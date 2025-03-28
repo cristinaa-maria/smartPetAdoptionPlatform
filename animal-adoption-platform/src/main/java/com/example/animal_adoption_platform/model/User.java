@@ -1,0 +1,26 @@
+package com.example.animal_adoption_platform.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Document(collection = "users")
+public class User {
+    private String name;
+    private String email;
+    private String password;
+    private String type;
+    private String location;
+    private String contact;
+
+    @Id
+    private String id;
+}
