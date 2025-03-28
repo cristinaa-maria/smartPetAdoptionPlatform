@@ -1,5 +1,6 @@
 package com.example.animal_adoption_platform.model;
 
+import com.mongodb.client.model.geojson.Point;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,7 +19,7 @@ public class User {
     private String email;
     private String password;
     private String type;
-    private String location;
+    private Point location;
     private String contact;
 
     @Id

@@ -3,11 +3,14 @@ package com.example.animal_adoption_platform.service;
 import com.example.animal_adoption_platform.model.User;
 import com.example.animal_adoption_platform.repository.UserRepository;
 import com.example.animal_adoption_platform.dto.UserDTO;
+import com.mongodb.client.model.geojson.Point;
+import com.mongodb.client.model.geojson.Position;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -47,4 +50,53 @@ public class UserService {
         return null;
     }
 
+    public void updateUser(String id, String modifiedField, Object modifiedValue) {
+        Optional<User> existingUser = userRepository.findById(id);
+
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+
+            switch (modifiedField) {
+                case "name":
+                    user.setName(modifiedValue.toString());
+                    break;
+                case "email":
+                    user.setEmail(modifiedValue.toString());
+                    break;
+                case "password":
+                    user.setPassword(modifiedValue.toString());
+                    break;
+                case "type":
+                    user.setType(modifiedValue.toString());
+                    break;
+                case "contact":
+                    user.setContact(modifiedValue.toString());
+                    break;
+                case "location":
+                    if (modifiedValue instanceof Point) {
+                        user.setLocation((Point) modifiedValue);
+                    } else {
+                        throw new IllegalArgumentException("Invalid location format");
+                    }
+                    break;
+                default:
+                    throw new IllegalArgumentException("Invalid field: " + modifiedField);
+            }
+
+            userRepository.save(user);
+        } else {
+            throw new RuntimeException("User not found with id: " + id);
+        }
+    }
+
+    public List<User> findUsersNearLocation(double latitude, double longitude, double radiusInKm) {
+        double radiusInMeters = radiusInKm * 1000;
+        Point locationPoint = new Point(new Position(longitude, latitude));
+
+        return userRepository.findUsersNear(locationPoint, radiusInMeters);
+    }
+
+
 }
+
+
