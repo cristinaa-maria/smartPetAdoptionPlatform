@@ -5,26 +5,23 @@ import com.example.animal_adoption_platform.model.Animal;
 import com.example.animal_adoption_platform.repository.AnimalRepository;
 import com.example.animal_adoption_platform.service.AnimalService;
 import com.example.animal_adoption_platform.service.UserService;
-import com.mongodb.client.model.geojson.Point;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @Controller
 @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
-public class AdoptionPostController {
+public class AnimalsController {
     private final AnimalRepository animalRepository;
     private AnimalService animalService;
     private UserService userService;
     private Authentication authentication;
 
-    public AdoptionPostController(AnimalService animalService, AnimalRepository animalRepository, UserService userService) {
+    public AnimalsController(AnimalService animalService, AnimalRepository animalRepository, UserService userService) {
         this.animalService = animalService;
         this.animalRepository = animalRepository;
         this.userService = userService;
@@ -62,19 +59,21 @@ public class AdoptionPostController {
         }
     }
 //
-//    @GetMapping("/locations")
-//    public ResponseEntity<List<String>> getLocations() {
-//        List<Animal> animals = animalService.getAnimals();
-//        List<String> locations = new ArrayList<>();
-//        for(Animal animal : animals) {
-//            locations.add(animal.getLocation().toString());
-//        }
-//        return ResponseEntity.ok(locations);
-//    }
+    @GetMapping("/locations")
+    public ResponseEntity<List<Animal>> getLocations() {
+        List<Animal> locations = animalService.getAnimals();
+        return ResponseEntity.ok(locations);
+    }
 
     @GetMapping("/animalCatalog")
     public ResponseEntity<List<Animal>> getAnimals(String userId){
         List<Animal> animals = animalService.getAnimalsByUserId(userId);
+        return ResponseEntity.ok(animals);
+    }
+
+    @GetMapping("/allAnimals")
+    public ResponseEntity<List<Animal>> getAllAnimals() {
+        List<Animal> animals = animalService.getAnimals();
         return ResponseEntity.ok(animals);
     }
 
