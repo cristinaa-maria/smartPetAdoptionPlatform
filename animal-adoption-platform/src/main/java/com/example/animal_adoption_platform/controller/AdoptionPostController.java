@@ -4,6 +4,8 @@ import com.example.animal_adoption_platform.dto.AnimalDTO;
 import com.example.animal_adoption_platform.model.Animal;
 import com.example.animal_adoption_platform.repository.AnimalRepository;
 import com.example.animal_adoption_platform.service.AnimalService;
+import com.example.animal_adoption_platform.service.UserService;
+import com.mongodb.client.model.geojson.Point;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,17 +21,18 @@ import java.util.Map;
 public class AdoptionPostController {
     private final AnimalRepository animalRepository;
     private AnimalService animalService;
-    public AdoptionPostController(AnimalService animalService, AnimalRepository animalRepository) {
+    private UserService userService;
+    private Authentication authentication;
+
+    public AdoptionPostController(AnimalService animalService, AnimalRepository animalRepository, UserService userService) {
         this.animalService = animalService;
         this.animalRepository = animalRepository;
+        this.userService = userService;
     }
 
     @PostMapping("/createAnimal")
-    public ResponseEntity<String> createAnimal(@RequestBody AnimalDTO animalDTO, String location, String contact, String type) {
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        String userId = authentication.getName();
-//        animalDTO.setUserID(userId);
-        animalService.addAnimal(animalDTO, location, contact, type);
+    public ResponseEntity<String> createAnimal(@RequestBody AnimalDTO animalDTO) {
+        animalService.addAnimal(animalDTO);
         return ResponseEntity.ok("Created successfully");
     }
 
@@ -58,16 +61,24 @@ public class AdoptionPostController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+//
+//    @GetMapping("/locations")
+//    public ResponseEntity<List<String>> getLocations() {
+//        List<Animal> animals = animalService.getAnimals();
+//        List<String> locations = new ArrayList<>();
+//        for(Animal animal : animals) {
+//            locations.add(animal.getLocation().toString());
+//        }
+//        return ResponseEntity.ok(locations);
+//    }
 
-    @GetMapping("/locations")
-    public ResponseEntity<List<String>> getLocations() {
-        List<Animal> animals = animalService.getAnimals();
-        List<String> locations = new ArrayList<>();
-        for(Animal animal : animals) {
-            locations.add(animal.getLocation().toString());
-        }
-        return ResponseEntity.ok(locations);
+    @GetMapping("/animalCatalog")
+    public ResponseEntity<List<Animal>> getAnimals(String userId){
+        List<Animal> animals = animalService.getAnimalsByUserId(userId);
+        return ResponseEntity.ok(animals);
     }
+
+ 
 
 
 

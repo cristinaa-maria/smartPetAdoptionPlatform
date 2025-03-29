@@ -22,7 +22,7 @@ public class LocationController {
         this.userService = userService;
     }
 
-    @PostMapping("/{userId}/update-location")
+    @PatchMapping("/{userId}/update-location")
     public ResponseEntity<String> updateUserLocation(@PathVariable String userId, @RequestBody Map<String, String> requestBody) {
         try {
             String address = requestBody.get("address");

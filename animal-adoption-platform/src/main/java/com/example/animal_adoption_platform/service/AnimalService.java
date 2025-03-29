@@ -5,6 +5,7 @@ import com.example.animal_adoption_platform.model.Animal;
 import com.example.animal_adoption_platform.model.User;
 import com.example.animal_adoption_platform.repository.AnimalRepository;
 import com.example.animal_adoption_platform.repository.UserRepository;
+import com.mongodb.client.model.geojson.Point;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,18 +23,13 @@ public class AnimalService {
         this.userRepository  = userRepository;
     }
 
-    public void addAnimal(AnimalDTO animal, String location, String contact, String type) {
+    public void addAnimal(AnimalDTO animal) {
         Animal animal1 = new Animal();
         animal1.setName(animal.getName());
         animal1.setSpecies(animal.getSpecies());
         animal1.setDescription(animal.getDescription());
-        animal1.setOwnerId(animal1.getOwnerId());
-        User user = userRepository.findById(animal1.getOwnerId()).get();
-        user.setLocation(location);
-        user.setContact(contact);
-        user.setType(type);
+        animal1.setUserId(animal.getUserId());
         animalRepository.save(animal1);
-        userRepository.save(user);
     }
 
     public void deleteAnimal(String id) {
@@ -61,6 +57,10 @@ public class AnimalService {
 
     public List<Animal> getAnimals(){
         return animalRepository.findAll();
+    }
+
+    public List<Animal> getAnimalsByUserId(String userId){
+        return animalRepository.findByUserId(userId);
     }
 
 

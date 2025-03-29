@@ -5,7 +5,9 @@ import com.example.animal_adoption_platform.repository.UserRepository;
 import com.example.animal_adoption_platform.dto.UserDTO;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -35,20 +37,21 @@ public class UserService {
     }
 
 
-    public String loginUser(UserDTO user) {
+    public Authentication loginUser(UserDTO user) {
         Optional<User> existingUser = userRepository.findByEmail(user.getEmail());
         if (existingUser.isPresent() && passwordEncoder.matches(user.getPassword(), existingUser.get().getPassword())) {
             User authenticatedUser = existingUser.get();
-            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    existingUser.get().getId(),
-                    null,
-                    null
+
+            Authentication auth = new UsernamePasswordAuthenticationToken(
+                    authenticatedUser.getId(), null, List.of()
             );
+
             SecurityContextHolder.getContext().setAuthentication(auth);
-            return authenticatedUser.getId();
+            return auth;
         }
         return null;
     }
+
 
     public void updateUser(String id, String modifiedField, Object modifiedValue) {
         Optional<User> existingUser = userRepository.findById(id);
@@ -73,8 +76,8 @@ public class UserService {
                     user.setContact(modifiedValue.toString());
                     break;
                 case "location":
-                    if (modifiedValue instanceof Point) {
-                        user.setLocation((Point) modifiedValue);
+                    if (modifiedValue instanceof GeoJsonPoint) {
+                        user.setLocation((GeoJsonPoint) modifiedValue);
                     } else {
                         throw new IllegalArgumentException("Invalid location format");
                     }
@@ -95,6 +98,17 @@ public class UserService {
 
         return userRepository.findUsersNear(locationPoint, radiusInMeters);
     }
+
+    public String getCurrentUserId(Authentication authentication) {
+        if (authentication != null && authentication.isAuthenticated() &&
+                !"anonymousUser".equals(authentication.getPrincipal())) {
+            return authentication.getPrincipal().toString();
+        }
+        return null;
+    }
+
+
+
 
 
 }

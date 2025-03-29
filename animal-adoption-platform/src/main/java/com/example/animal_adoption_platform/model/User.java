@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 
@@ -19,7 +20,7 @@ public class User {
     private String email;
     private String password;
     private String type;
-    private Point location;
+    private GeoJsonPoint location;
     private String contact;
 
     @Id

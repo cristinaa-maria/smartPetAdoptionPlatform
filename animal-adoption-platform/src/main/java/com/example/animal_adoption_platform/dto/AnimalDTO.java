@@ -9,5 +9,5 @@ public class AnimalDTO {
     private String name;
     private String species;
     private String description;
-    private String userID;
+    private String userId;
 }

@@ -20,11 +20,10 @@ public class Animal {
     @Id
     private String id;
 
-    private String ownerId;
+    private String userId;
     private String name;
     private String species;
     private String description;
-    private Point location;
     @LastModifiedDate
     private Instant updatedAt;
 
