@@ -16,15 +16,11 @@ import java.util.Map;
 @Controller
 @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class AnimalsController {
-    private final AnimalRepository animalRepository;
-    private AnimalService animalService;
-    private UserService userService;
-    private Authentication authentication;
 
-    public AnimalsController(AnimalService animalService, AnimalRepository animalRepository, UserService userService) {
+    private AnimalService animalService;
+
+    public AnimalsController(AnimalService animalService) {
         this.animalService = animalService;
-        this.animalRepository = animalRepository;
-        this.userService = userService;
     }
 
     @PostMapping("/createAnimal")
