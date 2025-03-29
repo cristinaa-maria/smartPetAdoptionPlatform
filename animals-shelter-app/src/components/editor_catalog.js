@@ -14,27 +14,34 @@ const EditorCatalog = () => {
         species: "",
         description: "",
         imageUrl: "",
-        place: "",
         imageFile: null,
+        userId: "",
     })
     const [location, setLocation] = useState("")
     const [contact, setContact] = useState("")
+    const [userType, setUserType] = useState("individual")
     const [isEditing, setIsEditing] = useState(false)
     const [editingId, setEditingId] = useState(null)
-    const [userType, setUserType] = useState("individual")
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     const [userId, setUserId] = useState(null)
 
+    const API_BASE_URL = "http://localhost:8083"
+
     useEffect(() => {
-        fetchUserSession()
-        fetchAnimals()
+        fetchCurrentUserId()
     }, [])
 
-    const fetchUserSession = async () => {
+    useEffect(() => {
+        if (userId) {
+            fetchUserAnimals()
+        }
+    }, [userId])
+
+    const fetchCurrentUserId = async () => {
         try {
             setLoading(true)
-            const response = await fetch("http://localhost:8083/api/user/current", {
+            const response = await fetch(`${API_BASE_URL}/currentUserId`, {
                 method: "GET",
                 credentials: "include",
                 headers: {
@@ -50,38 +57,47 @@ const EditorCatalog = () => {
                 throw new Error("Failed to fetch user session")
             }
 
-            const data = await response.json()
-            if (data && data.id) {
-                setUserId(data.id)
+            const userId = await response.text()
+            if (userId) {
+                setUserId(userId)
             } else {
                 throw new Error("Invalid user data received")
             }
         } catch (err) {
-            console.error("Error fetching user session:", err)
+            console.error("Error fetching user ID:", err)
             setError("Nu sunteți conectat. Vă rugăm să vă autentificați.")
         } finally {
             setLoading(false)
         }
     }
 
-    const fetchAnimals = async () => {
+    const fetchUserAnimals = async () => {
+        if (!userId) return;
+
         try {
-            setLoading(true)
-            const response = await fetch("http://localhost:8083/animals", {
+            setLoading(true);
+            console.log("Fetching animals for user:", userId);
+
+            const response = await fetch(`${API_BASE_URL}/animalCatalog?userId=${userId}`, {
+                method: "GET",
                 credentials: "include",
-            })
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                }
+            });
 
             if (!response.ok) {
-                throw new Error("Failed to fetch animals")
+                throw new Error(`Failed to fetch animals: ${response.status} ${response.statusText}`);
             }
 
-            const data = await response.json()
-            setAnimals(data)
+            const data = await response.json();
+            console.log("Fetched animals:", data);
+            setAnimals(data);
         } catch (err) {
-            console.error("Error fetching animals:", err)
-            setError("Failed to load animals. Please try again later.")
+            console.error("Error fetching animals:", err);
+            setError("Failed to load animals. Please try again later.");
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
     }
 
@@ -92,154 +108,211 @@ const EditorCatalog = () => {
         }
     }
 
-    const addAnimal = async () => {
+    const addAnimal = async (e) => {
+        e.preventDefault()
+
         if (!userId) {
             setError("Vă rugăm să vă autentificați pentru a adăuga un anunț.")
             return
         }
 
-        if (newAnimal.name && newAnimal.species) {
-            try {
-                setLoading(true)
+        if (!newAnimal.name || !newAnimal.species) {
+            setError("Numele și specia animalului sunt obligatorii.")
+            return
+        }
 
-                const animalDTO = {
-                    name: newAnimal.name,
-                    species: newAnimal.species,
-                    description: newAnimal.description,
-                    imageUrl: newAnimal.imageUrl || `/placeholder.svg?height=200&width=200`,
-                    place: newAnimal.place,
-                    userId: userId,
-                }
+        try {
+            setLoading(true)
+            setError(null)
 
-                const url = new URL("http://localhost:8083/createAnimal")
-                url.searchParams.append("location", location)
-                url.searchParams.append("contact", contact)
-                url.searchParams.append("type", userType)
-                url.searchParams.append("userId", userId.toString())
+            const currentId = userId
 
-                const response = await fetch(url.toString(), {
-                    method: "POST",
+            if (!currentId) {
+                throw new Error("User ID is not available")
+            }
+
+            const animalDTO = {
+                name: newAnimal.name,
+                species: newAnimal.species,
+                description: newAnimal.description,
+                imageUrl: newAnimal.imageUrl || `/placeholder.svg?height=200&width=200`,
+                userId: currentId,
+            }
+
+            const animalResponse = await fetch(`${API_BASE_URL}/createAnimal`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(animalDTO),
+                credentials: "include",
+            })
+
+            if (!animalResponse.ok) {
+                throw new Error("Failed to create animal")
+            }
+
+            // Step 2: Update user location with PATCH /{userId}/update-location
+            if (location) {
+                const locationResponse = await fetch(`${API_BASE_URL}/${currentId}/update-location`, {
+                    method: "PATCH", // Changed from POST to PATCH as requested
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify(animalDTO),
+                    body: JSON.stringify({
+                        address: location,
+                    }),
                     credentials: "include",
                 })
 
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        window.location.href = "/login"
-                        return
-                    }
-                    throw new Error("Failed to create animal")
+                if (!locationResponse.ok) {
+                    console.error("Failed to update location")
+                    // Continue with the process even if location update fails
                 }
-
-                await fetchAnimals()
-
-                // Reset form
-                setNewAnimal({
-                    name: "",
-                    species: "",
-                    description: "",
-                    imageUrl: "",
-                    place: "",
-                    imageFile: null,
-                })
-                setLocation("")
-                setContact("")
-                setIsEditing(false)
-                setEditingId(null)
-            } catch (err) {
-                console.error("Error adding/updating animal:", err)
-                setError("Failed to save animal. Please try again.")
-            } finally {
-                setLoading(false)
             }
+
+            // Step 3: Update user type and contact with PATCH /update-info
+            const userInfoResponse = await fetch(`${API_BASE_URL}/update-info`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    type: userType,
+                    contact: contact,
+                }),
+                credentials: "include",
+            })
+
+            if (!userInfoResponse.ok) {
+                console.error("Failed to update user info")
+                // Continue with the process even if user info update fails
+            }
+
+            // Step 4: Refresh the animals list
+            await fetchUserAnimals()
+
+            // Reset form
+            setNewAnimal({
+                name: "",
+                species: "",
+                description: "",
+                imageUrl: "",
+                imageFile: null,
+            })
+            setLocation("")
+            setIsEditing(false)
+            setEditingId(null)
+        } catch (err) {
+            console.error("Error adding animal:", err)
+            setError("Failed to save animal. Please try again.")
+        } finally {
+            setLoading(false)
         }
     }
 
-    const updateAnimal = async (id, animalData) => {
-        // Update each field individually as required by the backend
-        for (const [field, value] of Object.entries(animalData)) {
-            if (value) {
-                try {
-                    const response = await fetch(`http://localhost:8083/updateAnimal/${id}`, {
-                        method: "PATCH",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({ [field]: value }),
-                        credentials: "include",
-                    })
+    const updateAnimal = async (e) => {
+        e.preventDefault()
 
-                    if (!response.ok) {
-                        throw new Error(`Failed to update ${field}`)
-                    }
-                } catch (err) {
-                    console.error(`Error updating ${field}:`, err)
-                    throw err
-                }
-            }
+        if (!userId || !editingId) {
+            setError("Nu se poate actualiza animalul.")
+            return
         }
 
-        if (location) {
-            try {
-                const response = await fetch(`http://localhost:8083/updateAnimal/${id}`, {
+        try {
+            setLoading(true)
+            setError(null)
+
+            // Make sure we have the current user ID
+            const currentId = userId
+
+            if (!currentId) {
+                throw new Error("User ID is not available")
+            }
+
+            // Step 1: Update animal details
+            const animalFields = {
+                name: newAnimal.name,
+                species: newAnimal.species,
+                description: newAnimal.description,
+                imageUrl: newAnimal.imageUrl,
+                userId: currentId, // Ensure userId is included in updates
+            }
+
+            // Only send fields that have values
+            const updateData = Object.fromEntries(
+                Object.entries(animalFields).filter(([_, value]) => value)
+            )
+
+            if (Object.keys(updateData).length > 0) {
+                const animalResponse = await fetch(`${API_BASE_URL}/updateAnimal/${editingId}`, {
                     method: "PATCH",
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({ location: location }),
+                    body: JSON.stringify(updateData),
                     credentials: "include",
                 })
 
-                if (!response.ok) {
-                    throw new Error("Failed to update location")
+                if (!animalResponse.ok) {
+                    throw new Error("Failed to update animal")
                 }
-            } catch (err) {
-                console.error("Error updating location:", err)
-                throw err
             }
-        }
 
-        if (contact) {
-            try {
-                const response = await fetch(`http://localhost:8083/updateAnimal/${id}`, {
+            // Step 2: Update user location
+            if (location) {
+                const locationResponse = await fetch(`${API_BASE_URL}/${currentId}/update-location`, {
                     method: "PATCH",
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({ contact: contact }),
+                    body: JSON.stringify({
+                        address: location,
+                    }),
                     credentials: "include",
                 })
 
-                if (!response.ok) {
-                    throw new Error("Failed to update contact")
+                if (!locationResponse.ok) {
+                    console.error("Failed to update location")
                 }
-            } catch (err) {
-                console.error("Error updating contact:", err)
-                throw err
             }
-        }
 
-        if (userType) {
-            try {
-                const response = await fetch(`http://localhost:8083/updateAnimal/${id}`, {
-                    method: "PATCH",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ type: userType }),
-                    credentials: "include",
-                })
+            // Step 3: Update user type and contact
+            const userInfoResponse = await fetch(`${API_BASE_URL}/update-info`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    type: userType,
+                    contact: contact,
+                }),
+                credentials: "include",
+            })
 
-                if (!response.ok) {
-                    throw new Error("Failed to update type")
-                }
-            } catch (err) {
-                console.error("Error updating type:", err)
-                throw err
+            if (!userInfoResponse.ok) {
+                console.error("Failed to update user info")
             }
+
+            // Step 4: Refresh the animals list
+            await fetchUserAnimals()
+
+            // Reset form
+            setNewAnimal({
+                name: "",
+                species: "",
+                description: "",
+                imageUrl: "",
+                imageFile: null,
+            })
+            setLocation("")
+            setIsEditing(false)
+            setEditingId(null)
+        } catch (err) {
+            console.error("Error updating animal:", err)
+            setError("Failed to update animal. Please try again.")
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -247,7 +320,7 @@ const EditorCatalog = () => {
         try {
             setLoading(true)
 
-            const response = await fetch(`http://localhost:8083/deleteAnimal/${id}`, {
+            const response = await fetch(`${API_BASE_URL}/deleteAnimal/${id}`, {
                 method: "DELETE",
                 credentials: "include",
             })
@@ -256,7 +329,7 @@ const EditorCatalog = () => {
                 throw new Error("Failed to delete animal")
             }
 
-            await fetchAnimals()
+            await fetchUserAnimals()
         } catch (err) {
             console.error("Error deleting animal:", err)
             setError("Failed to delete animal. Please try again.")
@@ -271,14 +344,27 @@ const EditorCatalog = () => {
             species: animal.species,
             description: animal.description,
             imageUrl: animal.imageUrl,
-            place: animal.place,
             imageFile: null,
         })
-        setLocation(animal.location || "")
+        setLocation(animal.place || "")
         setContact(animal.contact || "")
         setUserType(animal.type || "individual")
         setIsEditing(true)
         setEditingId(animal.id)
+    }
+
+    const handleCancel = () => {
+        setNewAnimal({
+            name: "",
+            species: "",
+            description: "",
+            imageUrl: "",
+            imageFile: null,
+        })
+        setLocation("")
+        setContact("")
+        setIsEditing(false)
+        setEditingId(null)
     }
 
     return (
@@ -330,24 +416,12 @@ const EditorCatalog = () => {
                     </div>
                 )}
 
-                {userId ? (
-                    <div className="text-sm text-gray-600 mb-4">Utilizator conectat: ID {userId}</div>
-                ) : (
-                    <div className="text-sm text-red-600 mb-4">Nu sunteți conectat. Vă rugăm să vă autentificați.</div>
-                )}
-
                 <Card className="mb-8 w-full">
                     <CardHeader>
                         <CardTitle>{isEditing ? "Editează Anunț" : "Detalii Anunț"}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault()
-                                addAnimal()
-                            }}
-                            className="space-y-4"
-                        >
+                        <form onSubmit={isEditing ? updateAnimal : addAnimal} className="space-y-4">
                             <div>
                                 <Label htmlFor="userType">Tip Utilizator</Label>
                                 <RadioGroup value={userType} onValueChange={setUserType} className="flex flex-col space-y-2">
@@ -392,11 +466,11 @@ const EditorCatalog = () => {
                                 />
                             </div>
                             <div>
-                                <Label htmlFor="place">Locație (Adresă)</Label>
+                                <Label htmlFor="location">Locație (Adresă)</Label>
                                 <Input
-                                    id="place"
-                                    value={newAnimal.place}
-                                    onChange={(e) => setNewAnimal({ ...newAnimal, place: e.target.value })}
+                                    id="location"
+                                    value={location}
+                                    onChange={(e) => setLocation(e.target.value)}
                                     placeholder="Introduceți locația"
                                 />
                             </div>
@@ -422,7 +496,7 @@ const EditorCatalog = () => {
                                 />
                                 {newAnimal.imageUrl && (
                                     <img
-                                        src={newAnimal.imageUrl || "/placeholder.svg"}
+                                        src={newAnimal.imageUrl || "/placeholder.svg?height=200&width=200"}
                                         alt="Preview"
                                         className="mt-4 w-full max-h-64 object-cover rounded-lg"
                                     />
@@ -436,20 +510,7 @@ const EditorCatalog = () => {
                                     <Button
                                         type="button"
                                         className="px-6 py-3 text-lg ml-4 bg-gray-500 hover:bg-gray-600"
-                                        onClick={() => {
-                                            setNewAnimal({
-                                                name: "",
-                                                species: "",
-                                                description: "",
-                                                imageUrl: "",
-                                                place: "",
-                                                imageFile: null,
-                                            })
-                                            setLocation("")
-                                            setContact("")
-                                            setIsEditing(false)
-                                            setEditingId(null)
-                                        }}
+                                        onClick={handleCancel}
                                     >
                                         Anulează
                                     </Button>
@@ -471,7 +532,7 @@ const EditorCatalog = () => {
                                 <Card key={animal.id} className="overflow-hidden">
                                     {animal.imageUrl && (
                                         <img
-                                            src={animal.imageUrl || "/placeholder.svg"}
+                                            src={animal.imageUrl || "/placeholder.svg?height=200&width=200"}
                                             alt={animal.name}
                                             className="w-full h-48 object-cover"
                                         />
@@ -526,4 +587,3 @@ const EditorCatalog = () => {
 }
 
 export default EditorCatalog
-
