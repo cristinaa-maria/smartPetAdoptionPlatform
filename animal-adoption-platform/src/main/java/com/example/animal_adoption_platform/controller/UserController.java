@@ -1,6 +1,8 @@
 package com.example.animal_adoption_platform.controller;
 
 import com.example.animal_adoption_platform.dto.UserDTO;
+import com.example.animal_adoption_platform.model.User;
+import com.example.animal_adoption_platform.repository.UserRepository;
 import com.example.animal_adoption_platform.service.UserService;
 import com.mongodb.client.model.geojson.Point;
 import org.springframework.http.HttpStatus;
@@ -11,16 +13,19 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class UserController {
 
     private final UserService userService;
+    private final UserRepository userRepository;
     private Authentication authentication;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, UserRepository userRepository) {
         this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     @PostMapping("/register")
@@ -48,6 +53,18 @@ public class UserController {
             return ResponseEntity.ok(currentUserId);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+    }
+
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<User> getUserById(@PathVariable String userId) {
+
+        Optional<User> user = userRepository.findById(userId);
+
+        if (user.isPresent()) {
+            return ResponseEntity.ok(user.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
     }
 
     @PatchMapping("/update-info")

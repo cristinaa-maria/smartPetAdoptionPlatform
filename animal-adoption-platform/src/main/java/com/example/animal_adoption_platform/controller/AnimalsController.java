@@ -54,12 +54,6 @@ public class AnimalsController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-//
-    @GetMapping("/locations")
-    public ResponseEntity<List<Animal>> getLocations() {
-        List<Animal> locations = animalService.getAnimals();
-        return ResponseEntity.ok(locations);
-    }
 
     @GetMapping("/animalCatalog")
     public ResponseEntity<List<Animal>> getAnimals(String userId){

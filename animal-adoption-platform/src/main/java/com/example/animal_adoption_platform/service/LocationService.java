@@ -5,10 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Service
 public class LocationService {
@@ -27,26 +31,23 @@ public class LocationService {
 
     public void updateUserLocationFromAddress(String userId, String address) {
         try {
-            // 1. Construim URL-ul pentru API LocationIQ
-            String url = "https://us1.locationiq.com/v1/search.php?key=" + locationIqApiKey +
-                    "&q=" + address + "&format=json";
+            String encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8.toString());
 
-            // 2. Facem request-ul către LocationIQ
+            String url = "https://us1.locationiq.com/v1/search.php?key=" + locationIqApiKey +
+                    "&q=" + encodedAddress + "&format=json";
+
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                // 3. Parsăm JSON-ul folosind Jackson
                 JsonNode jsonArray = objectMapper.readTree(response.getBody());
 
                 if (jsonArray.isArray() && jsonArray.size() > 0) {
-                    JsonNode locationData = jsonArray.get(0); // Luăm primul rezultat
+                    JsonNode locationData = jsonArray.get(0);
                     double lat = locationData.get("lat").asDouble();
                     double lon = locationData.get("lon").asDouble();
 
-                    // 4. Convertim în obiect Point pentru MongoDB
-                    Point locationPoint = new Point(new Position(lon, lat));
+                    GeoJsonPoint locationPoint = new GeoJsonPoint(lon, lat);
 
-                    // 5. Apelăm metoda updateUser din UserService
                     userService.updateUser(userId, "location", locationPoint);
                 } else {
                     throw new RuntimeException("No location data found for address: " + address);
@@ -59,4 +60,26 @@ public class LocationService {
         }
     }
 
+    public String getAddressFromCoordinates(double latitude, double longitude) {
+        try {
+            String url = "https://us1.locationiq.com/v1/reverse.php?key=" + locationIqApiKey +
+                    "&lat=" + latitude + "&lon=" + longitude + "&format=json";
+
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                JsonNode jsonNode = objectMapper.readTree(response.getBody());
+
+                if (jsonNode.has("display_name")) {
+                    return jsonNode.get("display_name").asText();
+                } else {
+                    throw new RuntimeException("No address found for coordinates.");
+                }
+            } else {
+                throw new RuntimeException("Error fetching address from LocationIQ");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get address: " + e.getMessage());
+        }
+    }
 }

@@ -3,8 +3,6 @@ package com.example.animal_adoption_platform.controller;
 import com.example.animal_adoption_platform.model.User;
 import com.example.animal_adoption_platform.service.LocationService;
 import com.example.animal_adoption_platform.service.UserService;
-import com.mongodb.client.model.geojson.Point;
-import com.mongodb.client.model.geojson.Position;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,10 +20,10 @@ public class LocationController {
         this.userService = userService;
     }
 
-    @PatchMapping("/{userId}/update-location")
+    @PostMapping("/{userId}/update-location")
     public ResponseEntity<String> updateUserLocation(@PathVariable String userId, @RequestBody Map<String, String> requestBody) {
         try {
-            String address = requestBody.get("address");
+            String address = requestBody.get("location");
             if (address == null || address.isEmpty()) {
                 return ResponseEntity.badRequest().body("Address is required!");
             }
@@ -35,9 +33,8 @@ public class LocationController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error updating location: " + e.getMessage());
         }
-
-
     }
+
     @PostMapping("/nearby")
     public ResponseEntity<List<User>> getUsersNearby(@RequestBody Map<String, Object> requestBody) {
         try {
@@ -49,6 +46,16 @@ public class LocationController {
             return ResponseEntity.ok(users);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    @GetMapping("/reverse-geocode")
+    public ResponseEntity<String> getAddressFromCoordinates(@RequestParam double latitude, @RequestParam double longitude) {
+        try {
+            String address = locationService.getAddressFromCoordinates(latitude, longitude);
+            return ResponseEntity.ok(address);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error fetching address: " + e.getMessage());
         }
     }
 }
