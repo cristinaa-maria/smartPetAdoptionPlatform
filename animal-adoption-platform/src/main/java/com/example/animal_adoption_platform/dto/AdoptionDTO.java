@@ -9,7 +9,7 @@ import java.util.Date;
 @Setter
 public class AdoptionDTO {
 
-    private String ownerId;
+    private String userId;
     private String animalId;
     private String adopterId;
     private String status;

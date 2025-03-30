@@ -24,7 +24,7 @@ public class Adoption {
     private String id;
 
     private String adopterId;
-    private String ownerId;
+    private String userId;
     private String animalId;
     private String status;
     private String type;

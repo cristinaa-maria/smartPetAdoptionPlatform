@@ -7,5 +7,5 @@ import java.util.Optional;
 
 public interface AdoptionRepository extends MongoRepository<Adoption, String> {
     Optional<Adoption> findById(String id);
-    Adoption findAdoptionByOwnerId(String s);
+    Adoption findAdoptionByUserId(String s);
 }

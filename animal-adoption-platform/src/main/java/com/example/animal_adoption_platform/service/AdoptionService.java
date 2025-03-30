@@ -24,7 +24,7 @@ public class AdoptionService {
 
     public void scheduleAnAdoption(AdoptionDTO adoptionDTO) {
         Adoption adoption = new Adoption();
-        adoption.setOwnerId(adoptionDTO.getOwnerId());
+        adoption.setUserId(adoptionDTO.getUserId());
         adoption.setAnimalId(adoptionDTO.getAnimalId());
         adoption.setAdopterId(adoptionDTO.getAdopterId());
         adoption.setAdoptionDate(adoptionDTO.getScheduledDate());

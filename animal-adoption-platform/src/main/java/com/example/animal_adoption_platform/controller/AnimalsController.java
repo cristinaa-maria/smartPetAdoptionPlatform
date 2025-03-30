@@ -67,6 +67,12 @@ public class AnimalsController {
         return ResponseEntity.ok(animals);
     }
 
+    @GetMapping("/animalInfo/{animalId}")
+    public ResponseEntity<?> getAnimalInfo(@PathVariable String animalId){
+        Animal animal = animalService.getAnimalInfoById(animalId);
+        return ResponseEntity.ok(animal);
+    }
+
  
 
 

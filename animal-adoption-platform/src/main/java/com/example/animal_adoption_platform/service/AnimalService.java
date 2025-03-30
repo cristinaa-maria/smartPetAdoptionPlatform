@@ -63,6 +63,10 @@ public class AnimalService {
         return animalRepository.findByUserId(userId);
     }
 
+    public Animal getAnimalInfoById(String id){
+        return animalRepository.findAnimalById(id);
+    }
+
 
 
 }
