@@ -2,6 +2,7 @@ package com.example.animal_adoption_platform.repository;
 
 import com.example.animal_adoption_platform.model.User;
 import com.mongodb.client.model.geojson.Point;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
@@ -14,5 +15,5 @@ public interface UserRepository extends MongoRepository<User, String> {
     Optional<User> findByEmail(String email);
     Optional<User> findByPassword(String password);
     @Query("{ 'location': { $nearSphere: { $geometry: ?0, $maxDistance: ?1 } } }")
-    List<User> findUsersNear(Point location, double maxDistance);
+    List<User> findUsersNear(GeoJsonPoint location, double maxDistance);
 }

@@ -12,6 +12,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -92,11 +93,17 @@ public class UserService {
         }
     }
 
-    public List<User> findUsersNearLocation(double latitude, double longitude, double radiusInKm) {
-        double radiusInMeters = radiusInKm * 1000;
-        Point locationPoint = new Point(new Position(longitude, latitude));
+    public List<String> findUsersNearLocation(double latitude, double longitude, double radiusInKm) {
 
-        return userRepository.findUsersNear(locationPoint, radiusInMeters);
+        double radiusInMeters = radiusInKm * 1000;
+        GeoJsonPoint locationPoint = new GeoJsonPoint(longitude, latitude);
+        List<User> users = userRepository.findUsersNear(locationPoint, radiusInMeters);
+        List<String> ids = new ArrayList<>();
+        for (User user : users) {
+            ids.add(user.getId());
+        }
+
+        return ids;
     }
 
     public String getCurrentUserId(Authentication authentication) {

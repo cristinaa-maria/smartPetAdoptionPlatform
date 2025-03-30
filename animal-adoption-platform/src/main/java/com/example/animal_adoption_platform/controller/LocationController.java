@@ -3,6 +3,7 @@ package com.example.animal_adoption_platform.controller;
 import com.example.animal_adoption_platform.model.User;
 import com.example.animal_adoption_platform.service.LocationService;
 import com.example.animal_adoption_platform.service.UserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,16 +37,16 @@ public class LocationController {
     }
 
     @PostMapping("/nearby")
-    public ResponseEntity<List<User>> getUsersNearby(@RequestBody Map<String, Object> requestBody) {
+    public ResponseEntity<List<String>> getUsersNearby(@RequestBody Map<String, Object> requestBody) {
         try {
             double latitude = (double) requestBody.get("latitude");
             double longitude = (double) requestBody.get("longitude");
             double radiusInKm = (double) requestBody.get("radius");
 
-            List<User> users = userService.findUsersNearLocation(latitude, longitude, radiusInKm);
+            List<String> users = userService.findUsersNearLocation(latitude, longitude, radiusInKm);
             return ResponseEntity.ok(users);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(List.of(e.getMessage()));
         }
     }
 
