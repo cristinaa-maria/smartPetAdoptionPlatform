@@ -33,7 +33,6 @@ const Catalog = () => {
         fetchAnimals();
     }, []);
 
-    // 🔹 1️⃣ Luăm datele user-ului pentru a obține locația
     const fetchUserLocation = async (animalId, userId) => {
         try {
             const response = await fetch(`${API_BASE_URL}/users/${userId}`);
@@ -51,7 +50,6 @@ const Catalog = () => {
         }
     };
 
-    // 🔹 2️⃣ Transformăm coordonatele (lat, lon) în adresă
     const fetchLocation = async (animalId, latitude, longitude) => {
         try {
             const response = await fetch(`${API_BASE_URL}/reverse-geocode?latitude=${latitude}&longitude=${longitude}`);
@@ -64,6 +62,19 @@ const Catalog = () => {
             console.error("Error fetching location:", error);
         }
     };
+
+
+    const navigateToAdoption = (animalId) => {
+        window.location.href = `/book-adoption?animalId=${animalId}`
+    }
+
+    const navigateToFostering = (animalId) => {
+        window.location.href = `/fostering?animalId=${animalId}`
+    }
+
+    const navigateToDistantAdoption = (animalId) => {
+        window.location.href = `/distantAdoption?animalId=${animalId}`
+    }
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -118,9 +129,32 @@ const Catalog = () => {
                                 <p className="text-gray-600 mb-1">Specia: {animal.species}</p>
                                 <p className="text-gray-600 mb-1">Descrierea: {animal.description}</p>
                                 <p className="text-gray-600 flex items-center">
-                                    <MapPin className="h-4 w-4 mr-1" />
+                                    <MapPin className="h-4 w-4 mr-1"/>
                                     {locations[animal.id] || "Se încarcă locația..."}
                                 </p>
+                                <div className="flex flex-wrap gap-2 mt-4">
+                                    <Button
+                                        size="sm"
+                                        className="bg-green-600 hover:bg-green-700"
+                                        onClick={() => navigateToAdoption(animal.id)}
+                                    >
+                                        Adopție
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        className="bg-blue-600 hover:bg-blue-700"
+                                        onClick={() => navigateToFostering(animal.id)}
+                                    >
+                                        Foster
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        className="bg-purple-600 hover:bg-purple-700"
+                                        onClick={() => navigateToDistantAdoption(animal.id)}
+                                    >
+                                        Adopție la distanță
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     ))}
