@@ -1,43 +1,135 @@
 "use client"
 
-import { useState } from "react"
-import { format, addDays } from "date-fns"
-import { ArrowLeft, PawPrint, Calendar, Clock } from "lucide-react"
-import  Button  from "./ui/Button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/Select"
+import { useState, useEffect } from "react"
+import { format, addDays, parseISO } from "date-fns"
+import { ArrowLeft } from "lucide-react"
 
 export default function FosteringBooking() {
+    const [animalId, setAnimalId] = useState(null)
     const [date, setDate] = useState(null)
     const [period, setPeriod] = useState(null)
     const [message, setMessage] = useState("")
+    const [isLoading, setIsLoading] = useState(false)
+    const [adopterId, setAdopterId] = useState(null)
+    const [userId, setUserId] = useState(null)
+    const [dataLoading, setDataLoading] = useState(true)
+    const [error, setError] = useState(null)
+    const [animalDetails, setAnimalDetails] = useState(null)
 
-    // Generate next 10 days for date options
+    const API_BASE_URL = "http://localhost:8083"
+
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search)
+        const id = urlParams.get("animalId")
+        console.log("Extracted animalId from URL:", id)
+        setAnimalId(id)
+    }, [])
+
+    useEffect(() => {
+        const fetchRequiredData = async () => {
+            setDataLoading(true)
+            try {
+                const userResponse = await fetch(`${API_BASE_URL}/currentUserId`, {
+                    method: "GET",
+                    credentials: "include",
+                    headers: { "Accept": "application/json" }
+                })
+
+                if (!userResponse.ok) throw new Error("Failed to get current user information")
+
+                const currentUserId = await userResponse.text()
+                console.log("Current user ID (adopterId):", currentUserId)
+                setAdopterId(currentUserId)
+
+                const animalResponse = await fetch(`${API_BASE_URL}/animalInfo/${animalId}`, {
+                    method: "GET",
+                    credentials: "include",
+                    headers: { "Accept": "application/json" }
+                })
+
+                if (!animalResponse.ok) throw new Error("Failed to fetch animal information")
+
+                const animal = await animalResponse.json()
+                console.log("Fetched animal:", animal)
+                setAnimalDetails(animal)
+                setUserId(animal.userId)
+
+                setError(null)
+            } catch (err) {
+                console.error("Error fetching required data:", err)
+                setError("Nu s-au putut încărca datele necesare. Te rugăm să încerci din nou.")
+            } finally {
+                setDataLoading(false)
+            }
+        }
+
+        if (animalId) fetchRequiredData()
+        else {
+            setError("ID-ul animalului lipsește. Te rugăm să te întorci și să încerci din nou.")
+            setDataLoading(false)
+        }
+    }, [animalId])
+
     const today = new Date()
     const dateOptions = Array.from({ length: 10 }, (_, i) => {
         const day = addDays(today, i)
-        return {
-            value: day.toISOString(),
-            label: format(day, "dd/MM/yyyy"),
-        }
+        return { value: day.toISOString(), label: format(day, "dd/MM/yyyy") }
     })
 
-    // Generate period options (months)
     const periodOptions = Array.from({ length: 12 }, (_, i) => {
         const month = i + 1
-        return {
-            value: month.toString(),
-            label: `${month} ${month === 1 ? "lună" : "luni"}`,
-        }
+        return { value: month.toString(), label: `${month} ${month === 1 ? "lună" : "luni"}` }
     })
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         if (!date || !period) {
-            setMessage("Te rugăm să selectezi atât perioada, cât și data de început")
+            setMessage("Te rugăm să selectezi atât data de început, cât și perioada fostering-ului.")
             return
         }
-        setMessage(
-            `Ai programat adopția pe ${format(new Date(date), "dd/MM/yyyy")} pe o perioadă de ${period} ${period === "1" ? "lună" : "luni"}.`,
-        )
+
+        if (!adopterId || !userId) {
+            setMessage("Informațiile despre utilizator sau animal lipsesc. Te rugăm să încerci din nou.")
+            return
+        }
+
+        setIsLoading(true)
+
+        try {
+            const selectedDate = parseISO(date)
+
+            const fosteringDTO = {
+                adopterId,
+                userId,
+                animalId,
+                status: "initializat",
+                type: "fostering",
+                fosteringStartDate: format(selectedDate, "yyyy-MM-dd"),
+                period: period
+            }
+
+            console.log("Sending fostering request:", fosteringDTO)
+
+            const response = await fetch(`${API_BASE_URL}/scheduleAdoption`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Accept": "application/json" },
+                body: JSON.stringify(fosteringDTO),
+                credentials: "include"
+            })
+
+            if (response.ok) {
+                console.log("Fostering scheduled successfully")
+                setMessage(`Ai programat fostering-ul pe ${format(selectedDate, "dd/MM/yyyy")} pentru o perioadă de ${period} ${period === "1" ? "lună" : "luni"}.`)
+            } else {
+                const errorText = await response.text()
+                console.error("Server error response:", errorText)
+                setMessage("A apărut o eroare la programarea fostering-ului. Te rugăm să încerci din nou.")
+            }
+        } catch (error) {
+            console.error("Error scheduling fostering:", error)
+            setMessage("A apărut o eroare la programarea fostering-ului. Te rugăm să încerci din nou.")
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     const handleReturn = () => {
@@ -45,85 +137,68 @@ export default function FosteringBooking() {
     }
 
     return (
-        <div className="flex flex-col min-h-screen p-4">
-
-            <div className="flex items-center gap-2 mb-4">
-                <PawPrint className="h-6 w-6 text-green-600" />
-                <span className="text-xl font-bold">PetPal Fostering</span>
+        <div className="flex flex-col min-h-screen">
+            <div className="flex items-center gap-2 p-4 bg-white shadow-sm">
+                <ArrowLeft className="h-6 w-6 text-green-600" onClick={handleReturn} />
+                <span className="text-xl font-bold">PetPal Foster</span>
             </div>
 
-
-
-            <div className="mb-8">
-                <Button
-                    variant="ghost"
-                    className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 px-4 py-2 rounded-md"
-                    onClick={handleReturn}
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                    Înapoi
-                </Button>
-            </div>
-
-            <div className="flex-1 flex flex-col items-center justify-center">
-                <div className="w-full max-w-2xl bg-white rounded-lg shadow-sm p-8">
+            <div className="flex-1 flex flex-col items-center justify-center p-4">
+                <div className="w-full max-w-2xl">
                     <h1 className="text-4xl font-bold mb-12 text-center">Programare Fostering</h1>
 
-                    <div className="space-y-8">
-                        <div className="space-y-3">
-                            <label className="text-base font-medium flex items-center gap-2">
-                                <Calendar className="h-5 w-5 text-green-600" />
-                                Selectează data de început:
-                            </label>
-                            <Select value={date} onValueChange={setDate}>
-                                <SelectTrigger className="w-full h-14 text-base border-2 border-green-500 focus:ring-green-500">
-                                    <SelectValue placeholder="Alege o dată" />
-                                </SelectTrigger>
-                                <SelectContent>
+                    {dataLoading ? (
+                        <div className="text-center py-8">
+                            <p className="text-lg text-gray-600">Se încarcă datele...</p>
+                        </div>
+                    ) : error ? (
+                        <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700 text-center">
+                            {error}
+                        </div>
+                    ) : (
+                        <div className="space-y-8">
+                            {animalDetails && (
+                                <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
+                                    <h2 className="text-xl font-semibold mb-2">Detalii animal:</h2>
+                                    <p><strong>Nume:</strong> {animalDetails.name}</p>
+                                    <p><strong>Specie:</strong> {animalDetails.species}</p>
+                                    {animalDetails.breed && <p><strong>Rasă:</strong> {animalDetails.breed}</p>}
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="text-base font-medium">Selectează data de început:</label>
+                                <select className="w-full p-3 border border-gray-300 rounded-md" value={date || ""} onChange={(e) => setDate(e.target.value)}>
+                                    <option value="" disabled>Alege o dată</option>
                                     {dateOptions.map((option) => (
-                                        <SelectItem key={option.value} value={option.value}>
-                                            {option.label}
-                                        </SelectItem>
+                                        <option key={option.value} value={option.value}>{option.label}</option>
                                     ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="space-y-3">
-                            <label className="text-base font-medium flex items-center gap-2">
-                                <Clock className="h-5 w-5 text-green-600" />
-                                Selectează perioada (luni):
-                            </label>
-                            <Select value={period} onValueChange={setPeriod}>
-                                <SelectTrigger className="w-full h-14 text-base border-2 border-green-500 focus:ring-green-500">
-                                    <SelectValue placeholder="Alege perioada" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {periodOptions.map((option) => (
-                                        <SelectItem key={option.value} value={option.value}>
-                                            {option.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <Button
-                            className="w-full bg-green-600 hover:bg-green-700 text-white h-14 text-lg mt-8"
-                            onClick={handleConfirm}
-                        >
-                            Confirmă programarea
-                        </Button>
-
-                        {message && (
-                            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md text-green-700 text-center text-lg">
-                                {message}
+                                </select>
                             </div>
-                        )}
-                    </div>
+
+                            <div>
+                                <label className="text-base font-medium">Selectează perioada (luni):</label>
+                                <select className="w-full p-3 border border-gray-300 rounded-md" value={period || ""} onChange={(e) => setPeriod(e.target.value)}>
+                                    <option value="" disabled>Alege perioada</option>
+                                    {periodOptions.map((option) => (
+                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <button className="w-full bg-green-600 hover:bg-green-700 text-white p-4 text-lg rounded-md" onClick={handleConfirm} disabled={isLoading}>
+                                {isLoading ? "Se procesează..." : "Confirmă programarea"}
+                            </button>
+
+                            {message && (
+                                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md text-green-700 text-center text-lg">
+                                    {message}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     )
 }
-
