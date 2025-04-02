@@ -114,6 +114,10 @@ public class UserService {
         return null;
     }
 
+    public String getCurrentUserName(String id){
+        return userRepository.findById(id).get().getName();
+    }
+
 
 
 

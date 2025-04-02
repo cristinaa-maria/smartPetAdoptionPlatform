@@ -55,6 +55,15 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
     }
 
+    @GetMapping("/currentUserName/{id}")
+    public ResponseEntity<?> getCurrentUserName(@PathVariable String id){
+        String currentUserName = userService.getCurrentUserName(id);
+        if(currentUserName != null){
+            return ResponseEntity.ok(currentUserName);
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User name not found");
+    }
+
     @GetMapping("/users/{userId}")
     public ResponseEntity<User> getUserById(@PathVariable String userId) {
 
