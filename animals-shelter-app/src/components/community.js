@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { PawPrint, Heart, MessageCircle, Share2, LogOut } from "lucide-react"
 import Button from "./ui/Button"
@@ -30,7 +32,16 @@ const initialPosts = [
 ]
 
 export default function PostUpdates() {
-    const [posts, setPosts] = useState(initialPosts)
+    const [posts, setPosts] = useState(() => {
+        // Try to get posts from localStorage on initial load
+        try {
+            const savedPosts = localStorage.getItem("petpalPosts")
+            return savedPosts ? JSON.parse(savedPosts) : initialPosts
+        } catch (error) {
+            console.error("Error loading posts from localStorage:", error)
+            return initialPosts
+        }
+    })
     const [newPost, setNewPost] = useState({ content: "", image: "" })
     const [currentUserId, setCurrentUserId] = useState(null)
     const [currentUserName, setCurrentUserName] = useState(null)
@@ -117,8 +128,30 @@ export default function PostUpdates() {
                 comments: 0,
                 timestamp: "Just now",
             }
-            setPosts([post, ...posts])
+            const updatedPosts = [post, ...posts]
+            setPosts(updatedPosts)
+
+            // Save to localStorage
+            try {
+                localStorage.setItem("petpalPosts", JSON.stringify(updatedPosts))
+            } catch (error) {
+                console.error("Error saving posts to localStorage:", error)
+                setError("Nu s-au putut salva postările local.")
+            }
+
             setNewPost({ content: "", image: "" })
+        }
+    }
+
+    const handleLike = (postId) => {
+        const updatedPosts = posts.map((post) => (post.id === postId ? { ...post, likes: post.likes + 1 } : post))
+        setPosts(updatedPosts)
+
+        // Save updated likes to localStorage
+        try {
+            localStorage.setItem("petpalPosts", JSON.stringify(updatedPosts))
+        } catch (error) {
+            console.error("Error saving likes to localStorage:", error)
         }
     }
 
@@ -208,7 +241,7 @@ export default function PostUpdates() {
                             {post.image && <img src={post.image || "/placeholder.svg"} alt="Post" className="rounded-lg w-full" />}
                         </CardContent>
                         <CardFooter className="flex justify-between">
-                            <Button variant="ghost" className="flex items-center">
+                            <Button variant="ghost" className="flex items-center" onClick={() => handleLike(post.id)}>
                                 <Heart className="mr-2 h-4 w-4" />
                                 {post.likes} Likes
                             </Button>
