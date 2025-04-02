@@ -322,7 +322,7 @@ const ShelterMap = () => {
                                 Toate
                             </Button>
                             <Button
-                                variant={species === "câine" ? "default" : "outline"}
+                                variant={species === "câine" || species == "catelus" ? "default" : "outline"}
                                 size="sm"
                                 onClick={() => setSpecies("câine")}
                                 className="whitespace-nowrap"
