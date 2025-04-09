@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import Button from "./ui/Button"
 import Input from "./ui/Input"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card"
-import { LogOut, PawPrint, Send } from "lucide-react"
+import { LogOut, PawPrint, Send, AlertCircle, MessageSquare } from "lucide-react"
 
 export default function AdoptionChatbot() {
     const [messages, setMessages] = useState([])
@@ -37,17 +37,11 @@ export default function AdoptionChatbot() {
             // Process numbered items
             const formattedPara = para
                 .replace(/###\s(\d+)\.\s\*\*(.*?)\*\*/g, '<h4 class="font-bold mt-2">$1. $2</h4>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-                .replace(/\n/g, '<br />')
+                .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                .replace(/\*([^*]+)\*/g, "<em>$1</em>")
+                .replace(/\n/g, "<br />")
 
-            return (
-                <div
-                    key={index}
-                    className="my-1"
-                    dangerouslySetInnerHTML={{ __html: formattedPara }}
-                />
-            )
+            return <div key={index} className="my-1" dangerouslySetInnerHTML={{ __html: formattedPara }} />
         })
     }
 
@@ -118,6 +112,23 @@ export default function AdoptionChatbot() {
         }
     }
 
+    const handleReportProblem = () => {
+        // Navigate to the report problem page using standard browser navigation
+        window.location.href = "/report-problem"
+    }
+
+    const handleTalkToAssistant = () => {
+        // You can implement specific assistant conversation starter here
+        setMessages((prev) => [
+            ...prev,
+            {
+                id: generateId(),
+                role: "assistant",
+                content: "Cum vă pot ajuta astăzi cu adopția unui animal de companie?",
+            },
+        ])
+    }
+
     return (
         <div className="min-h-screen flex flex-col">
             <header className="border-b">
@@ -160,18 +171,33 @@ export default function AdoptionChatbot() {
                     <Card className="w-full max-w-2xl mx-auto">
                         <CardHeader>
                             <CardTitle className="text-2xl font-semibold text-gray-800">Asistentul Virtual PetPal</CardTitle>
+                            <div className="flex space-x-3 mt-2">
+                                <Button
+                                    variant="outline"
+                                    className="flex items-center text-red-600 border-red-200 hover:bg-red-50"
+                                    onClick={handleReportProblem}
+                                >
+                                    <AlertCircle className="h-4 w-4 mr-2" />
+                                    Raportează o problemă
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="flex items-center text-green-600 border-green-200 hover:bg-green-50"
+                                    onClick={handleTalkToAssistant}
+                                >
+                                    <MessageSquare className="h-4 w-4 mr-2" />
+                                    Vorbește cu asistentul virtual
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <div className="h-[60vh] overflow-y-auto mb-4 px-1">
                                 {messages.map((m) => (
-                                    <div
-                                        key={m.id}
-                                        className={`mb-4 ${m.role === "user" ? "text-right" : "text-left"}`}
-                                    >
+                                    <div key={m.id} className={`mb-4 ${m.role === "user" ? "text-right" : "text-left"}`}>
                                         {m.role === "user" ? (
                                             <span className="inline-block p-3 rounded-lg bg-green-500 text-white max-w-[80%]">
-                                                {m.content}
-                                            </span>
+                        {m.content}
+                      </span>
                                         ) : (
                                             <div className="inline-block p-3 rounded-lg bg-gray-100 text-black max-w-[85%] leading-relaxed">
                                                 {formatResponseText(m.content)}
@@ -181,13 +207,19 @@ export default function AdoptionChatbot() {
                                 ))}
                                 {isTyping && (
                                     <div className="text-left">
-                                        <span className="inline-block p-2 rounded-lg bg-gray-200 text-black">
-                                            <div className="flex space-x-1">
-                                                <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                                                <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
-                                                <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }}></div>
-                                            </div>
-                                        </span>
+                    <span className="inline-block p-2 rounded-lg bg-gray-200 text-black">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
+                        <div
+                            className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
+                            style={{ animationDelay: "0.2s" }}
+                        ></div>
+                        <div
+                            className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
+                            style={{ animationDelay: "0.4s" }}
+                        ></div>
+                      </div>
+                    </span>
                                     </div>
                                 )}
                                 <div ref={messagesEndRef} />

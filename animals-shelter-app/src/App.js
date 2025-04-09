@@ -17,6 +17,7 @@ import ShelterMap from "./components/map";
 import DistantAdoptionPage from "./components/distantAdoption";
 import DonationPage from "./components/donationPage";
 import FosteringBooking from "./components/fostering";
+import ReportProblem from "./components/report-problem";
 
 
 function App() {
@@ -46,6 +47,7 @@ function App() {
             <Route path="/distantAdoption" element={<DistantAdoptionPage></DistantAdoptionPage>} />
             <Route path="/donationPage" element={<DonationPage></DonationPage>} />
             <Route path="/fostering" element={<FosteringBooking></FosteringBooking>} />
+            <Route path="/report-problem" element={<ReportProblem></ReportProblem>} />
           </Routes>
         </BrowserRouter>
       </div>

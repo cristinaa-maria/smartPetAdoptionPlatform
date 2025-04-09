@@ -7,7 +7,7 @@ export default function AdoptionBooking() {
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search)
-        const id = urlParams.get('animalId')
+        const id = urlParams.get("animalId")
         console.log("Extracted animalId from URL:", id)
         setAnimalId(id)
     }, [])
@@ -33,8 +33,8 @@ export default function AdoptionBooking() {
                     method: "GET",
                     credentials: "include",
                     headers: {
-                        "Accept": "application/json, text/plain, */*"
-                    }
+                        Accept: "application/json, text/plain, */*",
+                    },
                 })
 
                 if (!userResponse.ok) {
@@ -50,8 +50,8 @@ export default function AdoptionBooking() {
                     method: "GET",
                     credentials: "include",
                     headers: {
-                        "Accept": "application/json"
-                    }
+                        Accept: "application/json",
+                    },
                 })
 
                 if (!animalResponse.ok) {
@@ -80,7 +80,6 @@ export default function AdoptionBooking() {
             setDataLoading(false)
         }
     }, [animalId])
-
 
     const start = startOfWeek(new Date(), { weekStartsOn: 1 })
     const dateOptions = Array.from({ length: 10 }, (_, i) => {
@@ -116,7 +115,7 @@ export default function AdoptionBooking() {
 
         try {
             const selectedDate = parseISO(date)
-            const [hours, minutes] = time.split(':').map(Number)
+            const [hours, minutes] = time.split(":").map(Number)
 
             const adoptionDTO = {
                 adopterId: adopterId,
@@ -124,7 +123,7 @@ export default function AdoptionBooking() {
                 animalId: animalId,
                 status: "initializat",
                 type: "adoptie permanenta",
-                adoptionDate: `${format(selectedDate, "yyyy-MM-dd")}T${hours}:${minutes}:00`
+                adoptionDate: `${format(selectedDate, "yyyy-MM-dd")}T${hours}:${minutes}:00`,
             }
 
             console.log("Sending adoption request:", adoptionDTO)
@@ -133,10 +132,10 @@ export default function AdoptionBooking() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Accept": "application/json"
+                    Accept: "application/json",
                 },
                 body: JSON.stringify(adoptionDTO),
-                credentials: "include"
+                credentials: "include",
             })
 
             if (response.ok) {
@@ -162,7 +161,7 @@ export default function AdoptionBooking() {
     return (
         <div className="flex flex-col min-h-screen">
             <div className="flex items-center gap-2 p-4 bg-white shadow-sm">
-                <ArrowLeft className="h-6 w-6 text-green-600" onClick={handleReturn}/>
+                <ArrowLeft className="h-6 w-6 text-green-600" onClick={handleReturn} />
                 <span className="text-xl font-bold">PetPal Adopție</span>
             </div>
             <div className="flex-1 flex flex-col items-center justify-center p-4">
@@ -174,31 +173,42 @@ export default function AdoptionBooking() {
                             <p className="text-lg text-gray-600">Se încarcă datele...</p>
                         </div>
                     ) : error ? (
-                        <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700 text-center">
-                            {error}
-                        </div>
+                        <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700 text-center">{error}</div>
                     ) : (
                         <div className="space-y-8">
                             {animalDetails && (
                                 <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
                                     <h2 className="text-xl font-semibold mb-2">Detalii animal:</h2>
-                                    <p><strong>Nume:</strong> {animalDetails.name}</p>
-                                    <p><strong>Specie:</strong> {animalDetails.species}</p>
-                                    {animalDetails.breed && <p><strong>Rasă:</strong> {animalDetails.breed}</p>}
+                                    <p>
+                                        <strong>Nume:</strong> {animalDetails.name}
+                                    </p>
+                                    <p>
+                                        <strong>Specie:</strong> {animalDetails.species}
+                                    </p>
+                                    {animalDetails.breed && (
+                                        <p>
+                                            <strong>Rasă:</strong> {animalDetails.breed}
+                                        </p>
+                                    )}
                                 </div>
                             )}
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                         xmlns="http://www.w3.org/2000/svg">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path
                                             d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z"
-                                            stroke="#10B981" strokeWidth="2" strokeLinecap="round"
-                                            strokeLinejoin="round"/>
+                                            stroke="#10B981"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
                                         <path
                                             d="M16 2V6M8 2V6M3 10H21M8 14H8.01M12 14H12.01M16 14H16.01M8 18H8.01M12 18H12.01M16 18H16.01"
-                                            stroke="#10B981" strokeWidth="2" strokeLinecap="round"
-                                            strokeLinejoin="round"/>
+                                            stroke="#10B981"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
                                     </svg>
                                     <label className="text-base font-medium">Selectează data:</label>
                                 </div>
@@ -207,7 +217,9 @@ export default function AdoptionBooking() {
                                     value={date || ""}
                                     onChange={(e) => setDate(e.target.value)}
                                 >
-                                    <option value="" disabled>Alege o dată</option>
+                                    <option value="" disabled>
+                                        Alege o dată
+                                    </option>
                                     {dateOptions.map((option) => (
                                         <option key={option.value} value={option.value}>
                                             {option.label}
@@ -217,11 +229,15 @@ export default function AdoptionBooking() {
                             </div>
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                         xmlns="http://www.w3.org/2000/svg">
-                                        <circle cx="12" cy="12" r="9" stroke="#10B981" strokeWidth="2"/>
-                                        <path d="M12 7V12L15 15" stroke="#10B981" strokeWidth="2" strokeLinecap="round"
-                                              strokeLinejoin="round"/>
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="12" cy="12" r="9" stroke="#10B981" strokeWidth="2" />
+                                        <path
+                                            d="M12 7V12L15 15"
+                                            stroke="#10B981"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
                                     </svg>
                                     <label className="text-base font-medium">Selectează ora:</label>
                                 </div>
@@ -230,7 +246,9 @@ export default function AdoptionBooking() {
                                     value={time || ""}
                                     onChange={(e) => setTime(e.target.value)}
                                 >
-                                    <option value="" disabled>Alege o oră</option>
+                                    <option value="" disabled>
+                                        Alege o oră
+                                    </option>
                                     {timeOptions.map((option) => (
                                         <option key={option.value} value={option.value}>
                                             {option.label}
@@ -246,14 +264,40 @@ export default function AdoptionBooking() {
                                 {isLoading ? "Se procesează..." : "Confirmă programarea"}
                             </button>
                             {message && (
-                                <div className={`mt-6 p-4 border rounded-md text-center text-lg ${
-                                    message.includes("eroare")
-                                        ? "bg-red-50 border-red-200 text-red-700"
-                                        : "bg-green-50 border-green-200 text-green-700"
-                                }`}>
+                                <div
+                                    className={`mt-6 p-4 border rounded-md text-center text-lg ${
+                                        message.includes("eroare")
+                                            ? "bg-red-50 border-red-200 text-red-700"
+                                            : "bg-green-50 border-green-200 text-green-700"
+                                    }`}
+                                >
                                     {message}
                                 </div>
                             )}
+
+                            {/* Added veterinary clinic link */}
+                            <div className="mt-8 text-center">
+                                <a
+                                    href="/find-clinics"
+                                    className="inline-flex items-center text-green-600 hover:text-green-800 text-lg font-medium"
+                                >
+                                    <svg
+                                        className="w-5 h-5 mr-2"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                                        ></path>
+                                    </svg>
+                                    Găsește veterinar ușor pentru noul tău prieten, tot aici
+                                </a>
+                            </div>
                         </div>
                     )}
                 </div>
