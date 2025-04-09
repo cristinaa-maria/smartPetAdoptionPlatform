@@ -10,4 +10,5 @@ public class AnimalDTO {
     private String species;
     private String description;
     private String userId;
+    private byte[] image;
 }

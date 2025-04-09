@@ -24,6 +24,7 @@ public class Animal {
     private String name;
     private String species;
     private String description;
+    private byte[] image;
     @LastModifiedDate
     private Instant updatedAt;
 
