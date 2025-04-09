@@ -1,10 +1,9 @@
+"use client"
+
 import { useState, useEffect, useRef } from "react"
-import { PawPrint, Heart, MessageCircle, Share2, LogOut, MoreVertical, Edit, Trash, Flag } from "lucide-react"
-import Button from "./ui/Button"
-import Input from "./ui/Input"
+import { PawPrint, Heart, MessageCircle, Share2, LogOut, MoreVertical, Edit, Trash, Flag, X } from "lucide-react"
+import Label from "./ui/Label"
 import Textarea from "./ui/Textarea"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/Card"
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/Avatar"
 
 // Custom Dialog component
 const Dialog = ({ isOpen, onClose, title, children, footer }) => {
@@ -66,8 +65,7 @@ const initialPosts = [
     {
         id: 1,
         author: "John Doe",
-        avatar: "/placeholder.svg?height=40&width=40",
-        content: "Max is doing great! He loves his new toy and has been playing with it all day.",
+        content: "Max este fericit cu noua lui jucarie.",
         image: "/placeholder.svg?height=300&width=500",
         likes: 15,
         comments: 3,
@@ -77,8 +75,7 @@ const initialPosts = [
     {
         id: 2,
         author: "Jane Smith",
-        avatar: "/placeholder.svg?height=40&width=40",
-        content: "Bella had her first visit to the vet today. She was so brave!",
+        content: "Bella, pentru prima data la veterinar. Nu e foarte incantata",
         image: "/placeholder.svg?height=300&width=500",
         likes: 10,
         comments: 2,
@@ -99,17 +96,22 @@ export default function PostUpdates() {
         }
     })
     const [newPost, setNewPost] = useState({ content: "", image: "" })
-    const [currentUserId, setCurrentUserId] = useState("user123") // Default for testing
+    const [imagePreview, setImagePreview] = useState(null)
+    const [currentUserId, setCurrentUserId] = useState("user123") 
     const [currentUserName, setCurrentUserName] = useState("Nume generic")
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState("Nu s-a putut obține ID-ul utilizatorului.")
+    const [error, setError] = useState("")
     const [editingPost, setEditingPost] = useState(null)
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
     const [editedContent, setEditedContent] = useState("")
     const [editedImage, setEditedImage] = useState("")
+    const [editImagePreview, setEditImagePreview] = useState(null)
     const [isReportDialogOpen, setIsReportDialogOpen] = useState(false)
     const [reportReason, setReportReason] = useState("")
     const [reportedPostId, setReportedPostId] = useState(null)
+
+    const fileInputRef = useRef(null)
+    const editFileInputRef = useRef(null)
 
     const API_BASE_URL = "http://localhost:8083"
 
@@ -143,8 +145,9 @@ export default function PostUpdates() {
                     throw new Error("Failed to fetch user ID")
                 }
 
-                const userId = await response.text()
+                const userId = await response.text() // Use text() instead of json()
                 setCurrentUserId(userId)
+                console.log("Current user ID:", userId)
 
                 // After getting the user ID, fetch the user name
                 if (userId) {
@@ -158,8 +161,7 @@ export default function PostUpdates() {
             }
         }
 
-        // Uncomment this to fetch from real API
-        // fetchCurrentUserId()
+        fetchCurrentUserId() // Remove the comment to enable the API call
     }, [API_BASE_URL])
 
     // Fetch current user name using the user ID
@@ -178,7 +180,7 @@ export default function PostUpdates() {
                 throw new Error("Failed to fetch user name")
             }
 
-            const userName = await response.text()
+            const userName = await response.text() // Use text() instead of json()
             setCurrentUserName(userName)
         } catch (err) {
             console.error("Error fetching user name:", err)
@@ -188,13 +190,66 @@ export default function PostUpdates() {
         }
     }
 
+    const handleImageChange = (e) => {
+        const file = e.target.files[0]
+        if (!file) return
+
+        // Check file size (limit to 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert("Imaginea este prea mare. Vă rugăm să alegeți o imagine mai mică de 5MB.")
+            e.target.value = null
+            return
+        }
+
+        const reader = new FileReader()
+        reader.onloadend = () => {
+            setImagePreview(reader.result)
+            setNewPost({ ...newPost, image: reader.result })
+        }
+        reader.readAsDataURL(file)
+    }
+
+    const handleEditImageChange = (e) => {
+        const file = e.target.files[0]
+        if (!file) return
+
+        // Check file size (limit to 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert("Imaginea este prea mare. Vă rugăm să alegeți o imagine mai mică de 5MB.")
+            e.target.value = null
+            return
+        }
+
+        const reader = new FileReader()
+        reader.onloadend = () => {
+            setEditImagePreview(reader.result)
+            setEditedImage(reader.result)
+        }
+        reader.readAsDataURL(file)
+    }
+
+    const handleRemoveImage = () => {
+        setImagePreview(null)
+        setNewPost({ ...newPost, image: "" })
+        if (fileInputRef.current) {
+            fileInputRef.current.value = ""
+        }
+    }
+
+    const handleRemoveEditImage = () => {
+        setEditImagePreview(null)
+        setEditedImage("")
+        if (editFileInputRef.current) {
+            editFileInputRef.current.value = ""
+        }
+    }
+
     const handlePostSubmit = (e) => {
         e.preventDefault()
         if (newPost.content.trim()) {
             const post = {
                 id: Date.now(),
                 author: currentUserName || "Utilizator necunoscut",
-                avatar: "/placeholder.svg?height=40&width=40",
                 content: newPost.content,
                 image: newPost.image,
                 likes: 0,
@@ -204,6 +259,10 @@ export default function PostUpdates() {
             }
             setPosts([post, ...posts])
             setNewPost({ content: "", image: "" })
+            setImagePreview(null)
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ""
+            }
         }
     }
 
@@ -215,6 +274,7 @@ export default function PostUpdates() {
         setEditingPost(post)
         setEditedContent(post.content)
         setEditedImage(post.image || "")
+        setEditImagePreview(post.image || null)
         setIsEditDialogOpen(true)
     }
 
@@ -234,6 +294,10 @@ export default function PostUpdates() {
             )
             setIsEditDialogOpen(false)
             setEditingPost(null)
+            setEditImagePreview(null)
+            if (editFileInputRef.current) {
+                editFileInputRef.current.value = ""
+            }
         }
     }
 
@@ -305,94 +369,110 @@ export default function PostUpdates() {
             <main className="container mx-auto py-8 px-4">
                 {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
 
-                <Card className="mb-8">
-                    <CardHeader>
-                        <CardTitle>Adaugă o postare</CardTitle>
-                        {currentUserName && <p className="text-sm text-gray-500">Postezi ca: {currentUserName}</p>}
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handlePostSubmit}>
-                            <Textarea
-                                placeholder="Ce mai face animăluțul tău?"
-                                value={newPost.content}
-                                onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
-                                className="mb-4"
+                <div className="mb-8 bg-white rounded-lg shadow p-6">
+                    <h2 className="text-xl font-bold mb-2">Adaugă o postare</h2>
+                    <p className="text-sm text-gray-500 mb-4">Postezi ca: {currentUserName}</p>
+
+                    <form onSubmit={handlePostSubmit}>
+                        <Textarea
+                            placeholder="Ce mai face animăluțul tău?"
+                            value={newPost.content}
+                            onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+                            className="mb-4"
+                        />
+
+                        <div className="mb-4">
+                            <Label htmlFor="image-upload">Imagine</Label>
+                            <input
+                                type="file"
+                                id="image-upload"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                ref={fileInputRef}
+                                className="block w-full text-sm border border-gray-300 rounded-lg p-2"
                             />
-                            <Input
-                                type="text"
-                                placeholder="Adaugă și o imagine!"
-                                value={newPost.image}
-                                onChange={(e) => setNewPost({ ...newPost, image: e.target.value })}
-                                className="mb-4"
-                            />
-                            <Button type="submit" disabled={loading || !currentUserId}>
-                                {loading ? "Se încarcă..." : "Postează"}
-                            </Button>
-                        </form>
-                    </CardContent>
-                </Card>
+                            {imagePreview && (
+                                <div className="mt-4 relative">
+                                    <img
+                                        src={imagePreview || "/placeholder.svg"}
+                                        alt="Preview"
+                                        className="w-full max-h-64 object-cover rounded-lg"
+                                    />
+                                    <button
+                                        onClick={handleRemoveImage}
+                                        className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1 text-white hover:bg-opacity-70"
+                                        type="button"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={loading || !currentUserId}
+                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                        >
+                            {loading ? "Se încarcă..." : "Postează"}
+                        </button>
+                    </form>
+                </div>
 
                 {posts.map((post) => (
-                    <Card key={post.id} className="mb-6">
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center">
-                                    <Avatar className="h-10 w-10 mr-4">
-                                        <AvatarImage src={post.avatar} alt={post.author} />
-                                        <AvatarFallback>{post.author[0]}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <CardTitle className="text-lg">{post.author}</CardTitle>
-                                        <p className="text-sm text-gray-500">
-                                            {post.timestamp} {post.edited && <span className="italic">(editat)</span>}
-                                        </p>
-                                    </div>
+                    <div key={post.id} className="mb-6 bg-white rounded-lg shadow overflow-hidden">
+                        <div className="p-4">
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 className="font-bold">{post.author}</h3>
+                                    <p className="text-sm text-gray-500">
+                                        {post.timestamp} {post.edited && <span className="italic">(editat)</span>}
+                                    </p>
                                 </div>
-
-                                <div className="flex items-center justify-center">
-                                    <CustomDropdownMenu
-                                        trigger={
-                                            <button className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100">
-                                                <MoreVertical className="h-5 w-5 text-gray-500" />
-                                            </button>
-                                        }
-                                    >
-                                        {/* Always show all options for testing */}
-                                        <DropdownMenuItem onClick={() => handleEditClick(post)}>
-                                            <Edit className="mr-2 h-4 w-4" />
-                                            <span>Editează</span>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => handleDeletePost(post.id)}>
-                                            <Trash className="mr-2 h-4 w-4" />
-                                            <span>Șterge</span>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => handleReportClick(post.id)}>
-                                            <Flag className="mr-2 h-4 w-4" />
-                                            <span>Raportează</span>
-                                        </DropdownMenuItem>
-                                    </CustomDropdownMenu>
-                                </div>
+                                <CustomDropdownMenu
+                                    trigger={
+                                        <button className="text-gray-500 hover:text-gray-700">
+                                            <MoreVertical className="h-5 w-5" />
+                                        </button>
+                                    }
+                                >
+                                    <DropdownMenuItem onClick={() => handleEditClick(post)}>
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        <span>Editează</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleDeletePost(post.id)}>
+                                        <Trash className="mr-2 h-4 w-4" />
+                                        <span>Șterge</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleReportClick(post.id)}>
+                                        <Flag className="mr-2 h-4 w-4" />
+                                        <span>Raportează</span>
+                                    </DropdownMenuItem>
+                                </CustomDropdownMenu>
                             </div>
-                        </CardHeader>
-                        <CardContent>
                             <p className="mb-4">{post.content}</p>
-                            {post.image && <img src={post.image || "/placeholder.svg"} alt="Post" className="rounded-lg w-full" />}
-                        </CardContent>
-                        <CardFooter className="flex justify-between">
-                            <Button variant="ghost" className="flex items-center" onClick={() => handleLike(post.id)}>
-                                <Heart className="mr-2 h-4 w-4" />
-                                {post.likes} Likes
-                            </Button>
-                            <Button variant="ghost" className="flex items-center">
-                                <MessageCircle className="mr-2 h-4 w-4" />
-                                {post.comments} Comments
-                            </Button>
-                            <Button variant="ghost" className="flex items-center">
-                                <Share2 className="mr-2 h-4 w-4" />
-                                Share
-                            </Button>
-                        </CardFooter>
-                    </Card>
+                            {post.image && (
+                                <img src={post.image || "/placeholder.svg"} alt="Post" className="w-full rounded-lg mb-3" />
+                            )}
+                            <div className="flex justify-between mt-4">
+                                <button
+                                    className="flex items-center text-gray-700 hover:text-green-600"
+                                    onClick={() => handleLike(post.id)}
+                                >
+                                    <Heart className="mr-1 h-5 w-5" />
+                                    <span>{post.likes} Aprecieri</span>
+                                </button>
+                                <button className="flex items-center text-gray-700 hover:text-green-600">
+                                    <MessageCircle className="mr-1 h-5 w-5" />
+                                    <span>{post.comments} Comentarii</span>
+                                </button>
+                                <button className="flex items-center text-gray-700 hover:text-green-600">
+                                    <Share2 className="mr-1 h-5 w-5" />
+                                    <span>Distribuie</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 ))}
             </main>
 
@@ -403,10 +483,18 @@ export default function PostUpdates() {
                 title="Editează postarea"
                 footer={
                     <>
-                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                        <button
+                            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 mr-2"
+                            onClick={() => setIsEditDialogOpen(false)}
+                        >
                             Anulează
-                        </Button>
-                        <Button onClick={handleSaveEdit}>Salvează</Button>
+                        </button>
+                        <button
+                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                            onClick={handleSaveEdit}
+                        >
+                            Salvează
+                        </button>
                     </>
                 }
             >
@@ -416,13 +504,34 @@ export default function PostUpdates() {
                     onChange={(e) => setEditedContent(e.target.value)}
                     className="mb-4"
                 />
-                <Input
-                    type="text"
-                    placeholder="URL imagine"
-                    value={editedImage}
-                    onChange={(e) => setEditedImage(e.target.value)}
-                    className="mb-4"
-                />
+
+                <div className="mb-4">
+                    <Label htmlFor="edit-image-upload">Imagine</Label>
+                    <input
+                        type="file"
+                        id="edit-image-upload"
+                        accept="image/*"
+                        onChange={handleEditImageChange}
+                        ref={editFileInputRef}
+                        className="block w-full text-sm border border-gray-300 rounded-lg p-2"
+                    />
+                    {editImagePreview && (
+                        <div className="mt-4 relative">
+                            <img
+                                src={editImagePreview || "/placeholder.svg"}
+                                alt="Preview"
+                                className="w-full max-h-64 object-cover rounded-lg"
+                            />
+                            <button
+                                onClick={handleRemoveEditImage}
+                                className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1 text-white hover:bg-opacity-70"
+                                type="button"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+                    )}
+                </div>
             </Dialog>
 
             {/* Report Post Dialog */}
@@ -432,10 +541,18 @@ export default function PostUpdates() {
                 title="Raportează postarea"
                 footer={
                     <>
-                        <Button variant="outline" onClick={() => setIsReportDialogOpen(false)}>
+                        <button
+                            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 mr-2"
+                            onClick={() => setIsReportDialogOpen(false)}
+                        >
                             Anulează
-                        </Button>
-                        <Button onClick={handleSubmitReport}>Trimite</Button>
+                        </button>
+                        <button
+                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                            onClick={handleSubmitReport}
+                        >
+                            Trimite
+                        </button>
                     </>
                 }
             >
