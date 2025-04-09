@@ -145,11 +145,10 @@ export default function PostUpdates() {
                     throw new Error("Failed to fetch user ID")
                 }
 
-                const userId = await response.text() // Use text() instead of json()
+                const userId = await response.text()
                 setCurrentUserId(userId)
                 console.log("Current user ID:", userId)
 
-                // After getting the user ID, fetch the user name
                 if (userId) {
                     fetchCurrentUserName(userId)
                 }
@@ -161,10 +160,9 @@ export default function PostUpdates() {
             }
         }
 
-        fetchCurrentUserId() // Remove the comment to enable the API call
+        fetchCurrentUserId()
     }, [API_BASE_URL])
 
-    // Fetch current user name using the user ID
     const fetchCurrentUserName = async (userId) => {
         try {
             setLoading(true)
@@ -180,7 +178,7 @@ export default function PostUpdates() {
                 throw new Error("Failed to fetch user name")
             }
 
-            const userName = await response.text() // Use text() instead of json()
+            const userName = await response.text()
             setCurrentUserName(userName)
         } catch (err) {
             console.error("Error fetching user name:", err)
@@ -194,7 +192,6 @@ export default function PostUpdates() {
         const file = e.target.files[0]
         if (!file) return
 
-        // Check file size (limit to 5MB)
         if (file.size > 5 * 1024 * 1024) {
             alert("Imaginea este prea mare. Vă rugăm să alegeți o imagine mai mică de 5MB.")
             e.target.value = null
@@ -213,7 +210,6 @@ export default function PostUpdates() {
         const file = e.target.files[0]
         if (!file) return
 
-        // Check file size (limit to 5MB)
         if (file.size > 5 * 1024 * 1024) {
             alert("Imaginea este prea mare. Vă rugăm să alegeți o imagine mai mică de 5MB.")
             e.target.value = null
@@ -255,7 +251,7 @@ export default function PostUpdates() {
                 likes: 0,
                 comments: 0,
                 timestamp: "Just now",
-                userId: currentUserId, // Store the user ID to identify the post owner
+                userId: currentUserId,
             }
             setPosts([post, ...posts])
             setNewPost({ content: "", image: "" })
