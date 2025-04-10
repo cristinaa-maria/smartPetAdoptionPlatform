@@ -59,4 +59,18 @@ public class LocationController {
             return ResponseEntity.badRequest().body("Error fetching address: " + e.getMessage());
         }
     }
+
+    @PostMapping("/nearbyClinics")
+    public ResponseEntity<List<String>> getNearbyClinics(@RequestBody Map<String, Object> requestBody) {
+        try {
+            double latitude = ((Number) requestBody.get("latitude")).doubleValue();
+            double longitude = ((Number) requestBody.get("longitude")).doubleValue();
+
+            List<String> clinics = locationService.getNearbyVetClinicNames(latitude, longitude);
+            return ResponseEntity.ok(clinics);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(List.of(e.getMessage()));
+        }
+    }
+
 }

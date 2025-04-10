@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.geo.Point;
 
 import java.time.Instant;
+import java.util.List;
 
 @Getter
 @Setter

@@ -10,9 +10,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class LocationService {
@@ -82,4 +86,27 @@ public class LocationService {
             throw new RuntimeException("Failed to get address: " + e.getMessage());
         }
     }
+
+    public List<String> getNearbyVetClinicNames(double latitude, double longitude) {
+        RestTemplate restTemplate = new RestTemplate();
+
+        // Crearea unui query simplu cu "+" pentru spații
+        String query = "veterinary clinic near " + latitude + "," + longitude;
+
+        // Construirea URL-ului corect cu "+" pentru spații
+        String url = "https://us1.locationiq.com/v1/search.php?key=" + locationIqApiKey +
+                "&q=" + query.replace(" ", "+") + // înlocuirea spațiilor cu "+"
+                "&format=json" +
+                "&limit=5"; // Limitați la 5 rezultate pentru mai multă claritate
+
+        // Obținerea răspunsului de la API
+        List<Map<String, Object>> response = restTemplate.getForObject(url, List.class);
+        if (response == null || response.isEmpty()) return List.of();
+
+        return response.stream()
+                .map(place -> (String) place.getOrDefault("display_name", "Unknown Clinic"))
+                .toList();
+    }
+
+
 }

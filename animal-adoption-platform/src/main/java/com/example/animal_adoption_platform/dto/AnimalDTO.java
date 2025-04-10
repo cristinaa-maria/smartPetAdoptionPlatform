@@ -3,6 +3,8 @@ package com.example.animal_adoption_platform.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class AnimalDTO {
