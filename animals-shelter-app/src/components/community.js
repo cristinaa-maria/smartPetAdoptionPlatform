@@ -1,4 +1,3 @@
-"use client"
 
 import { useState, useEffect, useRef } from "react"
 import { PawPrint, Heart, MessageCircle, Share2, LogOut, MoreVertical, Edit, Trash, Flag, X } from "lucide-react"
@@ -61,6 +60,36 @@ const DropdownMenuItem = ({ onClick, children }) => {
     )
 }
 
+// Post tag component
+const PostTag = ({ type }) => {
+    const tagStyles = {
+        eveniment: "bg-blue-100 text-blue-800",
+        voluntariat: "bg-green-100 text-green-800",
+        actualizare: "bg-amber-100 text-amber-800",
+    }
+
+    const style = tagStyles[type] || "bg-gray-100 text-gray-800"
+
+    return (
+        <span className={`text-xs font-medium px-2 py-1 rounded-full ${style}`}>
+      {type.charAt(0).toUpperCase() + type.slice(1)}
+    </span>
+    )
+}
+
+// Add this function after the PostTag component and before initialPosts
+const getPlaceholderByTag = (tag) => {
+    switch (tag) {
+        case "voluntariat":
+            return "Cu ce ai nevoie de ajutor azi?"
+        case "eveniment":
+            return "La ce evenimente ne invită animalutele azi?"
+        case "actualizare":
+        default:
+            return "Ce mai face animăluțul tău?"
+    }
+}
+
 const initialPosts = [
     {
         id: 1,
@@ -71,6 +100,7 @@ const initialPosts = [
         comments: 3,
         timestamp: "2 hours ago",
         userId: "user123", // Adding a userId for testing
+        tag: "actualizare", // Adding a tag
     },
     {
         id: 2,
@@ -81,6 +111,7 @@ const initialPosts = [
         comments: 2,
         timestamp: "5 hours ago",
         userId: "user456",
+        tag: "eveniment", // Adding a tag
     },
 ]
 
@@ -95,9 +126,9 @@ export default function PostUpdates() {
             return initialPosts
         }
     })
-    const [newPost, setNewPost] = useState({ content: "", image: "" })
+    const [newPost, setNewPost] = useState({ content: "", image: "", tag: "actualizare" })
     const [imagePreview, setImagePreview] = useState(null)
-    const [currentUserId, setCurrentUserId] = useState("user123") 
+    const [currentUserId, setCurrentUserId] = useState("user123")
     const [currentUserName, setCurrentUserName] = useState("Nume generic")
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
@@ -105,15 +136,20 @@ export default function PostUpdates() {
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
     const [editedContent, setEditedContent] = useState("")
     const [editedImage, setEditedImage] = useState("")
+    const [editedTag, setEditedTag] = useState("")
     const [editImagePreview, setEditImagePreview] = useState(null)
     const [isReportDialogOpen, setIsReportDialogOpen] = useState(false)
     const [reportReason, setReportReason] = useState("")
     const [reportedPostId, setReportedPostId] = useState(null)
+    const [expandedImage, setExpandedImage] = useState(null)
 
     const fileInputRef = useRef(null)
     const editFileInputRef = useRef(null)
 
     const API_BASE_URL = "http://localhost:8083"
+
+    // Available tags
+    const availableTags = ["actualizare", "eveniment", "voluntariat"]
 
     // Save posts to localStorage whenever they change
     useEffect(() => {
@@ -252,9 +288,10 @@ export default function PostUpdates() {
                 comments: 0,
                 timestamp: "Just now",
                 userId: currentUserId,
+                tag: newPost.tag,
             }
             setPosts([post, ...posts])
-            setNewPost({ content: "", image: "" })
+            setNewPost({ content: "", image: "", tag: "actualizare" })
             setImagePreview(null)
             if (fileInputRef.current) {
                 fileInputRef.current.value = ""
@@ -270,6 +307,7 @@ export default function PostUpdates() {
         setEditingPost(post)
         setEditedContent(post.content)
         setEditedImage(post.image || "")
+        setEditedTag(post.tag || "actualizare")
         setEditImagePreview(post.image || null)
         setIsEditDialogOpen(true)
     }
@@ -283,6 +321,7 @@ export default function PostUpdates() {
                             ...post,
                             content: editedContent,
                             image: editedImage,
+                            tag: editedTag,
                             edited: true,
                         }
                         : post,
@@ -326,8 +365,8 @@ export default function PostUpdates() {
     }
 
     return (
-        <div className="min-h-screen bg-white-100">
-            <header className="border-b">
+        <div className="min-h-screen bg-gray-50">
+            <header className="border-b bg-white">
                 <div className="container flex h-16 items-center justify-between px-4">
                     <a href="/public" className="flex items-center gap-2">
                         <PawPrint className="h-6 w-6 text-green-600" />
@@ -362,7 +401,7 @@ export default function PostUpdates() {
                     </nav>
                 </div>
             </header>
-            <main className="container mx-auto py-8 px-4">
+            <main className="container mx-auto py-8 px-4 max-w-2xl">
                 {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
 
                 <div className="mb-8 bg-white rounded-lg shadow p-6">
@@ -371,11 +410,31 @@ export default function PostUpdates() {
 
                     <form onSubmit={handlePostSubmit}>
                         <Textarea
-                            placeholder="Ce mai face animăluțul tău?"
+                            placeholder={getPlaceholderByTag(newPost.tag)}
                             value={newPost.content}
                             onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
                             className="mb-4"
                         />
+
+                        <div className="mb-4">
+                            <Label htmlFor="post-tag" className="block mb-2">
+                                Tip postare
+                            </Label>
+                            <div className="flex gap-2 mb-4">
+                                {availableTags.map((tag) => (
+                                    <button
+                                        key={tag}
+                                        type="button"
+                                        className={`px-3 py-1 rounded-full text-sm ${
+                                            newPost.tag === tag ? "bg-green-600 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                        }`}
+                                        onClick={() => setNewPost({ ...newPost, tag })}
+                                    >
+                                        {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
 
                         <div className="mb-4">
                             <Label htmlFor="image-upload">Imagine</Label>
@@ -416,11 +475,14 @@ export default function PostUpdates() {
                 </div>
 
                 {posts.map((post) => (
-                    <div key={post.id} className="mb-6 bg-white rounded-lg shadow overflow-hidden">
+                    <div key={post.id} className="mb-4 bg-white rounded-lg shadow overflow-hidden">
                         <div className="p-4">
                             <div className="flex justify-between items-start mb-3">
                                 <div>
-                                    <h3 className="font-bold">{post.author}</h3>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h3 className="font-bold">{post.author}</h3>
+                                        {post.tag && <PostTag type={post.tag} />}
+                                    </div>
                                     <p className="text-sm text-gray-500">
                                         {post.timestamp} {post.edited && <span className="italic">(editat)</span>}
                                     </p>
@@ -446,11 +508,18 @@ export default function PostUpdates() {
                                     </DropdownMenuItem>
                                 </CustomDropdownMenu>
                             </div>
-                            <p className="mb-4">{post.content}</p>
+                            <p className="mb-3">{post.content}</p>
                             {post.image && (
-                                <img src={post.image || "/placeholder.svg"} alt="Post" className="w-full rounded-lg mb-3" />
+                                <div className="mb-3 rounded-lg overflow-hidden" style={{ maxHeight: "350px" }}>
+                                    <img
+                                        src={post.image || "/placeholder.svg"}
+                                        alt="Post"
+                                        className="w-full h-full object-cover cursor-pointer"
+                                        onClick={() => setExpandedImage(post.image)}
+                                    />
+                                </div>
                             )}
-                            <div className="flex justify-between mt-4">
+                            <div className="flex justify-between mt-2 pt-2 border-t">
                                 <button
                                     className="flex items-center text-gray-700 hover:text-green-600"
                                     onClick={() => handleLike(post.id)}
@@ -495,11 +564,31 @@ export default function PostUpdates() {
                 }
             >
                 <Textarea
-                    placeholder="Ce mai face animăluțul tău?"
+                    placeholder={getPlaceholderByTag(editedTag)}
                     value={editedContent}
                     onChange={(e) => setEditedContent(e.target.value)}
                     className="mb-4"
                 />
+
+                <div className="mb-4">
+                    <Label htmlFor="edit-post-tag" className="block mb-2">
+                        Tip postare
+                    </Label>
+                    <div className="flex gap-2 mb-4">
+                        {availableTags.map((tag) => (
+                            <button
+                                key={tag}
+                                type="button"
+                                className={`px-3 py-1 rounded-full text-sm ${
+                                    editedTag === tag ? "bg-green-600 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                }`}
+                                onClick={() => setEditedTag(tag)}
+                            >
+                                {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                            </button>
+                        ))}
+                    </div>
+                </div>
 
                 <div className="mb-4">
                     <Label htmlFor="edit-image-upload">Imagine</Label>
@@ -559,7 +648,28 @@ export default function PostUpdates() {
                     className="mb-4"
                 />
             </Dialog>
+
+            {/* Image Expanded View */}
+            {expandedImage && (
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
+                    onClick={() => setExpandedImage(null)}
+                >
+                    <div className="relative max-w-4xl max-h-screen p-4">
+                        <button
+                            onClick={() => setExpandedImage(null)}
+                            className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-2 text-white hover:bg-opacity-70"
+                        >
+                            <X size={24} />
+                        </button>
+                        <img
+                            src={expandedImage || "/placeholder.svg"}
+                            alt="Expanded view"
+                            className="max-w-full max-h-[90vh] object-contain"
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
-

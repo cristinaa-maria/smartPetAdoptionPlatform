@@ -1,8 +1,7 @@
-"use client"
 
 import Button from "./ui/Button"
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card"
-import { PawPrint, Calendar, Info, LogOut } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "./ui/Card"
+import { PawPrint, Calendar, Info, LogOut, ArrowRight } from "lucide-react"
 
 export default function Homepage() {
     return (
@@ -33,7 +32,7 @@ export default function Homepage() {
                             className="flex items-center gap-1 text-sm font-medium text-red-600 hover:text-red-700 transition-colors ml-2"
                             onClick={() => {
                                 console.log("Logging out")
-                                window.location.href = "/login";
+                                window.location.href = "/login"
                             }}
                         >
                             <LogOut className="h-4 w-4" />
@@ -65,32 +64,48 @@ export default function Homepage() {
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                             {[
                                 {
-                                    title: "Summer Adoption Fair",
-                                    date: "July 15, 2023",
+                                    id: "event-1",
+                                    title: "Târg de Adopții de Vară",
+                                    date: "15 Iulie, 2023",
                                     description:
-                                        "Join us for our biggest adoption event of the year! Meet hundreds of adorable pets looking for their forever homes.",
+                                        "Alătură-te nouă la cel mai mare eveniment de adopție al anului! Întâlnește sute de animăluțe adorabile.",
                                 },
                                 {
-                                    title: "New Partnership Announcement",
-                                    date: "August 1, 2023",
+                                    id: "event-2",
+                                    title: "Anunț Nou Parteneriat",
+                                    date: "1 August, 2023",
                                     description:
-                                        "We're excited to announce our new partnership with Local Vet Clinic, offering discounted care for all adopted pets.",
+                                        "Suntem încântați să anunțăm noul nostru parteneriat cu Clinica Veterinară Locală, oferind îngrijire la preț redus.",
                                 },
                                 {
-                                    title: "Volunteer Orientation",
-                                    date: "August 10, 2023",
+                                    id: "event-3",
+                                    title: "Orientare pentru Voluntari",
+                                    date: "10 August, 2023",
                                     description:
-                                        "Interested in helping animals? Attend our volunteer orientation to learn how you can make a difference.",
+                                        "Ești interesat să ajuți animalele? Participă la orientarea noastră pentru voluntari pentru a afla cum poți face o diferență.",
                                 },
                             ].map((event, index) => (
-                                <Card key={index} className="text-center">
+                                <Card key={index} className="flex flex-col h-full">
                                     <CardHeader>
                                         <CardTitle>{event.title}</CardTitle>
                                     </CardHeader>
-                                    <CardContent className="text-center">
-                                        <p className="text-sm text-gray-500 mb-2">{event.date}</p>
+                                    <CardContent className="text-center flex-grow">
+                                        <p className="text-sm text-gray-500 mb-2 flex items-center justify-center">
+                                            <Calendar className="h-4 w-4 mr-1" />
+                                            {event.date}
+                                        </p>
                                         <p className="text-sm">{event.description}</p>
                                     </CardContent>
+                                    <CardFooter className="pt-0 flex justify-center">
+                                        <Button
+                                            variant="outline"
+                                            className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+                                            onClick={() => (window.location.href = `/events/${event.id}`)}
+                                        >
+                                            Vezi mai multe detalii
+                                            <ArrowRight className="h-4 w-4 ml-2" />
+                                        </Button>
+                                    </CardFooter>
                                 </Card>
                             ))}
                         </div>
@@ -98,19 +113,19 @@ export default function Homepage() {
                 </section>
                 <section className="w-full py-12 md:py-24 lg:py-32 bg-green-50 flex items-center justify-center">
                     <div className="container px-4 md:px-6">
-                        <h2 className="text-3xl font-bold tracking-tighter text-center mb-12">About PetPal Adoptions</h2>
+                        <h2 className="text-3xl font-bold tracking-tighter text-center mb-12">Despre PetPal Adoptions</h2>
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                             <Card className="text-center">
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2 justify-center">
                                         <Info className="h-5 w-5 text-green-600" />
-                                        Our Mission
+                                        Misiunea Noastră
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="text-center">
                                     <p>
-                                        We strive to find loving homes for all animals in need, promoting responsible pet ownership and
-                                        compassion for all creatures.
+                                        Ne străduim să găsim cămine iubitoare pentru toate animalele care au nevoie, promovând deținerea
+                                        responsabilă de animale de companie și compasiunea pentru toate creaturile.
                                     </p>
                                 </CardContent>
                             </Card>
@@ -118,13 +133,13 @@ export default function Homepage() {
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2 justify-center">
                                         <PawPrint className="h-5 w-5 text-green-600" />
-                                        Adoption Process
+                                        Procesul de Adopție
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="text-center">
                                     <p>
-                                        Our adoption process is designed to ensure the best match between pets and their new families. We
-                                        provide support every step of the way.
+                                        Procesul nostru de adopție este conceput pentru a asigura cea mai bună potrivire între animale și
+                                        noile lor familii. Oferim sprijin la fiecare pas.
                                     </p>
                                 </CardContent>
                             </Card>
@@ -132,13 +147,13 @@ export default function Homepage() {
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2 justify-center">
                                         <Calendar className="h-5 w-5 text-green-600" />
-                                        Get Involved
+                                        Implică-te
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="text-center">
                                     <p>
-                                        From volunteering to fostering, there are many ways to help animals in need. Join our community of
-                                        animal lovers today!
+                                        De la voluntariat la găzduire temporară, există multe modalități de a ajuta animalele în nevoie.
+                                        Alătură-te comunității noastre de iubitori de animale astăzi!
                                     </p>
                                 </CardContent>
                             </Card>
@@ -153,14 +168,14 @@ export default function Homepage() {
                             <PawPrint className="h-6 w-6" />
                             <span>PetPal Adoptions</span>
                         </a>
-                        <p className="text-sm text-gray-500 md:text-base">© 2023 PetPal Adoptions. All rights reserved.</p>
+                        <p className="text-sm text-gray-500 md:text-base">© 2023 PetPal Adoptions. Toate drepturile rezervate.</p>
                     </div>
                     <nav className="flex gap-4 md:gap-6 justify-center">
                         <a className="text-sm font-medium hover:underline underline-offset-4" href="#">
-                            Terms
+                            Termeni
                         </a>
                         <a className="text-sm font-medium hover:underline underline-offset-4" href="#">
-                            Privacy
+                            Confidențialitate
                         </a>
                     </nav>
                 </div>
@@ -168,4 +183,3 @@ export default function Homepage() {
         </div>
     )
 }
-
