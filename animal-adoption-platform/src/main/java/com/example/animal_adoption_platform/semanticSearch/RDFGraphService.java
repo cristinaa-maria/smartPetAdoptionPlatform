@@ -5,9 +5,7 @@ import com.example.animal_adoption_platform.model.User;
 import com.example.animal_adoption_platform.repository.AnimalRepository;
 import com.example.animal_adoption_platform.repository.UserRepository;
 import org.apache.jena.query.*;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
@@ -199,7 +197,10 @@ public class RDFGraphService {
 
         Map<String, String> result = new HashMap<>();
 
-        // Cat words for query matching
+        // Normalize query
+        String normalizedQuery = normalizeText(userQuery);
+
+        // --- SPECIES EXTRACTION (existing logic) ---
         List<String> catWords = List.of(
                 "pisica", "pisică", "pisicuta", "pisicuţa", "pisicuța",
                 "pisoias", "pisoiaș", "pisoiasi", "pisoiași",
@@ -213,36 +214,64 @@ public class RDFGraphService {
         );
 
         String extractedSpecies = null;
-        String normalizedQuery = normalizeText(userQuery);
-        System.out.println("Normalized query: '" + normalizedQuery + "'");
 
         // Check for cat words FIRST
         for (String word : catWords) {
             String normalizedWord = normalizeText(word);
-            System.out.println("Checking cat word: '" + word + "' (normalized: '" + normalizedWord + "')");
             if (normalizedQuery.matches(".*\\b" + Pattern.quote(normalizedWord) + "\\b.*")) {
                 extractedSpecies = "cat";
-                System.out.println("✓ FOUND CAT WORD in query: '" + word + "' -> extractedSpecies = 'cat'");
                 break;
             }
         }
-
         // Only check for dog words if no cat word was found
         if (extractedSpecies == null) {
             for (String word : dogWords) {
                 String normalizedWord = normalizeText(word);
-                System.out.println("Checking dog word: '" + word + "' (normalized: '" + normalizedWord + "')");
                 if (normalizedQuery.matches(".*\\b" + Pattern.quote(normalizedWord) + "\\b.*")) {
                     extractedSpecies = "dog";
-                    System.out.println("✓ Found dog word in query: '" + word + "'");
                     break;
                 }
             }
         }
 
-        // Location extraction (simplified for debugging)
+        // --- LOCATION EXTRACTION (improved) ---
+        // List of common Romanian cities and counties (add as needed!)
+        List<String> knownCities = List.of(
+                "bucuresti", "bucurești", "arad", "cluj", "cluj-napoca", "iasi", "iași",
+                "constanta", "constanța", "timisoara", "timișoara", "brasov", "brașov",
+                "galati", "galați", "ploiesti", "ploiesti", "craiova", "oradea", "pitesti",
+                "sibiu", "baia mare", "buzau", "targu mures", "târgu mureș", "alba iulia"
+                // Add more as needed
+        );
+
         String extractedLocation = null;
-        // ... (keep existing location extraction logic)
+        // Try to find a city in the query
+        for (String city : knownCities) {
+            // Normalize city for accent insensitivity
+            String normalizedCity = normalizeText(city);
+            if (normalizedQuery.contains(normalizedCity)) {
+                extractedLocation = normalizedCity;
+                break;
+            }
+        }
+
+        // Fallback: look for a word after "in", "din", "la"
+        if (extractedLocation == null) {
+            String[] words = normalizedQuery.split("\\s+");
+            for (int i = 0; i < words.length - 1; i++) {
+                if (words[i].equals("in") || words[i].equals("din") || words[i].equals("la")) {
+                    // Next word is probably a city
+                    String maybeCity = words[i + 1];
+                    // Remove punctuation, etc.
+                    maybeCity = maybeCity.replaceAll("[^a-zăâîșț]", "");
+                    // Only accept if it's not a stopword or animal adjective
+                    if (maybeCity.length() > 2) {
+                        extractedLocation = maybeCity;
+                        break;
+                    }
+                }
+            }
+        }
 
         result.put("species", extractedSpecies);
         result.put("location", extractedLocation);
@@ -394,4 +423,55 @@ public class RDFGraphService {
         }
         return false;
     }
+
+    public List<List<String>> generateRandomWalks(int walkLength, int walksPerNode) {
+        String ns = "http://example.org/adoption#";
+        List<List<String>> walks = new ArrayList<>();
+
+        // All animal nodes
+        List<Resource> animalResources = model.listResourcesWithProperty(model.getProperty(ns + "species")).toList();
+        Random rnd = new Random();
+
+        for (Resource animal : animalResources) {
+            for (int i = 0; i < walksPerNode; i++) {
+                List<String> walk = new ArrayList<>();
+                Resource current = animal;
+                walk.add(current.getURI());
+                for (int step = 1; step < walkLength; step++) {
+                    StmtIterator stmts = current.listProperties();
+                    List<Statement> edges = new ArrayList<>();
+                    while (stmts.hasNext()) {
+                        edges.add(stmts.next());
+                    }
+                    if (edges.isEmpty()) break;
+                    Statement edge = edges.get(rnd.nextInt(edges.size()));
+                    // Add property URI as a step (optional, can include or skip)
+                    // walk.add(edge.getPredicate().getURI());
+                    // Next node
+                    if (edge.getObject().isResource()) {
+                        current = edge.getObject().asResource();
+                        walk.add(current.getURI());
+                    } else {
+                        // It's a literal, include it and end walk
+                        walk.add(edge.getObject().toString());
+                        break;
+                    }
+                }
+                walks.add(walk);
+            }
+        }
+        return walks;
+    }
+
+    public List<String> getWalkSentences(int walkLength, int walksPerNode) {
+        Model m = getModel();
+        List<List<String>> walks = generateRandomWalks(walkLength, walksPerNode);
+        List<String> sentences = new ArrayList<>();
+
+        for (List<String> walk : walks) {
+            sentences.add(String.join(" ", walk));
+        }
+        return sentences;
+    }
+
 }
