@@ -25,5 +25,6 @@ public class Post {
     private int likes;
     private List<Comment> comments;
     private int shares;
+    private String tag;
 
 }

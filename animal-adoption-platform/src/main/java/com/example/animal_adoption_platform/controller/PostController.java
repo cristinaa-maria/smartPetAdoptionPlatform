@@ -2,9 +2,12 @@ package com.example.animal_adoption_platform.controller;
 
 
 import com.example.animal_adoption_platform.dto.PostDTO;
+import com.example.animal_adoption_platform.model.Post;
 import com.example.animal_adoption_platform.service.PostService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
@@ -32,4 +35,14 @@ public class PostController {
         postService.deletePost(id);
         return ResponseEntity.ok("Post deleted successfully");
     }
+
+    @GetMapping("/getPosts")
+    public ResponseEntity<List<Post>> getAllPosts(){
+        List<Post> posts = postService.getAllPosts();
+        return ResponseEntity.ok(posts);
+
+    }
+
+
+
 }

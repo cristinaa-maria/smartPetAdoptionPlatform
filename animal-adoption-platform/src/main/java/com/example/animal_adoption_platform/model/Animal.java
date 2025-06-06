@@ -25,8 +25,9 @@ public class Animal {
     private String name;
     private String species;
     private String description;
-    private byte[] image;
-    @LastModifiedDate
-    private Instant updatedAt;
+    private Object image;
+    private List<String> typesOfAdoptions;
+    private List<Float> embeddings;
+
 
 }

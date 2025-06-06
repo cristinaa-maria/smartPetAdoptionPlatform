@@ -2,111 +2,93 @@ package com.example.animal_adoption_platform.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.client.model.geojson.Point;
-import com.mongodb.client.model.geojson.Position;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
-import org.springframework.web.util.UriUtils;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class LocationService {
-    private final UserService userService;
-    private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
 
-    @Value("${locationiq.api.key}")
-    private String locationIqApiKey;
+    @Autowired
+    private UserService userService;
 
-    public LocationService(UserService userService, RestTemplate restTemplate, ObjectMapper objectMapper) {
-        this.userService = userService;
-        this.restTemplate = restTemplate;
-        this.objectMapper = objectMapper;
-    }
+    private final RestTemplate restTemplate = new RestTemplate();
+    private final ObjectMapper mapper = new ObjectMapper();
 
+    /**
+     * Updatează locația unui utilizator pe baza adresei (folosind Nominatim OpenStreetMap).
+     */
     public void updateUserLocationFromAddress(String userId, String address) {
         try {
-            String encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8.toString());
+            String url = "https://nominatim.openstreetmap.org/search?format=json&q=" + address;
 
-            String url = "https://us1.locationiq.com/v1/search.php?key=" + locationIqApiKey +
-                    "&q=" + encodedAddress + "&format=json";
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("User-Agent", "animal-platform/0.1 (contact@yourdomain.com)");
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                JsonNode jsonArray = objectMapper.readTree(response.getBody());
-
-                if (jsonArray.isArray() && jsonArray.size() > 0) {
-                    JsonNode locationData = jsonArray.get(0);
-                    double lat = locationData.get("lat").asDouble();
-                    double lon = locationData.get("lon").asDouble();
-
-                    GeoJsonPoint locationPoint = new GeoJsonPoint(lon, lat);
-
-                    userService.updateUser(userId, "location", locationPoint);
-                } else {
-                    throw new RuntimeException("No location data found for address: " + address);
-                }
-            } else {
-                throw new RuntimeException("Error fetching data from LocationIQ");
+            ResponseEntity<String> resp = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+            if (resp.getStatusCode() != HttpStatus.OK || resp.getBody() == null) {
+                throw new RuntimeException("Eroare la interogarea Nominatim: " + resp.getStatusCode());
             }
+
+            JsonNode arr = mapper.readTree(resp.getBody());
+            if (!arr.isArray() || arr.size() == 0) {
+                throw new RuntimeException("Nicio locație găsită pentru: " + address);
+            }
+            JsonNode first = arr.get(0);
+            double lat = first.get("lat").asDouble();
+            double lon = first.get("lon").asDouble();
+
+            GeoJsonPoint point = new GeoJsonPoint(lon, lat);
+            userService.updateUser(userId, "location", point);
+
         } catch (Exception e) {
-            throw new RuntimeException("Failed to update user location: " + e.getMessage());
+            throw new RuntimeException("Eroare geocodare: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * Obține adresa umană din coordonate (reverse geocoding).
+     */
     public String getAddressFromCoordinates(double latitude, double longitude) {
         try {
-            String url = "https://us1.locationiq.com/v1/reverse.php?key=" + locationIqApiKey +
-                    "&lat=" + latitude + "&lon=" + longitude + "&format=json";
+            String url = String.format(
+                    "https://nominatim.openstreetmap.org/reverse?format=json&lat=%s&lon=%s",
+                    latitude, longitude
+            );
 
-            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("User-Agent", "animal-platform/0.1 (contact@yourdomain.com)");
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                JsonNode jsonNode = objectMapper.readTree(response.getBody());
-
-                if (jsonNode.has("display_name")) {
-                    return jsonNode.get("display_name").asText();
-                } else {
-                    throw new RuntimeException("No address found for coordinates.");
-                }
-            } else {
-                throw new RuntimeException("Error fetching address from LocationIQ");
+            ResponseEntity<String> resp = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+            if (resp.getStatusCode() != HttpStatus.OK || resp.getBody() == null) {
+                throw new RuntimeException("Eroare la reverse geocoding: " + resp.getStatusCode());
             }
+
+            JsonNode root = mapper.readTree(resp.getBody());
+            return root.path("display_name").asText("Adresă necunoscută");
+
         } catch (Exception e) {
-            throw new RuntimeException("Failed to get address: " + e.getMessage());
+            throw new RuntimeException("Eroare reverse geocoding: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * Returnează lista de clinici veterinare apropiate (exemplu - implementare dummy, modifică după nevoie).
+     */
     public List<String> getNearbyVetClinicNames(double latitude, double longitude) {
-        RestTemplate restTemplate = new RestTemplate();
-
-        // Crearea unui query simplu cu "+" pentru spații
-        String query = "veterinary clinic near " + latitude + "," + longitude;
-
-        // Construirea URL-ului corect cu "+" pentru spații
-        String url = "https://us1.locationiq.com/v1/search.php?key=" + locationIqApiKey +
-                "&q=" + query.replace(" ", "+") + // înlocuirea spațiilor cu "+"
-                "&format=json" +
-                "&limit=5"; // Limitați la 5 rezultate pentru mai multă claritate
-
-        // Obținerea răspunsului de la API
-        List<Map<String, Object>> response = restTemplate.getForObject(url, List.class);
-        if (response == null || response.isEmpty()) return List.of();
-
-        return response.stream()
-                .map(place -> (String) place.getOrDefault("display_name", "Unknown Clinic"))
-                .toList();
+        // Aici poți folosi Overpass API, sau poți implementa logică custom.
+        // Exemplu simplu (mock):
+        return List.of("Clinica Vet1", "Clinica Vet2");
     }
 
-
+    // Orice alte metode ai mai avea, păstrează-le aici cu aceeași semnătură ca înainte!
+    // public <Tip> metodaTa(...) { ... }
 }

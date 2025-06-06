@@ -30,6 +30,8 @@ public class AnimalService {
         animal1.setDescription(animal.getDescription());
         animal1.setUserId(animal.getUserId());
         animal1.setImage(animal.getImage());
+        animal1.setTypesOfAdoptions(animal.getTypesOfAdoption());
+        animal1.setEmbeddings(animal.getEmbeddings());
         animalRepository.save(animal1);
     }
 
@@ -53,6 +55,12 @@ public class AnimalService {
             default:
                 throw new IllegalArgumentException("Invalid field: " + modifiedField);
         }
+        return animalRepository.save(animal);
+    }
+
+    public Animal editEmbeddings(String id, List<Float> embeddings){
+        Animal animal = animalRepository.findAnimalById(id);
+        animal.setEmbeddings(embeddings);
         return animalRepository.save(animal);
     }
 

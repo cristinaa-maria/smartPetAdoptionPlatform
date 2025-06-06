@@ -5,6 +5,11 @@ import com.example.animal_adoption_platform.model.Post;
 import com.example.animal_adoption_platform.repository.PostRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class PostService {
     private final PostRepository postRepository;
@@ -20,6 +25,7 @@ public class PostService {
         post.setComments(postDTO.getComments());
         post.setLikes(postDTO.getLikes());
         post.setImageUrl(postDTO.getImageUrl());
+        post.setTag(postDTO.getTag());
         postRepository.save(post);
     }
 
@@ -33,4 +39,22 @@ public class PostService {
         postRepository.save(post);
 
     }
+
+    public List<Post> getAllPosts(){
+        return postRepository.findAll();
+    }
+
+    public List<Post> getLatestPosts(){
+        LocalDateTime now = LocalDateTime.now();
+        List<Post> posts = postRepository.findAll();
+        List<Post> latestPosts = new ArrayList<>();
+        for (Post post : posts) {
+            if(post.getCreatedAt().until(now, ChronoUnit.MONTHS) <= 3) {
+                latestPosts.add(post);
+            }
+        }
+        return latestPosts;
+    }
+
+
 }
