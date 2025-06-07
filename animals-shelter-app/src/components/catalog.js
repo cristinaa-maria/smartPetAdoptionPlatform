@@ -8,109 +8,6 @@ const Catalog = () => {
     const [locations, setLocations] = useState({})
     const API_BASE_URL = "http://localhost:8083"
 
-    // Add the byteArrayToImageUrl function to convert image data to displayable URLs
-    const byteArrayToImageUrl = (imageData) => {
-        if (!imageData) return null
-
-        // Check if the data is already a Base64 string (starts with /9j/ for JPEG)
-        if (typeof imageData === "string") {
-            // If it's a Base64 string that starts with the actual data (without the data:image prefix)
-            if (imageData.startsWith("/9j/") || imageData.startsWith("iVBOR") || imageData.startsWith("R0lGOD")) {
-                // Add the proper data URL prefix based on the image format
-                let prefix = "data:image/jpeg;base64,"
-                if (imageData.startsWith("iVBOR")) {
-                    prefix = "data:image/png;base64,"
-                } else if (imageData.startsWith("R0lGOD")) {
-                    prefix = "data:image/gif;base64,"
-                }
-
-                // Return the complete data URL
-                return prefix + imageData
-            }
-
-            // If it already has the data:image prefix, return as is
-            if (imageData.startsWith("data:image/")) {
-                return imageData
-            }
-
-            // If it's some other string format, try to parse it
-            try {
-                // Check if it's a stringified array
-                const parsedData = JSON.parse(imageData)
-                if (Array.isArray(parsedData)) {
-                    // Convert the array back to Uint8Array
-                    const uint8Array = new Uint8Array(parsedData)
-                    // Create a blob and URL
-                    const blob = new Blob([uint8Array], { type: "image/jpeg" })
-                    return URL.createObjectURL(blob)
-                }
-            } catch (e) {
-                console.error("Failed to parse image data:", e)
-            }
-
-            // If all else fails, try to use it as is
-            return imageData
-        }
-
-        // Handle byte array
-        if (Array.isArray(imageData) && imageData.length) {
-            // Convert the array to Uint8Array
-            const uint8Array = new Uint8Array(imageData)
-
-            // Try to detect image type from the first few bytes
-            let imageType = "image/jpeg" // Default type
-
-            // Simple magic number detection for common image formats
-            if (uint8Array.length > 2) {
-                // Check for PNG signature
-                if (uint8Array[0] === 0x89 && uint8Array[1] === 0x50 && uint8Array[2] === 0x4e) {
-                    imageType = "image/png"
-                }
-                // Check for GIF signature
-                else if (uint8Array[0] === 0x47 && uint8Array[1] === 0x49 && uint8Array[2] === 0x46) {
-                    imageType = "image/gif"
-                }
-                // JPEG starts with FF D8
-                else if (uint8Array[0] === 0xff && uint8Array[1] === 0xd8) {
-                    imageType = "image/jpeg"
-                }
-            }
-
-            // Create a blob from the byte array with detected type
-            const blob = new Blob([uint8Array], { type: imageType })
-
-            // Create a URL for the blob
-            return URL.createObjectURL(blob)
-        }
-
-        return null
-    }
-
-    // Process animals to add image URLs
-    const processAnimalsWithImages = (animalsData) => {
-        return animalsData.map((animal) => {
-            // Check if animal has image data (could be Base64 string or byte array)
-            if (animal.image) {
-                console.log(`Processing image for animal ${animal.id}, type:`, typeof animal.image)
-                // Try to convert the image data to a URL
-                const imageUrl = byteArrayToImageUrl(animal.image)
-                console.log(`Converted image for animal ${animal.id}, URL created:`, !!imageUrl)
-                return {
-                    ...animal,
-                    imageUrl: imageUrl,
-                }
-            } else if (animal.imageBytes && animal.imageBytes.length) {
-                // Handle legacy imageBytes field if present
-                const imageUrl = byteArrayToImageUrl(animal.imageBytes)
-                return {
-                    ...animal,
-                    imageUrl: imageUrl,
-                }
-            }
-            return animal
-        })
-    }
-
     useEffect(() => {
         const fetchAnimals = async () => {
             try {
@@ -120,12 +17,11 @@ const Catalog = () => {
                 }
                 const data = await response.json()
 
-                // Process images before setting state
-                const processedAnimals = processAnimalsWithImages(data)
-                setAnimals(processedAnimals)
+                // Animals now have simple image URLs, no processing needed
+                setAnimals(data)
 
-                // 🔹 Pentru fiecare animal, luăm locația user-ului asociat
-                processedAnimals.forEach((animal) => {
+                // For each animal, get the associated user's location
+                data.forEach((animal) => {
                     if (animal.userId) {
                         fetchUserLocation(animal.id, animal.userId)
                     }
@@ -226,20 +122,20 @@ const Catalog = () => {
             {viewMode === "catalog" ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                     {animals.map((animal) => (
-                        <div key={animal.id} className="bg-white rounded-lg shadow-md overflow-hidden">
-                            {/* Add image display */}
+                        <div
+                            key={animal.id}
+                            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                        >
+                            {/* Simplified image display */}
                             <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
-                                {animal.imageUrl ? (
+                                {animal.image ? (
                                     <img
-                                        src={animal.imageUrl || "/placeholder.svg"}
+                                        src={animal.image || "/placeholder.svg"}
                                         alt={animal.name}
                                         className="w-full h-48 object-cover"
-                                    />
-                                ) : animal.image ? (
-                                    <img
-                                        src={byteArrayToImageUrl(animal.image) || "/placeholder.svg"}
-                                        alt={animal.name}
-                                        className="w-full h-48 object-cover"
+                                        onError={(e) => {
+                                            e.target.src = "/placeholder.svg?height=192&width=300"
+                                        }}
                                     />
                                 ) : (
                                     <div className="text-gray-400">Fără imagine</div>

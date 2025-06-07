@@ -18,6 +18,7 @@ import DistantAdoptionPage from "./components/distantAdoption";
 import DonationPage from "./components/donationPage";
 import FosteringBooking from "./components/fostering";
 import ReportProblem from "./components/report-problem";
+import Notification from "./components/notification";
 
 
 function App() {
@@ -48,6 +49,7 @@ function App() {
             <Route path="/donationPage" element={<DonationPage></DonationPage>} />
             <Route path="/fostering" element={<FosteringBooking></FosteringBooking>} />
             <Route path="/report-problem" element={<ReportProblem></ReportProblem>} />
+            <Route path="/notification" element={<Notification></Notification>} />
           </Routes>
         </BrowserRouter>
       </div>

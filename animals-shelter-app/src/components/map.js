@@ -1,9 +1,8 @@
-
 import { useState, useEffect, useCallback, useRef } from "react"
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet"
 import "leaflet/dist/leaflet.css"
 import L from "leaflet"
-import { LogOut, PawPrint, Search, MapPin, ChevronLeft, ChevronRight } from 'lucide-react'
+import { LogOut, PawPrint, Search, MapPin, ChevronLeft, ChevronRight } from "lucide-react"
 import Button from "./ui/Button"
 import Input from "./ui/Input"
 
@@ -14,12 +13,20 @@ L.Icon.Default.mergeOptions({
     shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 })
 
-const animalIcon = new L.Icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/616/616430.png",
-    iconSize: [30, 30],
-    iconAnchor: [15, 30],
-    popupAnchor: [0, -30],
-})
+// Remove the single animalIcon constant and replace with this function
+const createAnimalIcon = (animalId) => {
+    // Create different sizes based on animal ID to ensure consistency
+    const sizes = [25, 30, 35, 40] // Different icon sizes
+    const sizeIndex = Number.parseInt(animalId) % sizes.length
+    const iconSize = sizes[sizeIndex]
+
+    return new L.Icon({
+        iconUrl: "https://cdn-icons-png.flaticon.com/512/616/616430.png",
+        iconSize: [iconSize, iconSize],
+        iconAnchor: [iconSize / 2, iconSize],
+        popupAnchor: [0, -iconSize],
+    })
+}
 
 const ShelterMap = () => {
     const [animals, setAnimals] = useState([])
@@ -32,88 +39,10 @@ const ShelterMap = () => {
     const [sidebarOpen, setSidebarOpen] = useState(true)
     const [selectedAnimal, setSelectedAnimal] = useState(null)
     const [species, setSpecies] = useState("all")
+    const [isInitialLoad, setIsInitialLoad] = useState(true)
 
     const mapRef = useRef(null)
     const API_BASE_URL = "http://localhost:8083"
-
-    const byteArrayToImageUrl = (imageData) => {
-        if (!imageData) return null
-
-        if (typeof imageData === "string") {
-            if (imageData.startsWith("/9j/") || imageData.startsWith("iVBOR") || imageData.startsWith("R0lGOD")) {
-                let prefix = "data:image/jpeg;base64,"
-                if (imageData.startsWith("iVBOR")) {
-                    prefix = "data:image/png;base64,"
-                } else if (imageData.startsWith("R0lGOD")) {
-                    prefix = "data:image/gif;base64,"
-                }
-
-                return prefix + imageData
-            }
-            if (imageData.startsWith("data:image/")) {
-                return imageData
-            }
-
-            try {
-                const parsedData = JSON.parse(imageData)
-                if (Array.isArray(parsedData)) {
-                    const uint8Array = new Uint8Array(parsedData)
-                    const blob = new Blob([uint8Array], { type: "image/jpeg" })
-                    return URL.createObjectURL(blob)
-                }
-            } catch (e) {
-                console.error("Failed to parse image data:", e)
-            }
-
-            return imageData
-        }
-
-        if (Array.isArray(imageData) && imageData.length) {
-            const uint8Array = new Uint8Array(imageData)
-
-            let imageType = "image/jpeg"
-
-            if (uint8Array.length > 2) {
-                if (uint8Array[0] === 0x89 && uint8Array[1] === 0x50 && uint8Array[2] === 0x4e) {
-                    imageType = "image/png"
-                }
-                else if (uint8Array[0] === 0x47 && uint8Array[1] === 0x49 && uint8Array[2] === 0x46) {
-                    imageType = "image/gif"
-                }
-                else if (uint8Array[0] === 0xff && uint8Array[1] === 0xd8) {
-                    imageType = "image/jpeg"
-                }
-            }
-
-            const blob = new Blob([uint8Array], { type: imageType })
-
-            return URL.createObjectURL(blob)
-        }
-
-        return null
-    }
-
-    const processAnimalsWithImages = (animalsData) => {
-        return animalsData.map((animal) => {
-            if (animal.image) {
-                console.log(`Processing image for animal ${animal.id}, type:`, typeof animal.image)
-                // Try to convert the image data to a URL
-                const imageUrl = byteArrayToImageUrl(animal.image)
-                console.log(`Converted image for animal ${animal.id}, URL created:`, !!imageUrl)
-                return {
-                    ...animal,
-                    imageUrl: imageUrl,
-                }
-            } else if (animal.imageBytes && animal.imageBytes.length) {
-                const imageUrl = byteArrayToImageUrl(animal.imageBytes)
-                return {
-                    ...animal,
-                    imageUrl: imageUrl,
-                }
-            }
-            return animal
-        })
-    }
 
     const fetchLocation = async (animalId, latitude, longitude) => {
         try {
@@ -124,42 +53,14 @@ const ShelterMap = () => {
             const address = await response.text()
             setLocations((prevLocations) => ({ ...prevLocations, [animalId]: address }))
         } catch (error) {
-            console.error("Error fetching location:", error)
-        }
-    }
-
-    const fetchUserLocation = async (animalId, userId) => {
-        try {
-            const response = await fetch(`${API_BASE_URL}/users/${userId}`)
-            if (!response.ok) {
-                throw new Error("Failed to fetch user data")
-            }
-            const userData = await response.json()
-
-            if (userData.location && userData.location.coordinates) {
-                const [longitude, latitude] = userData.location.coordinates
-                fetchLocation(animalId, latitude, longitude)
-            }
-
-            setAnimals((prevAnimals) =>
-                prevAnimals.map((animal) =>
-                    animal.id === animalId
-                        ? {
-                            ...animal,
-                            userLocation: userData.location,
-                            userContact: userData.contact,
-                            userType: userData.type,
-                        }
-                        : animal,
-                ),
-            )
-        } catch (error) {
-            console.error(`Error fetching user location for ${userId}:`, error)
+            setLocations((prevLocations) => ({ ...prevLocations, [animalId]: "Locație necunoscută" }))
         }
     }
 
     const calculateRadius = (zoom) => {
-        return Math.max(0.5, 50 / Math.pow(1.5, zoom - 5))
+        // Invert the logic: lower zoom = larger radius, higher zoom = smaller radius
+        // This makes sense because when zoomed out, you want to see animals in a larger area
+        return Math.max(1, 100 / Math.pow(1.2, zoom - 8))
     }
 
     const fetchNearbyAnimals = useCallback(
@@ -167,20 +68,17 @@ const ShelterMap = () => {
             setLoading(true)
             setError(null)
 
+            if (!isInitialLoad) {
+                setAnimals([])
+                setLocations({})
+            }
+
             try {
                 const radius = calculateRadius(zoom)
-                console.log(`Searching with radius: ${radius}km at [${lat}, ${lng}]`)
-
                 const nearbyResponse = await fetch(`${API_BASE_URL}/nearby`, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        latitude: lat,
-                        longitude: lng,
-                        radius: radius,
-                    }),
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ latitude: lat, longitude: lng, radius: radius }),
                     credentials: "include",
                 })
 
@@ -189,53 +87,99 @@ const ShelterMap = () => {
                 }
 
                 const userIds = await nearbyResponse.json()
-                console.log(`Found ${userIds.length} nearby users:`, userIds)
 
                 if (userIds.length === 0) {
                     setAnimals([])
+                    setLocations({})
                     setLoading(false)
+                    setIsInitialLoad(false)
                     return
                 }
 
-                const animalsData = []
-                for (const userId of userIds) {
+                // Fetch all animals and user data in parallel
+                const animalPromises = userIds.map(async (userId) => {
                     try {
-                        const animalResponse = await fetch(`${API_BASE_URL}/animalCatalog?userId=${userId}`, {
-                            method: "GET",
-                            credentials: "include",
-                        })
+                        const [animalResponse, userResponse] = await Promise.all([
+                            fetch(`${API_BASE_URL}/animalCatalog?userId=${userId}`, {
+                                method: "GET",
+                                credentials: "include",
+                            }),
+                            fetch(`${API_BASE_URL}/users/${userId}`),
+                        ])
+
+                        let userAnimals = []
+                        let userData = null
 
                         if (animalResponse.ok) {
-                            const userAnimals = await animalResponse.json()
-                            animalsData.push(...userAnimals)
+                            userAnimals = await animalResponse.json()
                         }
+
+                        if (userResponse.ok) {
+                            userData = await userResponse.json()
+                        }
+
+                        return userAnimals.map((animal) => ({
+                            ...animal,
+                            userLocation: userData?.location || null,
+                            userContact: userData?.contact || null,
+                            userType: userData?.type || null,
+                        }))
                     } catch (err) {
-                        console.error(`Error fetching animals for user ${userId}:`, err)
-                    }
-                }
-
-                console.log(`Found ${animalsData.length} animals:`, animalsData)
-
-                const processedAnimals = processAnimalsWithImages(animalsData)
-                setAnimals(processedAnimals)
-                processedAnimals.forEach((animal) => {
-                    if (animal.userId) {
-                        fetchUserLocation(animal.id, animal.userId)
+                        return []
                     }
                 })
+
+                const animalArrays = await Promise.all(animalPromises)
+                const allAnimals = animalArrays.flat()
+
+                // Validare animale cu coordonate valide (doar acestea rămân)
+                const validAnimals = allAnimals.filter((animal) => {
+                    const hasValidLocation =
+                        animal.userLocation &&
+                        animal.userLocation.coordinates &&
+                        Array.isArray(animal.userLocation.coordinates) &&
+                        animal.userLocation.coordinates.length === 2 &&
+                        typeof animal.userLocation.coordinates[0] === "number" &&
+                        typeof animal.userLocation.coordinates[1] === "number" &&
+                        !isNaN(animal.userLocation.coordinates[0]) &&
+                        !isNaN(animal.userLocation.coordinates[1])
+                    return hasValidLocation
+                })
+
+                // --- MODIFICARE IMPORTANTĂ ---
+                // Setează animalele imediat (pinii și lista apar instant)
+                setAnimals(validAnimals)
+
+                // Fetch location pentru adrese în background (nu mai aștepți la Promise.all)
+                validAnimals.forEach((animal) => {
+                    const [longitude, latitude] = animal.userLocation.coordinates
+                    fetchLocation(animal.id, latitude, longitude)
+                })
             } catch (err) {
-                console.error("Error fetching nearby data:", err)
                 setError("Nu s-au putut încărca datele. Încercați din nou mai târziu.")
+                setAnimals([])
+                setLocations({})
             } finally {
                 setLoading(false)
+                setIsInitialLoad(false)
             }
         },
-        [API_BASE_URL],
+        [API_BASE_URL, isInitialLoad],
     )
 
     useEffect(() => {
         fetchNearbyAnimals(mapCenter[0], mapCenter[1], zoomLevel)
-    }, [fetchNearbyAnimals, mapCenter, zoomLevel])
+        // eslint-disable-next-line
+    }, []) // Only run once on mount
+
+    const handleMapChange = useCallback(
+        (newCenter, newZoom) => {
+            if (!isInitialLoad) {
+                fetchNearbyAnimals(newCenter[0], newCenter[1], newZoom)
+            }
+        },
+        [fetchNearbyAnimals, isInitialLoad],
+    )
 
     const searchByAddress = async (e) => {
         e.preventDefault()
@@ -250,24 +194,37 @@ const ShelterMap = () => {
 
             if (data && data.length > 0) {
                 const { lat, lon } = data[0]
-                setMapCenter([Number.parseFloat(lat), Number.parseFloat(lon)])
+                const newCenter = [Number.parseFloat(lat), Number.parseFloat(lon)]
+                setMapCenter(newCenter)
                 if (mapRef.current) {
-                    mapRef.current.setView([Number.parseFloat(lat), Number.parseFloat(lon)], zoomLevel)
+                    mapRef.current.setView(newCenter, zoomLevel)
                 }
                 fetchNearbyAnimals(Number.parseFloat(lat), Number.parseFloat(lon), zoomLevel)
             } else {
                 setError("Adresa nu a putut fi găsită")
             }
         } catch (err) {
-            console.error("Error searching address:", err)
             setError("Eroare la căutarea adresei")
         } finally {
             setLoading(false)
         }
     }
 
+    // Filtrare specii (toate animalele au coordonate valide)
     const filteredAnimals =
-        species === "all" ? animals : animals.filter((animal) => animal.species.toLowerCase() === species.toLowerCase())
+        species === "all"
+            ? animals
+            : animals.filter((animal) => {
+                const animalSpecies = animal.species?.toLowerCase() || ""
+                const filterSpecies = species.toLowerCase()
+                if (filterSpecies === "câine") {
+                    return animalSpecies.includes("câine") || animalSpecies.includes("catelus") || animalSpecies.includes("dog")
+                }
+                return animalSpecies.includes(filterSpecies)
+            })
+
+    const sidebarAnimals = filteredAnimals
+    const mapAnimals = filteredAnimals
 
     const MapController = () => {
         const map = useMap()
@@ -278,15 +235,15 @@ const ShelterMap = () => {
                 const center = map.getCenter()
                 const newCenter = [center.lat, center.lng]
                 const newZoom = map.getZoom()
-
                 if (
-                    Math.abs(newCenter[0] - mapCenter[0]) > 0.01 ||
-                    Math.abs(newCenter[1] - mapCenter[1]) > 0.01 ||
-                    newZoom !== zoomLevel
+                    !isInitialLoad &&
+                    (Math.abs(newCenter[0] - mapCenter[0]) > 0.01 ||
+                        Math.abs(newCenter[1] - mapCenter[1]) > 0.01 ||
+                        newZoom !== zoomLevel)
                 ) {
                     setMapCenter(newCenter)
                     setZoomLevel(newZoom)
-                    fetchNearbyAnimals(center.lat, center.lng, newZoom)
+                    handleMapChange(newCenter, newZoom)
                 }
             },
             click: () => {
@@ -299,7 +256,6 @@ const ShelterMap = () => {
 
     const centerMapOnAnimal = (animal) => {
         if (!animal.userLocation || !animal.userLocation.coordinates) return
-
         const [lng, lat] = animal.userLocation.coordinates
         if (mapRef.current) {
             mapRef.current.setView([lat, lng], 15)
@@ -357,7 +313,7 @@ const ShelterMap = () => {
             </header>
 
             <div className="flex flex-1 overflow-hidden">
-                {/* Sidebar - similar to Google Maps list view */}
+                {/* Sidebar */}
                 <div
                     className={`${
                         sidebarOpen ? "w-full lg:w-96" : "w-0"
@@ -387,7 +343,7 @@ const ShelterMap = () => {
                                 Toate
                             </Button>
                             <Button
-                                variant={species === "câine" || species == "catelus" ? "default" : "outline"}
+                                variant={species === "câine" ? "default" : "outline"}
                                 size="sm"
                                 onClick={() => setSpecies("câine")}
                                 className="whitespace-nowrap"
@@ -416,7 +372,7 @@ const ShelterMap = () => {
                     <div className="flex-1 overflow-y-auto">
                         <div className="p-4">
                             <div className="flex justify-between items-center mb-2">
-                                <h2 className="text-lg font-semibold">Rezultate ({filteredAnimals.length})</h2>
+                                <h2 className="text-lg font-semibold">Rezultate ({sidebarAnimals.length})</h2>
                                 {loading && <span className="text-sm text-gray-500">Se încarcă...</span>}
                             </div>
 
@@ -424,7 +380,7 @@ const ShelterMap = () => {
                                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>
                             )}
 
-                            {!loading && filteredAnimals.length === 0 && (
+                            {!loading && sidebarAnimals.length === 0 && !isInitialLoad && (
                                 <div className="text-center py-8">
                                     <MapPin className="h-12 w-12 mx-auto text-gray-400 mb-2" />
                                     <p className="text-gray-500">Nu s-au găsit animale în această zonă.</p>
@@ -435,27 +391,23 @@ const ShelterMap = () => {
                             )}
 
                             <div className="space-y-4">
-                                {filteredAnimals.map((animal) => (
+                                {sidebarAnimals.map((animal) => (
                                     <div
                                         key={animal.id}
-                                        className={`bg-white rounded-lg shadow-md overflow-hidden ${
+                                        className={`bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow ${
                                             selectedAnimal?.id === animal.id ? "border-green-500 border-2" : ""
                                         }`}
                                         onClick={() => centerMapOnAnimal(animal)}
                                     >
-                                        {/* Add image display */}
                                         <div className="w-full h-32 bg-gray-100 flex items-center justify-center">
-                                            {animal.imageUrl ? (
+                                            {animal.image ? (
                                                 <img
-                                                    src={animal.imageUrl || "/placeholder.svg"}
+                                                    src={animal.image || "/placeholder.svg"}
                                                     alt={animal.name}
                                                     className="w-full h-32 object-cover"
-                                                />
-                                            ) : animal.image ? (
-                                                <img
-                                                    src={byteArrayToImageUrl(animal.image) || "/placeholder.svg"}
-                                                    alt={animal.name}
-                                                    className="w-full h-32 object-cover"
+                                                    onError={(e) => {
+                                                        e.target.src = "/placeholder.svg?height=128&width=200"
+                                                    }}
                                                 />
                                             ) : (
                                                 <div className="text-gray-400">Fără imagine</div>
@@ -523,39 +475,33 @@ const ShelterMap = () => {
                         />
                         <MapController />
 
-                        {filteredAnimals.map((animal) => {
-                            const hasValidLocation =
-                                animal.userLocation && animal.userLocation.coordinates && animal.userLocation.coordinates.length === 2
-
-                            if (!hasValidLocation) return null
-
-                            const position = [animal.userLocation.coordinates[1], animal.userLocation.coordinates[0]]
+                        {mapAnimals.map((animal) => {
+                            const [longitude, latitude] = animal.userLocation.coordinates
+                            // Add a tiny random offset to each marker's position (±0.00005 degrees, approximately ±5 meters)
+                            const randomOffset = () => (Math.random() - 0.5) * 0.0001
+                            const position = [latitude + randomOffset(), longitude + randomOffset()]
 
                             return (
                                 <Marker
                                     key={animal.id}
                                     position={position}
-                                    icon={animalIcon}
+                                    icon={createAnimalIcon(animal.id)}
                                     eventHandlers={{
                                         click: () => setSelectedAnimal(animal),
                                     }}
                                 >
                                     <Popup>
                                         <div className="text-center max-w-xs">
-                                            {/* Add image to popup */}
-                                            {animal.imageUrl ? (
+                                            {animal.image && (
                                                 <img
-                                                    src={animal.imageUrl || "/placeholder.svg"}
+                                                    src={animal.image || "/placeholder.svg"}
                                                     alt={animal.name}
                                                     className="w-full h-24 object-cover mb-2 rounded"
+                                                    onError={(e) => {
+                                                        e.target.src = "/placeholder.svg?height=96&width=200"
+                                                    }}
                                                 />
-                                            ) : animal.image ? (
-                                                <img
-                                                    src={byteArrayToImageUrl(animal.image) || "/placeholder.svg"}
-                                                    alt={animal.name}
-                                                    className="w-full h-24 object-cover mb-2 rounded"
-                                                />
-                                            ) : null}
+                                            )}
                                             <h2 className="text-xl font-semibold mb-2">{animal.name}</h2>
                                             <p className="text-gray-600 mb-1">Specia: {animal.species}</p>
                                             <p className="text-gray-600 mb-1">Descrierea: {animal.description}</p>

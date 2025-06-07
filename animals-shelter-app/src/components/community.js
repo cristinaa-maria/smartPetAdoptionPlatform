@@ -21,12 +21,10 @@ const Dialog = ({ isOpen, onClose, title, children, footer }) => {
     )
 }
 
-// Custom Dropdown Menu component
 const CustomDropdownMenu = ({ children, trigger }) => {
     const [isOpen, setIsOpen] = useState(false)
     const dropdownRef = useRef(null)
 
-    // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -51,7 +49,6 @@ const CustomDropdownMenu = ({ children, trigger }) => {
     )
 }
 
-// Dropdown Menu Item component
 const DropdownMenuItem = ({ onClick, children }) => {
     return (
         <button className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={onClick}>
@@ -60,7 +57,6 @@ const DropdownMenuItem = ({ onClick, children }) => {
     )
 }
 
-// Post tag component
 const PostTag = ({ type }) => {
     const tagStyles = {
         eveniment: "bg-blue-100 text-blue-800",
@@ -77,7 +73,6 @@ const PostTag = ({ type }) => {
     )
 }
 
-// Add this function after the PostTag component and before initialPosts
 const getPlaceholderByTag = (tag) => {
     switch (tag) {
         case "voluntariat":
@@ -99,8 +94,8 @@ const initialPosts = [
         likes: 15,
         comments: 3,
         timestamp: "2 hours ago",
-        userId: "user123", // Adding a userId for testing
-        tag: "actualizare", // Adding a tag
+        userId: "user123",
+        tag: "actualizare",
     },
     {
         id: 2,
@@ -117,7 +112,6 @@ const initialPosts = [
 
 export default function PostUpdates() {
     const [posts, setPosts] = useState(() => {
-        // Try to get posts from localStorage on initial load
         try {
             const savedPosts = localStorage.getItem("petpalPosts")
             return savedPosts ? JSON.parse(savedPosts) : initialPosts
@@ -151,7 +145,6 @@ export default function PostUpdates() {
     // Available tags
     const availableTags = ["actualizare", "eveniment", "voluntariat"]
 
-    // Save posts to localStorage whenever they change
     useEffect(() => {
         try {
             localStorage.setItem("petpalPosts", JSON.stringify(posts))
@@ -160,7 +153,6 @@ export default function PostUpdates() {
         }
     }, [posts])
 
-    // Fetch current user ID when component mounts
     useEffect(() => {
         const fetchCurrentUserId = async () => {
             try {

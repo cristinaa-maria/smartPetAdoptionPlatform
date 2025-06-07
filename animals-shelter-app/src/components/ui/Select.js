@@ -1,73 +1,133 @@
-import React, { createContext, useContext, useState } from 'react';
+import { useState, createContext, useContext } from "react"
 
-const SelectContext = createContext({});
+// Select components
+const SelectContext = createContext({})
 
-export const Select = ({ children, onValueChange, value }) => {
-    const [isOpen, setIsOpen] = useState(false);
+const Select = ({ children, onValueChange, value }) => {
+    const [isOpen, setIsOpen] = useState(false)
+
+    console.log("Select render - received value:", value)
+
+    const handleValueChange = (newValue) => {
+        console.log("Select handleValueChange called with:", newValue)
+        if (onValueChange) {
+            onValueChange(newValue)
+        }
+        setIsOpen(false)
+    }
 
     return (
-        <SelectContext.Provider value={{ isOpen, setIsOpen, value, onValueChange }}>
-            {children}
+        <SelectContext.Provider
+            value={{
+                isOpen,
+                setIsOpen,
+                value: value || "",
+                onValueChange: handleValueChange,
+            }}
+        >
+            <div className="relative">{children}</div>
         </SelectContext.Provider>
-    );
-};
+    )
+}
 
-export const SelectTrigger = ({ children, id }) => {
-    const { isOpen, setIsOpen } = useContext(SelectContext);
+const SelectTrigger = ({ children, id, className = "" }) => {
+    const { isOpen, setIsOpen } = useContext(SelectContext)
 
     return (
         <button
             id={id}
             type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className={`
-        w-full px-3 py-2 text-left
-        border rounded-md shadow-sm
-        bg-white hover:bg-gray-50
-        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500
-        ${isOpen ? 'ring-2 ring-green-500 border-green-500' : 'border-gray-300'}
-      `}
+            className={`w-full px-3 py-2 text-left border-2 border-green-500 rounded-none shadow-sm flex items-center justify-between bg-white hover:bg-gray-50 ${className}`}
+            style={{ height: "40px", minHeight: "40px" }}
         >
-            {children}
+            <div className="flex-1 text-left overflow-hidden">{children}</div>
+            <svg className="w-4 h-4 text-gray-400 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
         </button>
-    );
-};
+    )
+}
 
-export const SelectContent = ({ children }) => {
-    const { isOpen, setIsOpen } = useContext(SelectContext);
+const SelectContent = ({ children, className = "" }) => {
+    const { isOpen } = useContext(SelectContext)
 
-    if (!isOpen) return null;
+    if (!isOpen) return null
 
     return (
-        <div className="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg">
+        <div className={`absolute left-0 top-full w-full bg-white border-2 border-green-500 shadow-md z-50 max-h-48 overflow-y-auto ${className}`}>
             <div className="py-1">{children}</div>
         </div>
-    );
-};
+    )
+}
 
-export const SelectItem = ({ children, value }) => {
-    const { onValueChange, value: selectedValue, setIsOpen } = useContext(SelectContext);
+const SelectItem = ({ children, value, className = "" }) => {
+    const { onValueChange, value: selectedValue } = useContext(SelectContext)
+
+    const handleClick = () => {
+        console.log("SelectItem clicked with value:", value)
+        if (onValueChange) {
+            onValueChange(value)
+        }
+    }
 
     return (
         <div
-            onClick={() => {
-                onValueChange(value);
-                setIsOpen(false);
-            }}
-            className={`
-        px-3 py-2 cursor-pointer
-        hover:bg-gray-100
-        ${selectedValue === value ? 'bg-green-50 text-green-700' : 'text-gray-900'}
-      `}
+            onClick={handleClick}
+            className={`px-4 py-2 cursor-pointer hover:bg-green-50 ${
+                selectedValue === value ? "bg-green-100 text-green-700 font-semibold" : "text-gray-900"
+            } ${className}`}
         >
             {children}
         </div>
-    );
-};
+    )
+}
 
-export const SelectValue = ({ placeholder }) => {
-    const { value } = useContext(SelectContext);
+const SelectValue = ({ placeholder }) => {
+    const { value } = useContext(SelectContext)
 
-    return <span>{value === 'all' ? placeholder : value}</span>;
-};
-export default {Select, SelectContent, SelectItem, SelectTrigger, SelectValue };
+    console.log("SelectValue rendering with value:", value)
+
+    const valueMap = {
+        "technical": "Probleme tehnice",
+        "account": "Probleme cu contul",
+        "adoption": "Probleme cu procesul de adopție",
+        "chatbot": "Probleme cu asistentul virtual",
+        "other": "Altă problemă",
+    }
+
+    if (!value || value === "") {
+        return <span className="text-gray-400">{placeholder}</span>
+    }
+
+    const displayText = valueMap[value] || value
+    console.log("SelectValue display text:", displayText)
+
+    return <span className="text-gray-900 font-medium">{displayText}</span>
+}
+
+// Export toate componentele
+export { Select, SelectTrigger, SelectContent, SelectItem, SelectValue }
+
+// Exemplu de utilizare:
+// export default function SelectExample() {
+//     const [selectedValue, setSelectedValue] = useState("")
+//
+//     return (
+//         <div className="space-y-2">
+//             <label htmlFor="category">Categoria problemei *</label>
+//             <Select value={selectedValue} onValueChange={setSelectedValue}>
+//                 <SelectTrigger id="category">
+//                     <SelectValue placeholder="Selectați categoria" />
+//                 </SelectTrigger>
+//                 <SelectContent>
+//                     <SelectItem value="technical">Probleme tehnice</SelectItem>
+//                     <SelectItem value="account">Probleme cu contul</SelectItem>
+//                     <SelectItem value="adoption">Probleme cu procesul de adopție</SelectItem>
+//                     <SelectItem value="chatbot">Probleme cu asistentul virtual</SelectItem>
+//                     <SelectItem value="other">Altă problemă</SelectItem>
+//                 </SelectContent>
+//             </Select>
+//         </div>
+//     )
+// }

@@ -24,7 +24,7 @@ export default function AdoptionChatbot() {
             {
                 id: generateId(),
                 role: "assistant",
-                content: "Bună ziua! Sunt asistentul virtual PetPal. Cum vă pot ajuta cu adopția de animale de companie?",
+                content: "Bună ziua! Sunt asistentul virtual PetPal. Cum vă pot ajuta?",
             },
         ])
     }, [])
@@ -245,13 +245,13 @@ export default function AdoptionChatbot() {
                     <div className="flex justify-between items-center">
                         <p>&copy; 2023 Pet Adoption Center. All rights reserved.</p>
                         <div className="flex space-x-4">
-                            <a href="#" className="hover:text-green-600">
+                            <a href="/privacy" className="hover:text-green-600">
                                 Privacy Policy
                             </a>
-                            <a href="#" className="hover:text-green-600">
+                            <a href="/terms" className="hover:text-green-600">
                                 Terms of Service
                             </a>
-                            <a href="#" className="hover:text-green-600">
+                            <a href="/contact" className="hover:text-green-600">
                                 Contact Us
                             </a>
                         </div>

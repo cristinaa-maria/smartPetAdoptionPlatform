@@ -13,11 +13,12 @@ const EditorCatalog = () => {
         name: "",
         species: "",
         description: "",
-        imageUrl: "",
-        imageFile: null,
-        imageBytes: null,
+        image: "", // Now a simple URL string
         userId: "",
     })
+    const [imageInputMethod, setImageInputMethod] = useState("url") // "url" or "file"
+    const [selectedFile, setSelectedFile] = useState(null)
+    const [filePreview, setFilePreview] = useState(null)
     const [location, setLocation] = useState("")
     const [contact, setContact] = useState("")
     const [userType, setUserType] = useState("individual")
@@ -100,86 +101,6 @@ const EditorCatalog = () => {
         }
     }
 
-    // Replace the byteArrayToImageUrl function with this new function that can handle both byte arrays and Base64 strings
-    const byteArrayToImageUrl = (imageData) => {
-        if (!imageData) return null
-
-        // Check if the data is already a Base64 string (starts with /9j/ for JPEG)
-        if (typeof imageData === "string") {
-            // If it's a Base64 string that starts with the actual data (without the data:image prefix)
-            if (imageData.startsWith("/9j/") || imageData.startsWith("iVBOR") || imageData.startsWith("R0lGOD")) {
-                // Add the proper data URL prefix based on the image format
-                let prefix = "data:image/jpeg;base64,"
-                if (imageData.startsWith("iVBOR")) {
-                    prefix = "data:image/png;base64,"
-                } else if (imageData.startsWith("R0lGOD")) {
-                    prefix = "data:image/gif;base64,"
-                }
-
-                // Return the complete data URL
-                return prefix + imageData
-            }
-
-            // If it already has the data:image prefix, return as is
-            if (imageData.startsWith("data:image/")) {
-                return imageData
-            }
-
-            // If it's some other string format, try to parse it
-            try {
-                // Check if it's a stringified array
-                const parsedData = JSON.parse(imageData)
-                if (Array.isArray(parsedData)) {
-                    // Convert the array back to Uint8Array
-                    const uint8Array = new Uint8Array(parsedData)
-                    // Create a blob and URL
-                    const blob = new Blob([uint8Array], { type: "image/jpeg" })
-                    return URL.createObjectURL(blob)
-                }
-            } catch (e) {
-                console.error("Failed to parse image data:", e)
-            }
-
-            // If all else fails, try to use it as is
-            return imageData
-        }
-
-        // Handle byte array (original functionality)
-        if (Array.isArray(imageData) && imageData.length) {
-            // Convert the array to Uint8Array
-            const uint8Array = new Uint8Array(imageData)
-
-            // Try to detect image type from the first few bytes
-            let imageType = "image/jpeg" // Default type
-
-            // Simple magic number detection for common image formats
-            if (uint8Array.length > 2) {
-                // Check for PNG signature
-                if (uint8Array[0] === 0x89 && uint8Array[1] === 0x50 && uint8Array[2] === 0x4e) {
-                    imageType = "image/png"
-                }
-                // Check for GIF signature
-                else if (uint8Array[0] === 0x47 && uint8Array[1] === 0x49 && uint8Array[2] === 0x46) {
-                    imageType = "image/gif"
-                }
-                // JPEG starts with FF D8
-                else if (uint8Array[0] === 0xff && uint8Array[1] === 0xd8) {
-                    imageType = "image/jpeg"
-                }
-            }
-
-            // Create a blob from the byte array with detected type
-            const blob = new Blob([uint8Array], { type: imageType })
-
-            // Create a URL for the blob
-            return URL.createObjectURL(blob)
-        }
-
-        return null
-    }
-
-    // Modify the fetchUserAnimals function to ensure proper image conversion
-    // Update the fetchUserAnimals function to handle both Base64 strings and byte arrays
     const fetchUserAnimals = async () => {
         if (!userId) return
 
@@ -202,30 +123,7 @@ const EditorCatalog = () => {
             const data = await response.json()
             console.log("Fetched animals:", data)
 
-            // Process the animals to convert any image data to imageUrl
-            const processedAnimals = data.map((animal) => {
-                // Check if animal has image data (could be Base64 string or byte array)
-                if (animal.image) {
-                    console.log(`Processing image for animal ${animal.id}, type:`, typeof animal.image)
-                    // Try to convert the image data to a URL
-                    const imageUrl = byteArrayToImageUrl(animal.image)
-                    console.log(`Converted image for animal ${animal.id}, URL created:`, !!imageUrl)
-                    return {
-                        ...animal,
-                        imageUrl: imageUrl,
-                    }
-                } else if (animal.imageBytes && animal.imageBytes.length) {
-                    // Handle legacy imageBytes field if present
-                    const imageUrl = byteArrayToImageUrl(animal.imageBytes)
-                    return {
-                        ...animal,
-                        imageUrl: imageUrl,
-                    }
-                }
-                return animal
-            })
-
-            setAnimals(processedAnimals)
+            setAnimals(data)
         } catch (err) {
             console.error("Error fetching animals:", err)
             setError("Failed to load animals. Please try again later.")
@@ -234,48 +132,43 @@ const EditorCatalog = () => {
         }
     }
 
-    // Convert file to byte array
-    const fileToByteArray = (file) => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader()
-            reader.readAsArrayBuffer(file)
-            reader.onload = () => {
-                const arrayBuffer = reader.result
-                const bytes = new Uint8Array(arrayBuffer)
-                resolve(Array.from(bytes))
-            }
-            reader.onerror = (error) => {
-                reject(error)
-            }
+    const handleImageUrlChange = (e) => {
+        const imageUrl = e.target.value
+        setNewAnimal({
+            ...newAnimal,
+            image: imageUrl,
         })
     }
 
-    const handleImageUpload = async (e) => {
+    const handleFileSelect = (e) => {
         const file = e.target.files[0]
         if (file) {
-            try {
-                // Create URL for preview
-                const imageUrl = URL.createObjectURL(file)
+            setSelectedFile(file)
 
-                // Convert file to byte array
-                const byteArray = await fileToByteArray(file)
-
+            // Create preview URL
+            const reader = new FileReader()
+            reader.onload = (e) => {
+                setFilePreview(e.target.result)
                 setNewAnimal({
                     ...newAnimal,
-                    imageFile: file,
-                    imageUrl: imageUrl,
-                    imageBytes: byteArray,
+                    image: e.target.result, // Store base64 data URL
                 })
-
-                console.log("Image converted to byte array, length:", byteArray.length)
-            } catch (error) {
-                console.error("Error converting image to byte array:", error)
-                setError("Nu s-a putut procesa imaginea. Vă rugăm să încercați din nou.")
             }
+            reader.readAsDataURL(file)
         }
     }
 
-    // Modify the addAnimal function to ensure image display after creation
+    const clearFileSelection = () => {
+        setSelectedFile(null)
+        setFilePreview(null)
+        if (imageInputMethod === "file") {
+            setNewAnimal({
+                ...newAnimal,
+                image: "",
+            })
+        }
+    }
+
     const addAnimal = async (e) => {
         e.preventDefault()
 
@@ -304,14 +197,11 @@ const EditorCatalog = () => {
                 name: newAnimal.name,
                 species: newAnimal.species,
                 description: newAnimal.description,
-                image: newAnimal.imageBytes,
+                image: newAnimal.image, // Now a simple URL string
                 userId: currentId,
             }
 
-            console.log("Creating animal with data:", {
-                ...animalDTO,
-                imageBytes: newAnimal.imageBytes ? `[Byte array with ${newAnimal.imageBytes.length} bytes]` : null,
-            })
+            console.log("Creating animal with data:", animalDTO)
 
             const animalResponse = await fetch(`${API_BASE_URL}/createAnimal`, {
                 method: "POST",
@@ -395,7 +285,7 @@ const EditorCatalog = () => {
                 }
             }
 
-            // Fetch the updated animals list which will include the newly created animal with image
+            // Fetch the updated animals list
             await fetchUserAnimals()
 
             // Reset form
@@ -403,14 +293,15 @@ const EditorCatalog = () => {
                 name: "",
                 species: "",
                 description: "",
-                imageUrl: "",
-                imageFile: null,
-                imageBytes: null,
+                image: "",
                 userId: "",
             })
             setLocation("")
             setIsEditing(false)
             setEditingId(null)
+            setImageInputMethod("url")
+            setSelectedFile(null)
+            setFilePreview(null)
 
             if (hasErrors) {
                 setError(`Animalul a fost salvat, dar unele actualizări au eșuat: ${errorMessages.join(", ")}`)
@@ -449,7 +340,7 @@ const EditorCatalog = () => {
                 name: newAnimal.name,
                 species: newAnimal.species,
                 description: newAnimal.description,
-                image: newAnimal.imageBytes,
+                image: newAnimal.image, // Now a simple URL string
                 userId: currentId,
             }
 
@@ -461,10 +352,7 @@ const EditorCatalog = () => {
             const errorMessages = []
 
             if (Object.keys(updateData).length > 0) {
-                console.log("Updating animal with data:", {
-                    ...updateData,
-                    imageBytes: updateData.imageBytes ? `[Byte array with ${updateData.imageBytes.length} bytes]` : null,
-                })
+                console.log("Updating animal with data:", updateData)
 
                 const animalResponse = await fetch(`${API_BASE_URL}/updateFullAnimal/${editingId}`, {
                     method: "PUT",
@@ -513,7 +401,6 @@ const EditorCatalog = () => {
                 }
             }
 
-            // Step 3: Update user type and contact
             if (userType || contact) {
                 try {
                     const userUpdateData = {}
@@ -545,7 +432,7 @@ const EditorCatalog = () => {
                 }
             }
 
-            // Step 4: Refresh the animals list
+            // Refresh the animals list
             await fetchUserAnimals()
 
             // Reset form
@@ -553,22 +440,21 @@ const EditorCatalog = () => {
                 name: "",
                 species: "",
                 description: "",
-                imageUrl: "",
-                imageFile: null,
-                imageBytes: null,
+                image: "",
                 userId: "",
             })
             setLocation("")
             setIsEditing(false)
             setEditingId(null)
+            setImageInputMethod("url")
+            setSelectedFile(null)
+            setFilePreview(null)
 
-            // Show warning if there were partial failures, but don't treat it as a complete error
             if (hasErrors) {
                 setError(`Animalul a fost actualizat, dar unele actualizări au eșuat: ${errorMessages.join(", ")}`)
             } else {
-                // Show success message
                 setSuccessMessage("Animalul a fost actualizat cu succes!")
-                setError(null) // Clear any previous errors
+                setError(null)
             }
         } catch (err) {
             console.error("Error updating animal:", err)
@@ -613,9 +499,7 @@ const EditorCatalog = () => {
             name: animal.name,
             species: animal.species,
             description: animal.description,
-            imageUrl: animal.imageUrl,
-            imageFile: null,
-            imageBytes: null, // Reset image bytes when editing
+            image: animal.image || "",
             userId: animal.userId,
         })
         setLocation(animal.place || "")
@@ -625,6 +509,19 @@ const EditorCatalog = () => {
         setEditingId(animal.id)
         setError(null)
         setSuccessMessage(null)
+
+        // Determine if the existing image is a URL or base64 data
+        if (animal.image) {
+            if (animal.image.startsWith("data:")) {
+                setImageInputMethod("file")
+                setFilePreview(animal.image)
+            } else {
+                setImageInputMethod("url")
+            }
+        } else {
+            setImageInputMethod("url")
+        }
+        setSelectedFile(null)
     }
 
     const handleCancel = () => {
@@ -632,9 +529,7 @@ const EditorCatalog = () => {
             name: "",
             species: "",
             description: "",
-            imageUrl: "",
-            imageFile: null,
-            imageBytes: null,
+            image: "",
             userId: "",
         })
         setLocation("")
@@ -643,6 +538,9 @@ const EditorCatalog = () => {
         setEditingId(null)
         setError(null)
         setSuccessMessage(null)
+        setImageInputMethod("url")
+        setSelectedFile(null)
+        setFilePreview(null)
     }
 
     return (
@@ -773,25 +671,65 @@ const EditorCatalog = () => {
                             </div>
 
                             <div>
-                                <Label htmlFor="imageUpload">Imagine</Label>
-                                <input
-                                    type="file"
-                                    id="imageUpload"
-                                    accept="image/*"
-                                    onChange={handleImageUpload}
-                                    className="block w-full text-sm border border-gray-300 rounded-lg p-2"
-                                />
-                                {newAnimal.imageBytes && (
-                                    <div className="mt-2 text-sm text-green-600">
-                                        Imagine încărcată: {newAnimal.imageBytes.length} bytes
+                                <Label>Imagine Animal</Label>
+                                <RadioGroup
+                                    value={imageInputMethod}
+                                    onValueChange={setImageInputMethod}
+                                    className="flex flex-row space-x-4 mb-4"
+                                >
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="url" id="url-method" />
+                                        <Label htmlFor="url-method">URL Imagine</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="file" id="file-method" />
+                                        <Label htmlFor="file-method">Încarcă Fișier</Label>
+                                    </div>
+                                </RadioGroup>
+
+                                {imageInputMethod === "url" ? (
+                                    <Input
+                                        id="imageUrl"
+                                        type="url"
+                                        value={newAnimal.image}
+                                        onChange={handleImageUrlChange}
+                                        placeholder="Introduceți URL-ul imaginii (ex: https://example.com/image.jpg)"
+                                    />
+                                ) : (
+                                    <div className="space-y-2">
+                                        <Input
+                                            id="imageFile"
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleFileSelect}
+                                            className="cursor-pointer"
+                                        />
+                                        {selectedFile && (
+                                            <div className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                                                <span className="text-sm text-gray-600">{selectedFile.name}</span>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={clearFileSelection}
+                                                    className="text-red-600 hover:text-red-700"
+                                                >
+                                                    Șterge
+                                                </Button>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
-                                {newAnimal.imageUrl && (
+
+                                {(newAnimal.image || filePreview) && (
                                     <div className="relative mt-4">
                                         <img
-                                            src={newAnimal.imageUrl || "/placeholder.svg?height=200&width=200"}
+                                            src={filePreview || newAnimal.image || "/placeholder.svg"}
                                             alt="Preview"
                                             className="w-full max-h-64 object-cover rounded-lg"
+                                            onError={(e) => {
+                                                e.target.src = "/placeholder.svg?height=200&width=200"
+                                            }}
                                         />
                                     </div>
                                 )}
@@ -822,22 +760,17 @@ const EditorCatalog = () => {
                         <p className="text-center text-gray-500">Nu ai adăugat încă niciun animal.</p>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Update the animal card rendering to use the image field directly if imageUrl is not available */}
                             {animals.map((animal) => (
                                 <Card key={animal.id} className="overflow-hidden">
-                                    {/* Always display an image section */}
                                     <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
-                                        {animal.imageUrl ? (
+                                        {animal.image ? (
                                             <img
-                                                src={animal.imageUrl || "/placeholder.svg"}
+                                                src={animal.image || "/placeholder.svg"}
                                                 alt={animal.name}
                                                 className="w-full h-48 object-cover"
-                                            />
-                                        ) : animal.image ? (
-                                            <img
-                                                src={byteArrayToImageUrl(animal.image) || "/placeholder.svg"}
-                                                alt={animal.name}
-                                                className="w-full h-48 object-cover"
+                                                onError={(e) => {
+                                                    e.target.src = "/placeholder.svg?height=200&width=200"
+                                                }}
                                             />
                                         ) : (
                                             <div className="text-gray-400">Fără imagine</div>
