@@ -12,7 +12,7 @@ public class AnimalDTO {
     private String species;
     private String description;
     private String userId;
-    private Object image;
+    private List<String> image;
     private List<String> typesOfAdoption;
     private List<Float> embeddings;
 }

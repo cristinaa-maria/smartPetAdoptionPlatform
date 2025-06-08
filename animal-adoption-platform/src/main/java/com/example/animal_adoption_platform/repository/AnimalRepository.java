@@ -13,5 +13,6 @@ public interface AnimalRepository extends MongoRepository<Animal, String> {
     Animal findAnimalByName(String name);
     List<Animal> findByUserId(String userId);
     List<Animal> findBySpecies(String species);
+    List<Animal> findByTypesOfAdoptions(List<String> typesOfAdoptions);
 
 }

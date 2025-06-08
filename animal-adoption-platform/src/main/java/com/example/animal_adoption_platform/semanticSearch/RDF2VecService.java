@@ -146,19 +146,6 @@ public class RDF2VecService {
             }
         }
 
-        // Also extract embeddings for user and location nodes
-        List<Resource> users = rdfGraphService.getModel()
-                .listResourcesWithProperty(rdfGraphService.getModel().getProperty(ns + "name"))
-                .toList();
-
-        for (Resource user : users) {
-            String nodeUri = user.getURI();
-            if (word2Vec.hasWord(nodeUri) && nodeUri.contains("user")) {
-                double[] embedding = word2Vec.getWordVector(nodeUri);
-                nodeEmbeddings.put(nodeUri, embedding);
-                embeddingsExtracted++;
-            }
-        }
 
         logger.info("Extracted embeddings for {} nodes", embeddingsExtracted);
     }

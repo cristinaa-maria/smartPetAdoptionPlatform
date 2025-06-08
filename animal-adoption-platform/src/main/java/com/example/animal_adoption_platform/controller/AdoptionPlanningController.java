@@ -5,9 +5,10 @@ import com.example.animal_adoption_platform.repository.AdoptionRepository;
 import com.example.animal_adoption_platform.repository.UserRepository;
 import com.example.animal_adoption_platform.service.AdoptionService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-@RestController
+@Controller
 @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class AdoptionPlanningController {
     AdoptionService adoptionService;

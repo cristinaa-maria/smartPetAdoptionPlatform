@@ -7,6 +7,7 @@ import com.example.animal_adoption_platform.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.Normalizer;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -24,8 +25,9 @@ public class SemanticSearchService {
     @Autowired
     private RDF2VecService rdf2VecService;
 
-    private static final float TEXT_EMBEDDING_WEIGHT = 0.5f;
-    private static final float RDF_EMBEDDING_WEIGHT = 0.5f;
+    // Base weights for adaptive system
+    private static final float BASE_TEXT_EMBEDDING_WEIGHT = 0.7f;
+    private static final float BASE_RDF_EMBEDDING_WEIGHT = 0.3f;
 
     // Map of city name (normalized, lowercase, NO diacritics) -> [latitude, longitude]
     private static final Map<String, double[]> CITY_COORDINATES = Map.of(
@@ -35,61 +37,358 @@ public class SemanticSearchService {
     );
 
     /**
-     * Enhanced semantic search using both text embeddings and RDF2Vec embeddings
+     * Enhanced semantic search with adaptive weighting
      */
     public List<Animal> semanticSearch(String userQuery, int topN) {
-        return semanticSearch(userQuery, topN, SearchMode.HYBRID);
+        return enhancedSemanticSearch(userQuery, topN, null);
     }
 
     /**
-     * Semantic search with configurable search mode
+     * Enhanced semantic search with adoption type filtering
      */
-    public List<Animal> semanticSearch(String userQuery, int topN, SearchMode mode) {
-        // 1. Generate embedding for query
+    public List<Animal> semanticSearch(String userQuery, int topN, List<String> adoptionTypes) {
+        return enhancedSemanticSearch(userQuery, topN, adoptionTypes);
+    }
+
+    /**
+     * Enhanced semantic search using adaptive weighting system with keyword matching and adoption type filtering
+     */
+    public List<Animal> enhancedSemanticSearch(String userQuery, int topN, List<String> adoptionTypes) {
+        System.out.println("Original query: " + userQuery);
+        System.out.println("Adoption types filter: " + adoptionTypes);
+
+        // Generate embedding for query
         List<Float> queryEmbedding = embeddingService.embedTexts(List.of(userQuery)).get(0);
 
-        // 2. Extract species/location from query
+        // Extract species/location from query
         Map<String, String> extracted = rdfGraphService.extractSpeciesAndLocation(userQuery);
         String species = extracted.get("species");
         String location = extracted.get("location");
 
-        // 3. Get users in a map for quick lookup
+        // Get users in a map for quick lookup
         Map<String, User> userMap = userRepository.findAll()
                 .stream()
                 .collect(Collectors.toMap(User::getId, u -> u));
 
-        // 4. Get animals of matching species (or all if species is null)
-        List<Animal> animals = getFilteredAnimals(species);
+        // Get animals with adoption type filtering first, then species filtering
+        List<Animal> animals = getFilteredAnimals(species, adoptionTypes);
 
-        // 5. Filter by location if specified and known
+        // Filter by location if specified and known
         List<Animal> candidates = filterByLocation(animals, location, userMap);
 
-        // 6. Calculate similarities based on search mode
-        List<ScoredAnimal> scored = calculateSimilarities(candidates, queryEmbedding, userQuery, mode);
+        // Calculate similarities with adaptive weighting
+        List<ScoredAnimal> scored = calculateAdaptiveSimilarities(candidates, queryEmbedding, userQuery);
 
-        // 7. Sort and return top N results
+        // Apply enhanced keyword scoring
+        scored = applyAdditionalScoring(scored, userQuery);
+
+        // Enhanced sorting with keyword priority
+        scored.sort((a, b) -> {
+            // Calculate keyword scores for comparison
+            float keywordScoreA = calculateKeywordMatchScore(a.animal, userQuery);
+            float keywordScoreB = calculateKeywordMatchScore(b.animal, userQuery);
+
+            // If there's a significant difference in keyword matching, prioritize that
+            if (Math.abs(keywordScoreA - keywordScoreB) > 0.2f) {
+                return Float.compare(keywordScoreB, keywordScoreA);
+            }
+
+            // Otherwise, use the combined similarity score
+            return Float.compare(b.similarity, a.similarity);
+        });
+
+        return scored.stream().limit(topN).map(sa -> sa.animal).collect(Collectors.toList());
+    }
+
+    /**
+     * Enhanced keyword matching with better scoring for exact term matches
+     */
+    private float calculateKeywordMatchScore(Animal animal, String userQuery) {
+        String normalizedQuery = normalizeText(userQuery);
+        String[] queryTerms = normalizedQuery.split("\\s+");
+
+        float totalScore = 0f;
+        int matchedTerms = 0;
+
+        // Check matches in different fields with different weights
+        String normalizedName = normalizeText(animal.getName());
+        String normalizedDesc = normalizeText(animal.getDescription());
+        String normalizedSpecies = normalizeText(animal.getSpecies());
+
+        for (String term : queryTerms) {
+            if (term.length() < 2) continue; // Skip very short terms
+
+            float termScore = 0f;
+
+            // Exact matches in name (highest priority)
+            if (normalizedName.equals(term)) {
+                termScore += 1.0f;
+            } else if (normalizedName.contains(term)) {
+                termScore += 0.8f;
+            }
+
+            // Matches in description (high priority for content relevance)
+            if (normalizedDesc.contains(term)) {
+                // Give higher score for longer, more specific terms
+                float lengthBonus = Math.min(0.3f, term.length() * 0.05f);
+                termScore += 0.6f + lengthBonus;
+            }
+
+            // Matches in species (important for basic filtering)
+            if (normalizedSpecies.contains(term)) {
+                termScore += 0.7f;
+            }
+
+
+            if (termScore > 0) {
+                totalScore += termScore;
+                matchedTerms++;
+            }
+        }
+
+        // Normalize by query length and add coverage bonus
+        if (queryTerms.length > 0) {
+            float coverage = (float) matchedTerms / queryTerms.length;
+            totalScore = (totalScore / queryTerms.length) * (0.7f + 0.3f * coverage);
+        }
+
+        return Math.min(1.0f, totalScore);
+    }
+
+    /**
+     * Adaptive weighting system based on query characteristics
+     */
+    private float[] calculateAdaptiveWeights(String userQuery, Animal animal) {
+        float textWeight = BASE_TEXT_EMBEDDING_WEIGHT;
+        float rdfWeight = BASE_RDF_EMBEDDING_WEIGHT;
+
+        // Analyze query complexity and adjust weights
+        int queryWordCount = userQuery.trim().split("\\s+").length;
+        boolean hasSpecificTerms = containsSpecificAnimalTerms(userQuery);
+        boolean hasLocationTerms = containsLocationTerms(userQuery);
+
+        // For short, specific queries - favor RDF (structured relationships)
+        if (queryWordCount <= 3 && hasSpecificTerms) {
+            textWeight = 0.4f;
+            rdfWeight = 0.6f;
+        }
+        // For longer, descriptive queries - favor text embeddings
+        else if (queryWordCount > 5) {
+            textWeight = 0.8f;
+            rdfWeight = 0.2f;
+        }
+
+        // If query contains location terms, slightly favor RDF
+        if (hasLocationTerms) {
+            rdfWeight = Math.min(0.5f, rdfWeight + 0.1f);
+            textWeight = 1.0f - rdfWeight;
+        }
+
+        // If animal has rich description, increase text weight
+        if (animal.getDescription() != null && animal.getDescription().length() > 150) {
+            textWeight = Math.min(0.9f, textWeight + 0.1f);
+            rdfWeight = 1.0f - textWeight;
+        }
+
+        return new float[]{textWeight, rdfWeight};
+    }
+
+    /**
+     * Helper method to detect specific animal terms in query
+     */
+    private boolean containsSpecificAnimalTerms(String query) {
+        String normalized = normalizeText(query);
+        Set<String> animalTerms = Set.of("pisica", "caine", "catel", "maca", "motan", "feline", "canine");
+        return animalTerms.stream().anyMatch(normalized::contains);
+    }
+
+    /**
+     * Helper method to detect location terms in query
+     */
+    private boolean containsLocationTerms(String query) {
+        String normalized = normalizeText(query);
+        Set<String> locationTerms = Set.of("bucuresti", "cluj", "zona", "sector", "cartier");
+        return locationTerms.stream().anyMatch(normalized::contains);
+    }
+
+    /**
+     * Calculate similarities using adaptive weighting
+     */
+    private List<ScoredAnimal> calculateAdaptiveSimilarities(List<Animal> candidates,
+                                                             List<Float> queryEmbedding,
+                                                             String userQuery) {
+        List<ScoredAnimal> scored = new ArrayList<>();
+
+        for (Animal animal : candidates) {
+            float textSim = 0f;
+            float rdfSim = 0f;
+
+            // Text embedding similarity
+            if (animal.getEmbeddings() != null && !animal.getEmbeddings().isEmpty()) {
+                textSim = cosineSimilarity(queryEmbedding, animal.getEmbeddings());
+            }
+
+            // RDF embedding similarity
+            rdfSim = calculateRdfQuerySimilarity(animal.getId(), userQuery);
+
+            // Apply adaptive weighting
+            float[] weights = calculateAdaptiveWeights(userQuery, animal);
+            float combinedSimilarity = weights[0] * textSim + weights[1] * rdfSim;
+
+            if (combinedSimilarity > 0) {
+                scored.add(new ScoredAnimal(animal, combinedSimilarity));
+            }
+        }
+
+        return scored;
+    }
+
+    /**
+     * Updated applyAdditionalScoring method with enhanced keyword matching
+     */
+    private List<ScoredAnimal> applyAdditionalScoring(List<ScoredAnimal> scored, String userQuery) {
+        String normalizedQuery = normalizeText(userQuery);
+
+        for (ScoredAnimal scoredAnimal : scored) {
+            Animal animal = scoredAnimal.animal;
+            float bonus = 0f;
+
+            // Enhanced keyword matching score
+            float keywordScore = calculateKeywordMatchScore(animal, userQuery);
+            bonus += keywordScore * 0.5f; // Give significant weight to keyword matches
+
+            // Original exact name match bonus (keeping for backward compatibility)
+            if (animal.getName() != null &&
+                    normalizedQuery.contains(normalizeText(animal.getName()))) {
+                bonus += 0.2f;
+            }
+
+            // Apply bonus (capped at reasonable limit)
+            scoredAnimal.similarity = Math.min(1.0f, scoredAnimal.similarity + bonus);
+        }
+
+        return scored;
+    }
+
+    private boolean containsAgeKeywords(String query) {
+        return query.matches(".*(tânăr|mic|adult|mare|vârst).*");
+    }
+
+    /**
+     * Semantic search with configurable search mode (backward compatibility)
+     */
+    public List<Animal> semanticSearch(String userQuery, int topN, SearchMode mode) {
+        return semanticSearch(userQuery, topN, mode, null);
+    }
+
+    /**
+     * Semantic search with configurable search mode and adoption type filtering
+     */
+    public List<Animal> semanticSearch(String userQuery, int topN, SearchMode mode, List<String> adoptionTypes) {
+        // For backward compatibility, delegate to mode-specific methods
+        switch (mode) {
+            case TEXT_ONLY:
+                return textOnlySearch(userQuery, topN, adoptionTypes);
+            case RDF_ONLY:
+                return rdfOnlySearch(userQuery, topN, adoptionTypes);
+            case HYBRID:
+            default:
+                return enhancedSemanticSearch(userQuery, topN, adoptionTypes);
+        }
+    }
+
+    /**
+     * Text-only search implementation with adoption type filtering
+     */
+    private List<Animal> textOnlySearch(String userQuery, int topN, List<String> adoptionTypes) {
+        List<Float> queryEmbedding = embeddingService.embedTexts(List.of(userQuery)).get(0);
+
+        Map<String, String> extracted = rdfGraphService.extractSpeciesAndLocation(userQuery);
+        String species = extracted.get("species");
+        String location = extracted.get("location");
+
+        Map<String, User> userMap = userRepository.findAll()
+                .stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
+        List<Animal> animals = getFilteredAnimals(species, adoptionTypes);
+        List<Animal> candidates = filterByLocation(animals, location, userMap);
+
+        List<ScoredAnimal> scored = new ArrayList<>();
+        for (Animal animal : candidates) {
+            if (animal.getEmbeddings() != null && !animal.getEmbeddings().isEmpty()) {
+                float similarity = cosineSimilarity(queryEmbedding, animal.getEmbeddings());
+                if (similarity > 0) {
+                    scored.add(new ScoredAnimal(animal, similarity));
+                }
+            }
+        }
+
+        scored = applyAdditionalScoring(scored, userQuery);
         scored.sort((a, b) -> Float.compare(b.similarity, a.similarity));
         return scored.stream().limit(topN).map(sa -> sa.animal).collect(Collectors.toList());
     }
 
     /**
-     * Find similar animals to a given animal using both embedding types
+     * RDF-only search implementation with adoption type filtering
+     */
+    private List<Animal> rdfOnlySearch(String userQuery, int topN, List<String> adoptionTypes) {
+        Map<String, String> extracted = rdfGraphService.extractSpeciesAndLocation(userQuery);
+        String species = extracted.get("species");
+        String location = extracted.get("location");
+
+        Map<String, User> userMap = userRepository.findAll()
+                .stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
+        List<Animal> animals = getFilteredAnimals(species, adoptionTypes);
+        List<Animal> candidates = filterByLocation(animals, location, userMap);
+
+        List<ScoredAnimal> scored = new ArrayList<>();
+        for (Animal animal : candidates) {
+            float similarity = calculateRdfQuerySimilarity(animal.getId(), userQuery);
+            if (similarity > 0) {
+                scored.add(new ScoredAnimal(animal, similarity));
+            }
+        }
+
+        scored.sort((a, b) -> Float.compare(b.similarity, a.similarity));
+        return scored.stream().limit(topN).map(sa -> sa.animal).collect(Collectors.toList());
+    }
+
+    /**
+     * Find similar animals to a given animal using enhanced approach
      */
     public List<Animal> findSimilarAnimals(String animalId, int topN) {
-        return findSimilarAnimals(animalId, topN, SearchMode.HYBRID);
+        return findSimilarAnimals(animalId, topN, SearchMode.HYBRID, null);
     }
 
     /**
      * Find similar animals with configurable search mode
      */
     public List<Animal> findSimilarAnimals(String animalId, int topN, SearchMode mode) {
+        return findSimilarAnimals(animalId, topN, mode, null);
+    }
+
+    /**
+     * Find similar animals with configurable search mode and adoption type filtering
+     */
+    public List<Animal> findSimilarAnimals(String animalId, int topN, SearchMode mode, List<String> adoptionTypes) {
         Optional<Animal> targetAnimal = animalRepository.findById(animalId);
         if (!targetAnimal.isPresent()) {
             return new ArrayList<>();
         }
 
         Animal target = targetAnimal.get();
-        List<Animal> allAnimals = animalRepository.findAll();
+
+        // Get all animals with adoption type filtering if specified
+        List<Animal> allAnimals;
+        if (adoptionTypes != null && !adoptionTypes.isEmpty()) {
+            allAnimals = getFilteredAnimalsByAdoptionType(adoptionTypes);
+        } else {
+            allAnimals = animalRepository.findAll();
+        }
+
         List<ScoredAnimal> scored = new ArrayList<>();
 
         for (Animal candidate : allAnimals) {
@@ -120,56 +419,31 @@ public class SemanticSearchService {
             default:
                 float textSim = calculateTextSimilarity(animal1.getEmbeddings(), animal2.getEmbeddings());
                 float rdfSim = calculateRdfSimilarity(animal1.getId(), animal2.getId());
-                return combineScores(textSim, rdfSim);
+
+                // Use adaptive weighting for animal-to-animal similarity as well
+                // Create a synthetic query based on animal1's attributes for weighting
+                String syntheticQuery = createSyntheticQuery(animal1);
+                float[] weights = calculateAdaptiveWeights(syntheticQuery, animal2);
+
+                return weights[0] * textSim + weights[1] * rdfSim;
         }
     }
 
     /**
-     * Calculate similarities for query-based search
+     * Create a synthetic query from animal attributes for similarity calculations
      */
-    private List<ScoredAnimal> calculateSimilarities(List<Animal> candidates, List<Float> queryEmbedding,
-                                                     String userQuery, SearchMode mode) {
-        List<ScoredAnimal> scored = new ArrayList<>();
-
-        for (Animal animal : candidates) {
-            float similarity = 0f;
-
-            switch (mode) {
-                case TEXT_ONLY:
-                    if (animal.getEmbeddings() != null && !animal.getEmbeddings().isEmpty()) {
-                        similarity = cosineSimilarity(queryEmbedding, animal.getEmbeddings());
-                    }
-                    break;
-
-                case RDF_ONLY:
-                    // For RDF-only search, we use the animal's RDF embedding similarity
-                    // Since we don't have a direct query RDF embedding, we use text-to-RDF mapping
-                    similarity = calculateRdfQuerySimilarity(animal.getId(), userQuery);
-                    break;
-
-                case HYBRID:
-                default:
-                    float textSim = 0f;
-                    float rdfSim = 0f;
-
-                    // Text embedding similarity
-                    if (animal.getEmbeddings() != null && !animal.getEmbeddings().isEmpty()) {
-                        textSim = cosineSimilarity(queryEmbedding, animal.getEmbeddings());
-                    }
-
-                    // RDF embedding similarity
-                    rdfSim = calculateRdfQuerySimilarity(animal.getId(), userQuery);
-
-                    similarity = combineScores(textSim, rdfSim);
-                    break;
-            }
-
-            if (similarity > 0) {
-                scored.add(new ScoredAnimal(animal, similarity));
+    private String createSyntheticQuery(Animal animal) {
+        StringBuilder query = new StringBuilder();
+        if (animal.getSpecies() != null) query.append(animal.getSpecies()).append(" ");
+        if (animal.getName() != null) query.append(animal.getName()).append(" ");
+        if (animal.getDescription() != null && animal.getDescription().length() > 20) {
+            // Take first few words from description
+            String[] words = animal.getDescription().split("\\s+");
+            for (int i = 0; i < Math.min(5, words.length); i++) {
+                query.append(words[i]).append(" ");
             }
         }
-
-        return scored;
+        return query.toString().trim();
     }
 
     /**
@@ -223,24 +497,114 @@ public class SemanticSearchService {
     }
 
     /**
-     * Combine text and RDF similarity scores
+     * Get filtered animals by species and adoption types - FIXED VERSION WITH BETTER MATCHING
      */
-    private float combineScores(float textSimilarity, float rdfSimilarity) {
-        return TEXT_EMBEDDING_WEIGHT * textSimilarity + RDF_EMBEDDING_WEIGHT * rdfSimilarity;
-    }
+    private List<Animal> getFilteredAnimals(String species, List<String> adoptionTypes) {
+        List<Animal> animals;
 
-    /**
-     * Get filtered animals by species
-     */
-    private List<Animal> getFilteredAnimals(String species) {
+        // First filter by adoption types if specified
+        if (adoptionTypes != null && !adoptionTypes.isEmpty()) {
+            System.out.println("Filtering by adoption types: " + adoptionTypes);
+
+            // Get all animals first
+            animals = animalRepository.findAll();
+            System.out.println("Total animals before adoption type filtering: " + animals.size());
+
+            // Filter manually to handle diacritics and case-insensitive matching
+            animals = animals.stream()
+                    .filter(animal -> {
+                        if (animal.getTypesOfAdoptions() == null || animal.getTypesOfAdoptions().isEmpty()) {
+                            return false;
+                        }
+
+                        // Check if any of the requested adoption types match any of the animal's adoption types
+                        boolean matches = adoptionTypes.stream()
+                                .anyMatch(requestedType ->
+                                        animal.getTypesOfAdoptions().stream()
+                                                .anyMatch(animalType -> {
+                                                    // Normalize both strings for comparison
+                                                    String normalizedRequested = normalizeText(requestedType);
+                                                    String normalizedAnimal = normalizeText(animalType);
+
+                                                    System.out.println("Comparing: '" + normalizedRequested + "' with '" + normalizedAnimal + "'");
+
+                                                    // Check for exact match or contains match
+                                                    boolean match = normalizedAnimal.equals(normalizedRequested) ||
+                                                            normalizedAnimal.contains(normalizedRequested) ||
+                                                            normalizedRequested.contains(normalizedAnimal);
+
+                                                    if (match) {
+                                                        System.out.println("MATCH FOUND: '" + normalizedRequested + "' matches '" + normalizedAnimal + "'");
+                                                    }
+
+                                                    return match;
+                                                })
+                                );
+
+                        if (matches) {
+                            System.out.println("Animal " + animal.getName() + " matches with types: " + animal.getTypesOfAdoptions());
+                        } else {
+                            System.out.println("Animal " + animal.getName() + " does NOT match. Requested: " + adoptionTypes + ", Animal has: " + animal.getTypesOfAdoptions());
+                        }
+
+                        return matches;
+                    })
+                    .collect(Collectors.toList());
+
+            System.out.println("Animals after adoption type filtering: " + animals.size());
+        } else {
+            animals = animalRepository.findAll();
+        }
+
+        // Then filter by species if specified
         if (species != null && !species.isBlank()) {
             String normalizedSpecies = species.substring(0, 1).toUpperCase() +
                     species.substring(1).toLowerCase();
             System.out.println("Filtering by species: " + normalizedSpecies);
-            return animalRepository.findBySpecies(normalizedSpecies);
-        } else {
+            animals = animals.stream()
+                    .filter(animal -> normalizedSpecies.equals(animal.getSpecies()))
+                    .collect(Collectors.toList());
+        }
+
+        System.out.println("Total animals after filtering: " + animals.size());
+        return animals;
+    }
+
+    /**
+     * Helper method to get filtered animals by adoption type only (for findSimilarAnimals)
+     */
+    private List<Animal> getFilteredAnimalsByAdoptionType(List<String> adoptionTypes) {
+        if (adoptionTypes == null || adoptionTypes.isEmpty()) {
             return animalRepository.findAll();
         }
+
+        // Get all animals first
+        List<Animal> animals = animalRepository.findAll();
+
+        // Filter manually to handle diacritics and case-insensitive matching
+        return animals.stream()
+                .filter(animal -> {
+                    if (animal.getTypesOfAdoptions() == null || animal.getTypesOfAdoptions().isEmpty()) {
+                        return false;
+                    }
+
+                    // Check if any of the requested adoption types match any of the animal's adoption types
+                    return adoptionTypes.stream()
+                            .anyMatch(requestedType ->
+                                    animal.getTypesOfAdoptions().stream()
+                                            .anyMatch(animalType -> {
+                                                // Normalize both strings for comparison
+                                                String normalizedRequested = normalizeText(requestedType);
+                                                String normalizedAnimal = normalizeText(animalType);
+
+                                                // Check for exact match or contains match
+                                                return normalizedAnimal.equals(normalizedRequested) ||
+                                                        normalizedAnimal.contains(normalizedRequested) ||
+                                                        normalizedRequested.contains(normalizedAnimal);
+                                            })
+                            );
+                })
+                .collect(Collectors.toList());
     }
 
     /**
@@ -283,6 +647,19 @@ public class SemanticSearchService {
         System.out.println("[INFO] Found " + candidates.size() + " animals within " + maxDistanceKm +
                 "km of " + normalizedLocation + " out of " + animals.size() + " candidates.");
         return candidates;
+    }
+
+    /**
+     * Enhanced text normalization with diacritics removal
+     */
+    private String normalizeText(String text) {
+        if (text == null) return "";
+        String normalized = Normalizer.normalize(text, Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .toLowerCase()
+                .trim();
+        System.out.println("Normalized '" + text + "' to '" + normalized + "'");
+        return normalized;
     }
 
     /**
@@ -341,7 +718,7 @@ public class SemanticSearchService {
     public enum SearchMode {
         TEXT_ONLY,    // Use only text embeddings
         RDF_ONLY,     // Use only RDF2Vec embeddings
-        HYBRID        // Combine both embedding types
+        HYBRID        // Combine both embedding types with adaptive weighting
     }
 
     /**

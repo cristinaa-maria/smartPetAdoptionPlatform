@@ -1,0 +1,1571 @@
+<http://example.org/adoption#animal6833558dcf61a9c01400a68c>
+        <http://example.org/adoption#description>
+                "Pui adorabili isi cauta familie";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location23.793_44.319>;
+        <http://example.org/adoption#name>
+                "cățelușă";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userc413d22709857806bd0f3c39>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a69f>
+        <http://example.org/adoption#description>
+                "Donez catelusa";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location25.919_44.374>;
+        <http://example.org/adoption#name>
+                "Dog";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userf3fc153b4ea6468c0326ca58>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#user783c57eb0538869519250ace>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location20.807_46.303>;
+        <http://example.org/adoption#name>
+                "cristina" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6ad>
+        <http://example.org/adoption#description>
+                "Cățel/ă sterilizat/ă, obișnuit/ă în apartament, liniștit/ă și iubitor/oare.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.263_44.345>;
+        <http://example.org/adoption#name>
+                "Oscar";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user18f2eeeb3242d56499ee3ed7>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#user741c2f55ac280b528d149f69>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location25.982_44.729>;
+        <http://example.org/adoption#name>
+                "elena" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a69a>
+        <http://example.org/adoption#description>
+                "Donez Yorkshire 4 ani fetița!";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.09_44.386>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#usera7a86b68da215e07032e662a>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#location20.719_45.944>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "45.944";
+        <http://example.org/adoption#long>
+                "20.719" .
+
+<http://example.org/adoption#location26.263_44.345>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "44.345";
+        <http://example.org/adoption#long>
+                "26.263" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6bb>
+        <http://example.org/adoption#description>
+                "Cu blăniță pufoasă, curioasă și jucăușă, perfectă pentru copii.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.146_44.417>;
+        <http://example.org/adoption#name>
+                "Lana";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user75fbb5c6c93663b1c55154ae>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6ce>
+        <http://example.org/adoption#description>
+                "Prietenos, inteligent și foarte energic, perfect pentru familii care iubesc plimbările lungi.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.312_46.186>;
+        <http://example.org/adoption#name>
+                "Sasha";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user0b73081648aa27f476873464>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#usere7bc12c81757af156b01c396>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location26.081_44.488>;
+        <http://example.org/adoption#name>
+                "alex" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a687>
+        <http://example.org/adoption#description>
+                "Donez catelusa tekel";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location25.982_44.729>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user741c2f55ac280b528d149f69>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a6a4>
+        <http://example.org/adoption#description>
+                "Căței frumoși de o lună, disponibili pentru adopție. Contactați doar persoane serioase. Gratuit.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.133_44.452>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#usereb407b7075cec2950c841fec>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#location27.566_47.158>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "47.158";
+        <http://example.org/adoption#long>
+                "27.566" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6a8>
+        <http://example.org/adoption#description>
+                "Companion ideal, inteligent, răbdător și mereu gata de o plimbare.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.312_46.186>;
+        <http://example.org/adoption#name>
+                "Maya";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user0b73081648aa27f476873464>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6dc>
+        <http://example.org/adoption#description>
+                "Pui energic, perfect pentru copii, dornic/ă de afecțiune și răsfăț.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location23.793_44.319>;
+        <http://example.org/adoption#name>
+                "Bruno";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userc413d22709857806bd0f3c39>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a682>
+        <http://example.org/adoption#description>
+                "Donez catel , super cuminte";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.081_44.488>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#usere7bc12c81757af156b01c396>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a695>
+        <http://example.org/adoption#description>
+                "Donez cățeluși vârstă 6 luni";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.016_44.434>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userc8b6da9b58e2dc9524591efb>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#user15f44b32e9a1b7e4291c9ceb>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location22.891_47.8>;
+        <http://example.org/adoption#name>
+                "alex" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6b6>
+        <http://example.org/adoption#description>
+                "Are nevoie de răsfăț și o familie iubitoare.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.312_46.186>;
+        <http://example.org/adoption#name>
+                "Dodo";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user0b73081648aa27f476873464>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6c9>
+        <http://example.org/adoption#description>
+                "Companion ideal, inteligent, răbdător și mereu gata de o plimbare.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location27.065_46.568>;
+        <http://example.org/adoption#name>
+                "Nero";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userda3f55bc76a2d25701390dc5>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a690>
+        <http://example.org/adoption#description>
+                "Catei in varsta 3 luni";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.146_44.417>;
+        <http://example.org/adoption#name>
+                "";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user75fbb5c6c93663b1c55154ae>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6b1>
+        <http://example.org/adoption#description>
+                "Pui energic, perfect pentru copii, dornic/ă de afecțiune și răsfăț.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.146_44.417>;
+        <http://example.org/adoption#name>
+                "Lucky";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user75fbb5c6c93663b1c55154ae>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#user80a57c6dc300616245003c3b>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location21.229_45.748>;
+        <http://example.org/adoption#name>
+                "simona" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6c4>
+        <http://example.org/adoption#description>
+                "Se adaptează rapid la orice locuință și se împrietenește repede cu alte animale.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.263_44.345>;
+        <http://example.org/adoption#name>
+                "Lana";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user18f2eeeb3242d56499ee3ed7>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6d7>
+        <http://example.org/adoption#description>
+                "Pui energic, perfect pentru copii, dornic/ă de afecțiune și răsfăț.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location23.793_44.319>;
+        <http://example.org/adoption#name>
+                "Sasha";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userc413d22709857806bd0f3c39>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#location26.09_44.386>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "44.386";
+        <http://example.org/adoption#long>
+                "26.09" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6d2>
+        <http://example.org/adoption#description>
+                "De talie mică, ideal/ă pentru apartament, vesel/ă și foarte atașat/ă de stăpân.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.312_46.186>;
+        <http://example.org/adoption#name>
+                "Nero";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user0b73081648aa27f476873464>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal684169911a8ecc65f0b15752>
+        <http://example.org/adoption#description>
+                "pisica dragutik";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location25.9961415_44.4338955>;
+        <http://example.org/adoption#name>
+                "pisicutza";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user6834bd5af147277f8a8014ce>;
+        <http://example.org/adoption#species>
+                "pisica" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6e0>
+        <http://example.org/adoption#description>
+                "O companie minunată pentru oricine, afectuoasă și prietenoasă.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.263_44.345>;
+        <http://example.org/adoption#name>
+                "Mia";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user18f2eeeb3242d56499ee3ed7>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#location28.608832900000003_44.320703949999995>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "44.320703949999995";
+        <http://example.org/adoption#long>
+                "28.608832900000003" .
+
+<http://example.org/adoption#usere509d6fe8aafc2d5690f42a9>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location22.885_47.792>;
+        <http://example.org/adoption#name>
+                "elena" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a68b>
+        <http://example.org/adoption#description>
+                "Tor motanul cel voinic";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.081_44.488>;
+        <http://example.org/adoption#name>
+                "Tor";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#usere7bc12c81757af156b01c396>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a69e>
+        <http://example.org/adoption#description>
+                "Donez , dau spre adopție Dog";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.004_45.209>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user33793435cd2c2c9eb92e953c>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6ac>
+        <http://example.org/adoption#description>
+                "Iubește mingea și jocurile în aer liber. Vaccinat/ă și microcipat/ă.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location27.065_46.568>;
+        <http://example.org/adoption#name>
+                "Bruno";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userda3f55bc76a2d25701390dc5>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6bf>
+        <http://example.org/adoption#description>
+                "Foarte loial/ă și ușor de dresat, se înțelege cu alți câini și adoră plimbările.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.312_46.186>;
+        <http://example.org/adoption#name>
+                "Nero";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user0b73081648aa27f476873464>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6ba>
+        <http://example.org/adoption#description>
+                "Motan/blând și foarte jucăuș, se acomodează repede într-o casă nouă și iubește alintul.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.016_44.434>;
+        <http://example.org/adoption#name>
+                "Lana";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userc8b6da9b58e2dc9524591efb>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6cd>
+        <http://example.org/adoption#description>
+                "Pui energic, perfect pentru copii, dornic/ă de afecțiune și răsfăț.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.263_44.345>;
+        <http://example.org/adoption#name>
+                "Oscar";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user18f2eeeb3242d56499ee3ed7>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#userccf9442206afc9a6b1e31192>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location20.719_45.944>;
+        <http://example.org/adoption#name>
+                "andrei" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a6a3>
+        <http://example.org/adoption#description>
+                "Donez Dog Malinois";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.09_44.386>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#usera7a86b68da215e07032e662a>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a686>
+        <http://example.org/adoption#description>
+                "Căței frumoși de o lună, disponibili pentru adopție. Contactați doar persoane serioase. Gratuit.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location22.891_47.8>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user15f44b32e9a1b7e4291c9ceb>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a699>
+        <http://example.org/adoption#description>
+                "Donez cățeluși vârstă 6 luni";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location25.976_44.362>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user110da16460d8d951cac42aac>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#user0b73081648aa27f476873464>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location21.312_46.186>;
+        <http://example.org/adoption#name>
+                "radu" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6a7>
+        <http://example.org/adoption#description>
+                "Se atașează ușor de toți membrii familiei și iubește copiii.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.312_46.186>;
+        <http://example.org/adoption#name>
+                "Ralf";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user0b73081648aa27f476873464>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#usera7a86b68da215e07032e662a>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location26.09_44.386>;
+        <http://example.org/adoption#name>
+                "cristina" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6db>
+        <http://example.org/adoption#description>
+                "Iubește mingea și jocurile în aer liber. Vaccinat/ă și microcipat/ă.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.263_44.345>;
+        <http://example.org/adoption#name>
+                "Rex";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user18f2eeeb3242d56499ee3ed7>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#location26.004_45.209>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "45.209";
+        <http://example.org/adoption#long>
+                "26.004" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a681>
+        <http://example.org/adoption#description>
+                "Adoptie Donatie Dog iubitor";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.918_47.072>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#usera42cbdfdd568968975889b56>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#user67e85828a6d77a148acaed31>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location28.608832900000003_44.320703949999995>;
+        <http://example.org/adoption#name>
+                "fifi" .
+
+<http://example.org/adoption#user18f2eeeb3242d56499ee3ed7>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location26.263_44.345>;
+        <http://example.org/adoption#name>
+                "elena" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a694>
+        <http://example.org/adoption#description>
+                "Ofer spre Adopție gratuit cățeluși drăguți jucăuși vaccinați.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location27.065_46.568>;
+        <http://example.org/adoption#name>
+                "Dog";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userda3f55bc76a2d25701390dc5>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#usera42cbdfdd568968975889b56>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location21.918_47.072>;
+        <http://example.org/adoption#name>
+                "simona" .
+
+<http://example.org/adoption#userf3fc153b4ea6468c0326ca58>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location25.919_44.374>;
+        <http://example.org/adoption#name>
+                "elena" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6b5>
+        <http://example.org/adoption#description>
+                "De talie mică, ideal/ă pentru apartament, vesel/ă și foarte atașat/ă de stăpân.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location23.793_44.319>;
+        <http://example.org/adoption#name>
+                "Sasha";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userc413d22709857806bd0f3c39>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6c8>
+        <http://example.org/adoption#description>
+                "Pisică sterilizată, liniștită, perfectă pentru o persoană singură sau familie cu copii.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.312_46.186>;
+        <http://example.org/adoption#name>
+                "Dodo";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user0b73081648aa27f476873464>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#location26.133_44.452>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "44.452";
+        <http://example.org/adoption#long>
+                "26.133" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6b0>
+        <http://example.org/adoption#description>
+                "Se atașează ușor de toți membrii familiei și iubește copiii.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.016_44.434>;
+        <http://example.org/adoption#name>
+                "Roxy";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userc8b6da9b58e2dc9524591efb>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6c3>
+        <http://example.org/adoption#description>
+                "De talie mică, ideal/ă pentru apartament, vesel/ă și foarte atașat/ă de stăpân.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.312_46.186>;
+        <http://example.org/adoption#name>
+                "Pufi";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user0b73081648aa27f476873464>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6d6>
+        <http://example.org/adoption#description>
+                "O companie minunată pentru oricine, afectuoasă și prietenoasă.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location23.793_44.319>;
+        <http://example.org/adoption#name>
+                "Fiona";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userc413d22709857806bd0f3c39>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6d1>
+        <http://example.org/adoption#description>
+                "Cățel/ă sterilizat/ă, obișnuit/ă în apartament, liniștit/ă și iubitor/oare.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.146_44.417>;
+        <http://example.org/adoption#name>
+                "Rex";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user75fbb5c6c93663b1c55154ae>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#location20.807_46.303>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "46.303";
+        <http://example.org/adoption#long>
+                "20.807" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a68f>
+        <http://example.org/adoption#description>
+                "Donez , dau spre adopție Dog";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.263_44.345>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user18f2eeeb3242d56499ee3ed7>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#location21.312_46.186>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "46.186";
+        <http://example.org/adoption#long>
+                "21.312" .
+
+<http://example.org/adoption#location25.976_44.362>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "44.362";
+        <http://example.org/adoption#long>
+                "25.976" .
+
+<http://example.org/adoption#location20.62_46.096>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "46.096";
+        <http://example.org/adoption#long>
+                "20.62" .
+
+<http://example.org/adoption#location25.982_44.729>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "44.729";
+        <http://example.org/adoption#long>
+                "25.982" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a68a>
+        <http://example.org/adoption#description>
+                "Adopții catei";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location20.807_46.303>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user783c57eb0538869519250ace>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a69d>
+        <http://example.org/adoption#description>
+                "Pui de cățel spre adopție";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.133_44.452>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#usereb407b7075cec2950c841fec>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6ab>
+        <http://example.org/adoption#description>
+                "O companie minunată pentru oricine, afectuoasă și prietenoasă.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.016_44.434>;
+        <http://example.org/adoption#name>
+                "Felix";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userc8b6da9b58e2dc9524591efb>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6be>
+        <http://example.org/adoption#description>
+                "Cățel/ă sterilizat/ă, obișnuit/ă în apartament, liniștit/ă și iubitor/oare.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location27.065_46.568>;
+        <http://example.org/adoption#name>
+                "Nero";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userda3f55bc76a2d25701390dc5>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal67d5707cdd6a972a391ff223>
+        <http://example.org/adoption#description>
+                "Câine prietenos, iubește copiii și se înțelege bine cu alte animale.";
+        <http://example.org/adoption#name>
+                "Buddy";
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#location21.918_47.072>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "47.072";
+        <http://example.org/adoption#long>
+                "21.918" .
+
+<http://example.org/adoption#user6834bd5af147277f8a8014ce>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location25.9961415_44.4338955>;
+        <http://example.org/adoption#name>
+                "Dan Balan" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6cc>
+        <http://example.org/adoption#description>
+                "Pisică sterilizată, liniștită, perfectă pentru o persoană singură sau familie cu copii.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.146_44.417>;
+        <http://example.org/adoption#name>
+                "Cleo";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user75fbb5c6c93663b1c55154ae>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6df>
+        <http://example.org/adoption#description>
+                "Iubește pernele moi, toarce mereu și e mereu gata de joacă.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location27.065_46.568>;
+        <http://example.org/adoption#name>
+                "Tasha";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userda3f55bc76a2d25701390dc5>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a685>
+        <http://example.org/adoption#description>
+                "Donez căței !!!";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location25.919_44.374>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userf3fc153b4ea6468c0326ca58>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a698>
+        <http://example.org/adoption#description>
+                "Ady un băiețel iubitor";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.081_44.488>;
+        <http://example.org/adoption#name>
+                "Ady";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#usere7bc12c81757af156b01c396>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a6a2>
+        <http://example.org/adoption#description>
+                "Donez catel , super cuminte";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location27.065_46.568>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userda3f55bc76a2d25701390dc5>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6a6>
+        <http://example.org/adoption#description>
+                "Companion ideal, inteligent, răbdător și mereu gata de o plimbare.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.016_44.434>;
+        <http://example.org/adoption#name>
+                "Max";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userc8b6da9b58e2dc9524591efb>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6b9>
+        <http://example.org/adoption#description>
+                "Se adaptează rapid la orice locuință și se împrietenește repede cu alte animale.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.312_46.186>;
+        <http://example.org/adoption#name>
+                "Dodo";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user0b73081648aa27f476873464>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6da>
+        <http://example.org/adoption#description>
+                "Are ochi expresivi și blană mătăsoasă.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.312_46.186>;
+        <http://example.org/adoption#name>
+                "Pisi";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user0b73081648aa27f476873464>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a693>
+        <http://example.org/adoption#description>
+                "Ofer spre adopție un câine frumos";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.312_46.186>;
+        <http://example.org/adoption#name>
+                "Dog";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user0b73081648aa27f476873464>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6b4>
+        <http://example.org/adoption#description>
+                "Dornic/ă de o nouă familie care să-i ofere dragoste și grijă.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.263_44.345>;
+        <http://example.org/adoption#name>
+                "Luna";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user18f2eeeb3242d56499ee3ed7>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6c7>
+        <http://example.org/adoption#description>
+                "Se atașează ușor de toți membrii familiei și iubește copiii.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location23.793_44.319>;
+        <http://example.org/adoption#name>
+                "Buddy";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userc413d22709857806bd0f3c39>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#user8caf4a1adef9eb978451ed58>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location27.566_47.158>;
+        <http://example.org/adoption#name>
+                "marius" .
+
+<http://example.org/adoption#location26.041623_44.433863>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "44.433863";
+        <http://example.org/adoption#long>
+                "26.041623" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6c2>
+        <http://example.org/adoption#description>
+                "Pui energic, perfect pentru copii, dornic/ă de afecțiune și răsfăț.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.263_44.345>;
+        <http://example.org/adoption#name>
+                "Sasha";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user18f2eeeb3242d56499ee3ed7>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6d5>
+        <http://example.org/adoption#description>
+                "Cățeluș/ă vesel/ă, iubitor/oare, obișnuit/ă cu copii și alte animale. Își dorește o familie activă.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location27.065_46.568>;
+        <http://example.org/adoption#name>
+                "Nero";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userda3f55bc76a2d25701390dc5>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6d0>
+        <http://example.org/adoption#description>
+                "Cu blăniță pufoasă, curioasă și jucăușă, perfectă pentru copii.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.146_44.417>;
+        <http://example.org/adoption#name>
+                "Nora";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user75fbb5c6c93663b1c55154ae>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#user33793435cd2c2c9eb92e953c>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location26.004_45.209>;
+        <http://example.org/adoption#name>
+                "george" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a68e>
+        <http://example.org/adoption#description>
+                "Căței labrador";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.312_46.186>;
+        <http://example.org/adoption#name>
+                "Dog";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user0b73081648aa27f476873464>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#usere7cdcf3e9ed6a3b3579755ea>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location25.642_45.108>;
+        <http://example.org/adoption#name>
+                "andrei" .
+
+<http://example.org/adoption#userc413d22709857806bd0f3c39>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location23.793_44.319>;
+        <http://example.org/adoption#name>
+                "alex" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6af>
+        <http://example.org/adoption#description>
+                "Cu blăniță pufoasă, curioasă și jucăușă, perfectă pentru copii.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.146_44.417>;
+        <http://example.org/adoption#name>
+                "Simba";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user75fbb5c6c93663b1c55154ae>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a69c>
+        <http://example.org/adoption#description>
+                "cazare N/Ae mici de companie";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.312_46.186>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user0b73081648aa27f476873464>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6aa>
+        <http://example.org/adoption#description>
+                "Cățeluș/ă vesel/ă, iubitor/oare, obișnuit/ă cu copii și alte animale. Își dorește o familie activă.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.263_44.345>;
+        <http://example.org/adoption#name>
+                "Bella";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user18f2eeeb3242d56499ee3ed7>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6bd>
+        <http://example.org/adoption#description>
+                "Cățeluș/ă vesel/ă, iubitor/oare, obișnuit/ă cu copii și alte animale. Își dorește o familie activă.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location27.065_46.568>;
+        <http://example.org/adoption#name>
+                "Ralf";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userda3f55bc76a2d25701390dc5>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a689>
+        <http://example.org/adoption#description>
+                "Adoptie Catelusa Sandra";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.263_44.345>;
+        <http://example.org/adoption#name>
+                "Sandra";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user18f2eeeb3242d56499ee3ed7>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6cb>
+        <http://example.org/adoption#description>
+                "Cățeluș/ă vesel/ă, iubitor/oare, obișnuit/ă cu copii și alte animale. Își dorește o familie activă.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location27.065_46.568>;
+        <http://example.org/adoption#name>
+                "Nero";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userda3f55bc76a2d25701390dc5>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6de>
+        <http://example.org/adoption#description>
+                "Se atașează ușor de toți membrii familiei și iubește copiii.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.263_44.345>;
+        <http://example.org/adoption#name>
+                "Rocky";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user18f2eeeb3242d56499ee3ed7>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a684>
+        <http://example.org/adoption#description>
+                "Catel cauta stapan.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.918_47.072>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#usera42cbdfdd568968975889b56>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a6a1>
+        <http://example.org/adoption#description>
+                "Donez catelusi Clinceni";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location27.566_47.158>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user8caf4a1adef9eb978451ed58>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a697>
+        <http://example.org/adoption#description>
+                "Pisicuta europeana Mira";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location22.885_47.792>;
+        <http://example.org/adoption#name>
+                "Mira";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#usere509d6fe8aafc2d5690f42a9>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6a5>
+        <http://example.org/adoption#description>
+                "Cățel/ă sterilizat/ă, obișnuit/ă în apartament, liniștit/ă și iubitor/oare.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.312_46.186>;
+        <http://example.org/adoption#name>
+                "Daisy";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user0b73081648aa27f476873464>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6b8>
+        <http://example.org/adoption#description>
+                "Cățel/ă sterilizat/ă, obișnuit/ă în apartament, liniștit/ă și iubitor/oare.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.146_44.417>;
+        <http://example.org/adoption#name>
+                "Rocky";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user75fbb5c6c93663b1c55154ae>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#location25.919_44.374>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "44.374";
+        <http://example.org/adoption#long>
+                "25.919" .
+
+<http://example.org/adoption#user110da16460d8d951cac42aac>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location25.976_44.362>;
+        <http://example.org/adoption#name>
+                "maria" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a692>
+        <http://example.org/adoption#description>
+                "Vând hamsteri sirieni";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.09_44.386>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#usera7a86b68da215e07032e662a>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6b3>
+        <http://example.org/adoption#description>
+                "Foarte loial/ă și ușor de dresat, se înțelege cu alți câini și adoră plimbările.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location23.793_44.319>;
+        <http://example.org/adoption#name>
+                "Daisy";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userc413d22709857806bd0f3c39>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6c6>
+        <http://example.org/adoption#description>
+                "Companion ideal, inteligent, răbdător și mereu gata de o plimbare.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.016_44.434>;
+        <http://example.org/adoption#name>
+                "Toby";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userc8b6da9b58e2dc9524591efb>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6d9>
+        <http://example.org/adoption#description>
+                "Dornic/ă de o nouă familie care să-i ofere dragoste și grijă.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.146_44.417>;
+        <http://example.org/adoption#name>
+                "Max";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user75fbb5c6c93663b1c55154ae>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#location22.891_47.8>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "47.8";
+        <http://example.org/adoption#long>
+                "22.891" .
+
+<http://example.org/adoption#location21.229_45.748>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "45.748";
+        <http://example.org/adoption#long>
+                "21.229" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6c1>
+        <http://example.org/adoption#description>
+                "Cu blăniță pufoasă, curioasă și jucăușă, perfectă pentru copii.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.312_46.186>;
+        <http://example.org/adoption#name>
+                "Coco";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user0b73081648aa27f476873464>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6d4>
+        <http://example.org/adoption#description>
+                "Cățel/ă sterilizat/ă, obișnuit/ă în apartament, liniștit/ă și iubitor/oare.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.146_44.417>;
+        <http://example.org/adoption#name>
+                "Rocky";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user75fbb5c6c93663b1c55154ae>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#location22.885_47.792>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "47.792";
+        <http://example.org/adoption#long>
+                "22.885" .
+
+<http://example.org/adoption#location26.146_44.417>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "44.417";
+        <http://example.org/adoption#long>
+                "26.146" .
+
+<http://example.org/adoption#location26.081_44.488>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "44.488";
+        <http://example.org/adoption#long>
+                "26.081" .
+
+<http://example.org/adoption#userda3f55bc76a2d25701390dc5>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location27.065_46.568>;
+        <http://example.org/adoption#name>
+                "alex" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a68d>
+        <http://example.org/adoption#description>
+                "Donez căței, rasa teckel sârmos";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.146_44.417>;
+        <http://example.org/adoption#name>
+                "catei pinscher";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user75fbb5c6c93663b1c55154ae>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#user75fbb5c6c93663b1c55154ae>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location26.146_44.417>;
+        <http://example.org/adoption#name>
+                "cristina" .
+
+<http://example.org/adoption#userf560a58f3bfe92649ac92a15>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location20.62_46.096>;
+        <http://example.org/adoption#name>
+                "marius" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6ae>
+        <http://example.org/adoption#description>
+                "Foarte loial/ă și ușor de dresat, se înțelege cu alți câini și adoră plimbările.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location27.065_46.568>;
+        <http://example.org/adoption#name>
+                "Sasha";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userda3f55bc76a2d25701390dc5>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#location23.793_44.319>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "44.319";
+        <http://example.org/adoption#long>
+                "23.793" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a69b>
+        <http://example.org/adoption#description>
+                "Adoptie Donatie Dog - Gratis";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.004_45.209>;
+        <http://example.org/adoption#name>
+                "Dog";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user33793435cd2c2c9eb92e953c>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#location27.065_46.568>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "46.568";
+        <http://example.org/adoption#long>
+                "27.065" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6bc>
+        <http://example.org/adoption#description>
+                "De talie mică, ideal/ă pentru apartament, vesel/ă și foarte atașat/ă de stăpân.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location23.793_44.319>;
+        <http://example.org/adoption#name>
+                "Nero";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userc413d22709857806bd0f3c39>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6cf>
+        <http://example.org/adoption#description>
+                "Foarte loial/ă și ușor de dresat, se înțelege cu alți câini și adoră plimbările.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location27.065_46.568>;
+        <http://example.org/adoption#name>
+                "Rex";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userda3f55bc76a2d25701390dc5>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a688>
+        <http://example.org/adoption#description>
+                "Căței frumoși de o lună, disponibili pentru adopție. Contactați doar persoane serioase. Gratuit.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location22.885_47.792>;
+        <http://example.org/adoption#name>
+                "Catei";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#usere509d6fe8aafc2d5690f42a9>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6a9>
+        <http://example.org/adoption#description>
+                "Dornic/ă de o nouă familie care să-i ofere dragoste și grijă.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.312_46.186>;
+        <http://example.org/adoption#name>
+                "Ralf";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user0b73081648aa27f476873464>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6ca>
+        <http://example.org/adoption#description>
+                "Toarce zgomotos când e fericit/ă și vine mereu la joacă.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.146_44.417>;
+        <http://example.org/adoption#name>
+                "Cleo";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user75fbb5c6c93663b1c55154ae>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6dd>
+        <http://example.org/adoption#description>
+                "Pui energic, perfect pentru copii, dornic/ă de afecțiune și răsfăț.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.146_44.417>;
+        <http://example.org/adoption#name>
+                "Max";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user75fbb5c6c93663b1c55154ae>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a683>
+        <http://example.org/adoption#description>
+                "Adoptie Urgenta Brac !!! Bruno si Otto au fost abandonati";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.229_45.748>;
+        <http://example.org/adoption#name>
+                "Bruno si Otto";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user80a57c6dc300616245003c3b>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a696>
+        <http://example.org/adoption#description>
+                "Căței frumoși de o lună, disponibili pentru adopție. Contactați doar persoane serioase. Gratuit.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.016_44.434>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userc8b6da9b58e2dc9524591efb>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a6a0>
+        <http://example.org/adoption#description>
+                "Cautam familie iubitoare pentru Zana, pentru o catelusa talie medie sub 1 an";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location20.807_46.303>;
+        <http://example.org/adoption#name>
+                "Zana";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user783c57eb0538869519250ace>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6b7>
+        <http://example.org/adoption#description>
+                "Se adaptează rapid la orice locuință și se împrietenește repede cu alte animale.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location23.793_44.319>;
+        <http://example.org/adoption#name>
+                "Mira";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userc413d22709857806bd0f3c39>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#animal67f7b281cf6a334613a38b5e>
+        <http://example.org/adoption#description>
+                "catel frumos, in varsta de 7 luni.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.041623_44.433863>;
+        <http://example.org/adoption#name>
+                "bubico";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user67d9a081161d1f3dfff4dcf2>;
+        <http://example.org/adoption#species>
+                "catel" .
+
+<http://example.org/adoption#user9897801850b5e90526d10624>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location25.601_45.658>;
+        <http://example.org/adoption#name>
+                "george" .
+
+<http://example.org/adoption#animal6833558dcf61a9c01400a691>
+        <http://example.org/adoption#description>
+                "Donez un mascul si o femela";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location27.065_46.568>;
+        <http://example.org/adoption#name>
+                "N/A";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userda3f55bc76a2d25701390dc5>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#usereb407b7075cec2950c841fec>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location26.133_44.452>;
+        <http://example.org/adoption#name>
+                "george" .
+
+<http://example.org/adoption#location26.016_44.434>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "44.434";
+        <http://example.org/adoption#long>
+                "26.016" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6b2>
+        <http://example.org/adoption#description>
+                "Pui energic, perfect pentru copii, dornic/ă de afecțiune și răsfăț.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.146_44.417>;
+        <http://example.org/adoption#name>
+                "Simba";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user75fbb5c6c93663b1c55154ae>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6c5>
+        <http://example.org/adoption#description>
+                "Dornic/ă de o nouă familie care să-i ofere dragoste și grijă.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.016_44.434>;
+        <http://example.org/adoption#name>
+                "Lucky";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userc8b6da9b58e2dc9524591efb>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6d8>
+        <http://example.org/adoption#description>
+                "Toarce zgomotos când e fericit/ă și vine mereu la joacă.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.263_44.345>;
+        <http://example.org/adoption#name>
+                "Sisi";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user18f2eeeb3242d56499ee3ed7>;
+        <http://example.org/adoption#species>
+                "cat" .
+
+<http://example.org/adoption#animal67f693f4db217c3b12645b94>
+        <http://example.org/adoption#description>
+                "bbbb";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.041623_44.433863>;
+        <http://example.org/adoption#name>
+                "fifi";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user67d9a081161d1f3dfff4dcf2>;
+        <http://example.org/adoption#species>
+                "pisica" .
+
+<http://example.org/adoption#location25.642_45.108>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "45.108";
+        <http://example.org/adoption#long>
+                "25.642" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6c0>
+        <http://example.org/adoption#description>
+                "Cățeluș/ă vesel/ă, iubitor/oare, obișnuit/ă cu copii și alte animale. Își dorește o familie activă.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location26.263_44.345>;
+        <http://example.org/adoption#name>
+                "Sasha";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user18f2eeeb3242d56499ee3ed7>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6d3>
+        <http://example.org/adoption#description>
+                "Cățel/ă sterilizat/ă, obișnuit/ă în apartament, liniștit/ă și iubitor/oare.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location21.312_46.186>;
+        <http://example.org/adoption#name>
+                "Oscar";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#user0b73081648aa27f476873464>;
+        <http://example.org/adoption#species>
+                "dog" .
+
+<http://example.org/adoption#location25.9961415_44.4338955>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "44.4338955";
+        <http://example.org/adoption#long>
+                "25.9961415" .
+
+<http://example.org/adoption#user67d9a081161d1f3dfff4dcf2>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location26.041623_44.433863>;
+        <http://example.org/adoption#name>
+                "Nume generic" .
+
+<http://example.org/adoption#location25.601_45.658>
+        <http://example.org/adoption#city>
+                "";
+        <http://example.org/adoption#lat>
+                "45.658";
+        <http://example.org/adoption#long>
+                "25.601" .
+
+<http://example.org/adoption#userc8b6da9b58e2dc9524591efb>
+        <http://example.org/adoption#hasLocation>
+                <http://example.org/adoption#location26.016_44.434>;
+        <http://example.org/adoption#name>
+                "ana" .
+
+<http://example.org/adoption#animal683356b2cf61a9c01400a6e1>
+        <http://example.org/adoption#description>
+                "Foarte loial/ă și ușor de dresat, se înțelege cu alți câini și adoră plimbările.";
+        <http://example.org/adoption#isLocatedIn>
+                <http://example.org/adoption#location23.793_44.319>;
+        <http://example.org/adoption#name>
+                "Daisy";
+        <http://example.org/adoption#postedBy>
+                <http://example.org/adoption#userc413d22709857806bd0f3c39>;
+        <http://example.org/adoption#species>
+                "dog" .

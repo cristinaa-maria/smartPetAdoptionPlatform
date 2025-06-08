@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.Normalizer;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -36,31 +38,6 @@ public class RDFGraphService {
         System.out.println("=== GENERATING RDF GRAPH ===");
         System.out.println("Total animals to process: " + animals.size());
 
-        // 1. Create User and Location resources
-        for (User user : users) {
-            Resource userResource = model.createResource(ns + "user" + user.getId())
-                    .addProperty(model.createProperty(ns + "name"), user.getName());
-
-            GeoJsonPoint point = user.getLocation();
-            if (point != null) {
-                String locId = point.getX() + "_" + point.getY();
-
-                String city = "";
-                try {
-                    city = (String) user.getClass().getMethod("getCity").invoke(user);
-                } catch (Exception e) {
-                    city = "";
-                }
-                city = normalizeLocation(city);
-
-                Resource locationResource = model.createResource(ns + "location" + locId)
-                        .addProperty(model.createProperty(ns + "lat"), String.valueOf(point.getY()))
-                        .addProperty(model.createProperty(ns + "long"), String.valueOf(point.getX()))
-                        .addProperty(model.createProperty(ns + "city"), city);
-
-                userResource.addProperty(model.createProperty(ns + "hasLocation"), locationResource);
-            }
-        }
 
         // 2. Create Animal resources and relationships
         for (Animal animal : animals) {
@@ -93,10 +70,6 @@ public class RDFGraphService {
                     .addProperty(model.createProperty(ns + "species"), species)
                     .addProperty(model.createProperty(ns + "description"), animal.getDescription() != null ? animal.getDescription() : "");
 
-            // Embedding
-            if (animal.getEmbeddings() != null) {
-                animalResource.addProperty(model.createProperty(ns + "embedding"), animal.getEmbeddings().toString());
-            }
 
             // Location relationship
             if (animal.getUserId() != null && userMap.containsKey(animal.getUserId())) {
@@ -472,6 +445,15 @@ public class RDFGraphService {
             sentences.add(String.join(" ", walk));
         }
         return sentences;
+    }
+
+    public void saveRDFToFile(String filename) {
+        try (FileOutputStream out = new FileOutputStream(filename)) {
+            model.write(out, "TURTLE");
+            System.out.println("RDF saved to " + filename);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }
