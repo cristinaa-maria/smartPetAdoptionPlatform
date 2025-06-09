@@ -26,8 +26,8 @@ public class SemanticSearchService {
     private RDF2VecService rdf2VecService;
 
     // Base weights for adaptive system
-    private static final float BASE_TEXT_EMBEDDING_WEIGHT = 0.7f;
-    private static final float BASE_RDF_EMBEDDING_WEIGHT = 0.3f;
+    private static final float BASE_TEXT_EMBEDDING_WEIGHT = 0.8f;
+    private static final float BASE_RDF_EMBEDDING_WEIGHT = 0.2f;
 
     // Map of city name (normalized, lowercase, NO diacritics) -> [latitude, longitude]
     private static final Map<String, double[]> CITY_COORDINATES = Map.of(
@@ -80,18 +80,9 @@ public class SemanticSearchService {
         List<ScoredAnimal> scored = calculateAdaptiveSimilarities(candidates, queryEmbedding, userQuery);
 
         // Apply enhanced keyword scoring
-        scored = applyAdditionalScoring(scored, userQuery);
 
         // Enhanced sorting with keyword priority
         scored.sort((a, b) -> {
-            // Calculate keyword scores for comparison
-            float keywordScoreA = calculateKeywordMatchScore(a.animal, userQuery);
-            float keywordScoreB = calculateKeywordMatchScore(b.animal, userQuery);
-
-            // If there's a significant difference in keyword matching, prioritize that
-            if (Math.abs(keywordScoreA - keywordScoreB) > 0.2f) {
-                return Float.compare(keywordScoreB, keywordScoreA);
-            }
 
             // Otherwise, use the combined similarity score
             return Float.compare(b.similarity, a.similarity);
@@ -115,30 +106,30 @@ public class SemanticSearchService {
         String normalizedDesc = normalizeText(animal.getDescription());
         String normalizedSpecies = normalizeText(animal.getSpecies());
 
+        // Tokenize descrierea în cuvinte
+        List<String> descWords = List.of(normalizedDesc.split("\\W+"));
+
         for (String term : queryTerms) {
-            if (term.length() < 2) continue; // Skip very short terms
+            if (term.length() < 2) continue;
 
             float termScore = 0f;
 
-            // Exact matches in name (highest priority)
-            if (normalizedName.equals(term)) {
-                termScore += 1.0f;
-            } else if (normalizedName.contains(term)) {
-                termScore += 0.8f;
-            }
+            // MATCH în nume
+            if (normalizedName.equals(term)) termScore += 1.0f;
+            else if (normalizedName.contains(term)) termScore += 0.8f;
 
-            // Matches in description (high priority for content relevance)
-            if (normalizedDesc.contains(term)) {
-                // Give higher score for longer, more specific terms
+            // MATCH în descriere prin prefixe
+            boolean descMatched = descWords.stream().anyMatch(word ->
+                    commonPrefixLength(word, term) >= 3
+            );
+
+            if (descMatched) {
                 float lengthBonus = Math.min(0.3f, term.length() * 0.05f);
-                termScore += 0.6f + lengthBonus;
+                termScore += 0.65f + lengthBonus;
             }
 
-            // Matches in species (important for basic filtering)
-            if (normalizedSpecies.contains(term)) {
-                termScore += 0.7f;
-            }
-
+            // MATCH în specie
+            if (normalizedSpecies.contains(term)) termScore += 0.7f;
 
             if (termScore > 0) {
                 totalScore += termScore;
@@ -151,9 +142,21 @@ public class SemanticSearchService {
             float coverage = (float) matchedTerms / queryTerms.length;
             totalScore = (totalScore / queryTerms.length) * (0.7f + 0.3f * coverage);
         }
+        System.out.println("→ Keyword score for " + animal.getName() + ": " + totalScore);
+
 
         return Math.min(1.0f, totalScore);
     }
+
+    private int commonPrefixLength(String a, String b) {
+        int len = Math.min(a.length(), b.length());
+        int i = 0;
+        while (i < len && a.charAt(i) == b.charAt(i)) {
+            i++;
+        }
+        return i;
+    }
+
 
     /**
      * Adaptive weighting system based on query characteristics
@@ -173,10 +176,6 @@ public class SemanticSearchService {
             rdfWeight = 0.6f;
         }
         // For longer, descriptive queries - favor text embeddings
-        else if (queryWordCount > 5) {
-            textWeight = 0.8f;
-            rdfWeight = 0.2f;
-        }
 
         // If query contains location terms, slightly favor RDF
         if (hasLocationTerms) {
@@ -223,21 +222,25 @@ public class SemanticSearchService {
             float textSim = 0f;
             float rdfSim = 0f;
 
-            // Text embedding similarity
             if (animal.getEmbeddings() != null && !animal.getEmbeddings().isEmpty()) {
                 textSim = cosineSimilarity(queryEmbedding, animal.getEmbeddings());
             }
 
-            // RDF embedding similarity
             rdfSim = calculateRdfQuerySimilarity(animal.getId(), userQuery);
 
-            // Apply adaptive weighting
+            // Calcul scor total
             float[] weights = calculateAdaptiveWeights(userQuery, animal);
-            float combinedSimilarity = weights[0] * textSim + weights[1] * rdfSim;
+            float keywordScore = calculateKeywordMatchScore(animal, userQuery);
+
+// Bonus pre-aplicat
+            float bonus = keywordScore * 1.2f;
+            float combinedSimilarity = weights[0] * textSim + weights[1] * rdfSim + bonus;
+            combinedSimilarity = Math.min(1.0f, combinedSimilarity);
 
             if (combinedSimilarity > 0) {
                 scored.add(new ScoredAnimal(animal, combinedSimilarity));
             }
+
         }
 
         return scored;
@@ -255,7 +258,7 @@ public class SemanticSearchService {
 
             // Enhanced keyword matching score
             float keywordScore = calculateKeywordMatchScore(animal, userQuery);
-            bonus += keywordScore * 0.5f; // Give significant weight to keyword matches
+            bonus += keywordScore * 0.3f; // Give significant weight to keyword matches
 
             // Original exact name match bonus (keeping for backward compatibility)
             if (animal.getName() != null &&

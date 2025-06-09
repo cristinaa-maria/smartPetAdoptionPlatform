@@ -1,8 +1,7 @@
-
 import { useState, useEffect, useCallback } from "react"
 import Button from "./ui/Button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "./ui/Card"
-import { PawPrint, Calendar, Info, LogOut, ArrowRight, Bell, Clock } from "lucide-react"
+import { PawPrint, Calendar, Info, LogOut, ArrowRight, Bell, Clock } from 'lucide-react'
 
 // Custom navigation hook that doesn't rely on Next.js
 const useCustomNavigation = () => {
@@ -336,7 +335,7 @@ export default function Homepage() {
                         </div>
                     </div>
                 </section>
-                <section className="w-full py-20 md:py-28 lg:py-40 flex items-center justify-center">
+                <section className="w-full py-12 md:py-16 lg:py-20 flex items-center justify-center">
                     <div className="container px-6 md:px-8">
                         <h2 className="text-3xl font-bold tracking-tighter justify-center text-center mb-12">
                             Ultimele postări și evenimente
@@ -346,28 +345,28 @@ export default function Homepage() {
                                 {
                                     id: "event-1",
                                     title: "Târg de Adopții de Vară",
-                                    date: "15 Iulie, 2023",
+                                    date: "15 Iulie, 2025",
                                     description:
                                         "Alătură-te nouă la cel mai mare eveniment de adopție al anului! Întâlnește sute de animăluțe adorabile.",
                                 },
                                 {
                                     id: "event-2",
                                     title: "Anunț Nou Parteneriat",
-                                    date: "1 August, 2023",
+                                    date: "1 August, 2025",
                                     description:
                                         "Suntem încântați să anunțăm noul nostru parteneriat cu Clinica Veterinară Locală, oferind îngrijire la preț redus.",
                                 },
                                 {
                                     id: "event-3",
                                     title: "Orientare pentru Voluntari",
-                                    date: "10 August, 2023",
+                                    date: "10 August, 2025",
                                     description:
                                         "Ești interesat să ajuți animalele? Participă la orientarea noastră pentru voluntari pentru a afla cum poți face o diferență.",
                                 },
                             ].map((event, index) => (
                                 <Card key={index} className="flex flex-col h-full">
                                     <CardHeader>
-                                        <CardTitle>{event.title}</CardTitle>
+                                        <CardTitle className="text-center">{event.title}</CardTitle>
                                     </CardHeader>
                                     <CardContent className="text-center flex-grow">
                                         <p className="text-sm text-gray-500 mb-2 flex items-center justify-center">

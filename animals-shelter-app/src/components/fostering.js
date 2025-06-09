@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { format, addDays, parseISO } from "date-fns"
 import { ArrowLeft } from "lucide-react"
@@ -15,6 +13,7 @@ export default function FosteringBooking() {
     const [dataLoading, setDataLoading] = useState(true)
     const [error, setError] = useState(null)
     const [animalDetails, setAnimalDetails] = useState(null)
+    const [ownerName, setOwnerName] = useState(null)
 
     const API_BASE_URL = "http://localhost:8083"
 
@@ -32,7 +31,7 @@ export default function FosteringBooking() {
                 const userResponse = await fetch(`${API_BASE_URL}/currentUserId`, {
                     method: "GET",
                     credentials: "include",
-                    headers: { "Accept": "application/json" }
+                    headers: { Accept: "application/json" },
                 })
 
                 if (!userResponse.ok) throw new Error("Failed to get current user information")
@@ -44,7 +43,7 @@ export default function FosteringBooking() {
                 const animalResponse = await fetch(`${API_BASE_URL}/animalInfo/${animalId}`, {
                     method: "GET",
                     credentials: "include",
-                    headers: { "Accept": "application/json" }
+                    headers: { Accept: "application/json" },
                 })
 
                 if (!animalResponse.ok) throw new Error("Failed to fetch animal information")
@@ -53,6 +52,27 @@ export default function FosteringBooking() {
                 console.log("Fetched animal:", animal)
                 setAnimalDetails(animal)
                 setUserId(animal.userId)
+
+                // Fetch owner name
+                if (animal.userId) {
+                    try {
+                        const ownerResponse = await fetch(`${API_BASE_URL}/currentUserName/${animal.userId}`, {
+                            method: "GET",
+                            credentials: "include",
+                            headers: { Accept: "text/plain, */*" },
+                        })
+
+                        if (ownerResponse.ok) {
+                            const ownerNameText = await ownerResponse.text()
+                            console.log("Owner name:", ownerNameText)
+                            setOwnerName(ownerNameText)
+                        } else {
+                            console.error("Failed to fetch owner name:", ownerResponse.status)
+                        }
+                    } catch (ownerError) {
+                        console.error("Error fetching owner name:", ownerError)
+                    }
+                }
 
                 setError(null)
             } catch (err) {
@@ -104,21 +124,23 @@ export default function FosteringBooking() {
                 status: "initializat",
                 type: "fostering",
                 fosteringStartDate: format(selectedDate, "yyyy-MM-dd"),
-                period: period
+                period: period,
             }
 
             console.log("Sending fostering request:", fosteringDTO)
 
             const response = await fetch(`${API_BASE_URL}/scheduleAdoption`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "Accept": "application/json" },
+                headers: { "Content-Type": "application/json", Accept: "application/json" },
                 body: JSON.stringify(fosteringDTO),
-                credentials: "include"
+                credentials: "include",
             })
 
             if (response.ok) {
                 console.log("Fostering scheduled successfully")
-                setMessage(`Ai programat fostering-ul pe ${format(selectedDate, "dd/MM/yyyy")} pentru o perioadă de ${period} ${period === "1" ? "lună" : "luni"}.`)
+                setMessage(
+                    `Ai programat fostering-ul pe ${format(selectedDate, "dd/MM/yyyy")} pentru o perioadă de ${period} ${period === "1" ? "lună" : "luni"}.`,
+                )
             } else {
                 const errorText = await response.text()
                 console.error("Server error response:", errorText)
@@ -152,41 +174,72 @@ export default function FosteringBooking() {
                             <p className="text-lg text-gray-600">Se încarcă datele...</p>
                         </div>
                     ) : error ? (
-                        <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700 text-center">
-                            {error}
-                        </div>
+                        <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700 text-center">{error}</div>
                     ) : (
                         <div className="space-y-8">
                             {animalDetails && (
                                 <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
                                     <h2 className="text-xl font-semibold mb-2">Detalii animal:</h2>
-                                    <p><strong>Nume:</strong> {animalDetails.name}</p>
-                                    <p><strong>Specie:</strong> {animalDetails.species}</p>
-                                    {animalDetails.breed && <p><strong>Rasă:</strong> {animalDetails.breed}</p>}
+                                    <p>
+                                        <strong>Nume:</strong> {animalDetails.name}
+                                    </p>
+                                    <p>
+                                        <strong>Specie:</strong> {animalDetails.species}
+                                    </p>
+                                    {animalDetails.breed && (
+                                        <p>
+                                            <strong>Rasă:</strong> {animalDetails.breed}
+                                        </p>
+                                    )}
+                                    {ownerName && (
+                                        <p>
+                                            <strong>Proprietar:</strong> {ownerName}
+                                        </p>
+                                    )}
                                 </div>
                             )}
 
                             <div>
                                 <label className="text-base font-medium">Selectează data de început:</label>
-                                <select className="w-full p-3 border border-gray-300 rounded-md" value={date || ""} onChange={(e) => setDate(e.target.value)}>
-                                    <option value="" disabled>Alege o dată</option>
+                                <select
+                                    className="w-full p-3 border border-gray-300 rounded-md"
+                                    value={date || ""}
+                                    onChange={(e) => setDate(e.target.value)}
+                                >
+                                    <option value="" disabled>
+                                        Alege o dată
+                                    </option>
                                     {dateOptions.map((option) => (
-                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
 
                             <div>
                                 <label className="text-base font-medium">Selectează perioada (luni):</label>
-                                <select className="w-full p-3 border border-gray-300 rounded-md" value={period || ""} onChange={(e) => setPeriod(e.target.value)}>
-                                    <option value="" disabled>Alege perioada</option>
+                                <select
+                                    className="w-full p-3 border border-gray-300 rounded-md"
+                                    value={period || ""}
+                                    onChange={(e) => setPeriod(e.target.value)}
+                                >
+                                    <option value="" disabled>
+                                        Alege perioada
+                                    </option>
                                     {periodOptions.map((option) => (
-                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
 
-                            <button className="w-full bg-green-600 hover:bg-green-700 text-white p-4 text-lg rounded-md" onClick={handleConfirm} disabled={isLoading}>
+                            <button
+                                className="w-full bg-green-600 hover:bg-green-700 text-white p-4 text-lg rounded-md"
+                                onClick={handleConfirm}
+                                disabled={isLoading}
+                            >
                                 {isLoading ? "Se procesează..." : "Confirmă programarea"}
                             </button>
 

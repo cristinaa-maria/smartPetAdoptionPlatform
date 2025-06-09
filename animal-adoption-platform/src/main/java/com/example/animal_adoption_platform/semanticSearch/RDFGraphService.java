@@ -35,19 +35,9 @@ public class RDFGraphService {
         List<Animal> animals = animalRepository.findAll();
         Map<String, User> userMap = users.stream().collect(Collectors.toMap(User::getId, u -> u));
 
-        System.out.println("=== GENERATING RDF GRAPH ===");
-        System.out.println("Total animals to process: " + animals.size());
 
-
-        // 2. Create Animal resources and relationships
         for (Animal animal : animals) {
-            System.out.println("\n--- Processing Animal: " + animal.getName() + " (ID: " + animal.getId() + ") ---");
-
-            // Get original species from database
             String originalSpecies = animal.getSpecies();
-            System.out.println("Original species from DB: '" + originalSpecies + "'");
-
-            // Extract species if not present
             String species = originalSpecies;
             if (species == null || species.isBlank()) {
                 String desc = animal.getDescription() != null ? animal.getDescription() : "";
@@ -56,7 +46,6 @@ public class RDFGraphService {
                 System.out.println("Extracted species from description: '" + species + "'");
             }
 
-            // Normalize species
             if (species != null && !species.isBlank()) {
                 species = species.toLowerCase().trim();
             } else {

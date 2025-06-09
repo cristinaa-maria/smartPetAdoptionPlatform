@@ -21,6 +21,7 @@ export default function AdoptionBooking() {
     const [dataLoading, setDataLoading] = useState(true)
     const [error, setError] = useState(null)
     const [animalDetails, setAnimalDetails] = useState(null)
+    const [ownerName, setOwnerName] = useState(null)
 
     const API_BASE_URL = "http://localhost:8083"
 
@@ -63,6 +64,29 @@ export default function AdoptionBooking() {
                 console.log("Fetched animal:", animal)
                 setAnimalDetails(animal)
                 setUserId(animal.userId)
+
+                // Fetch owner name
+                if (animal.userId) {
+                    try {
+                        const ownerResponse = await fetch(`${API_BASE_URL}/currentUserName/${animal.userId}`, {
+                            method: "GET",
+                            credentials: "include",
+                            headers: {
+                                Accept: "text/plain, */*",
+                            },
+                        })
+
+                        if (ownerResponse.ok) {
+                            const ownerNameText = await ownerResponse.text()
+                            console.log("Owner name:", ownerNameText)
+                            setOwnerName(ownerNameText)
+                        } else {
+                            console.error("Failed to fetch owner name:", ownerResponse.status)
+                        }
+                    } catch (ownerError) {
+                        console.error("Error fetching owner name:", ownerError)
+                    }
+                }
 
                 setError(null)
             } catch (err) {
@@ -188,6 +212,11 @@ export default function AdoptionBooking() {
                                     {animalDetails.breed && (
                                         <p>
                                             <strong>Rasă:</strong> {animalDetails.breed}
+                                        </p>
+                                    )}
+                                    {ownerName && (
+                                        <p>
+                                            <strong>Proprietar:</strong> {ownerName}
                                         </p>
                                     )}
                                 </div>

@@ -1,5 +1,4 @@
 import type React from "react"
-
 import { useState } from "react"
 import { PawPrint, Search, Loader2, MapPin, LogOut } from "lucide-react"
 import Button from "./ui/Button"
@@ -8,63 +7,209 @@ import Input from "./ui/Input"
 // The API base URL - adjust as needed for your environment
 const API_BASE_URL = "http://localhost:8083"
 
-const PetCard = ({ pet, location, onAdopt, onFoster, onDistantAdopt }) => (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-        <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
-            {pet.image ? (
-                <img
-                    src={pet.image || "/placeholder.svg"}
-                    alt={pet.name}
-                    className="w-full h-48 object-cover"
-                    onError={(e) => {
-                        e.target.src = "/placeholder.svg?height=192&width=300"
-                    }}
-                />
-            ) : (
-                <div className="text-gray-400">Fără imagine</div>
-            )}
-        </div>
-        <div className="p-4">
-            <h2 className="text-xl font-semibold mb-2">{pet.name}</h2>
-            <p className="text-gray-600 mb-1">Specia: {pet.species}</p>
-            <p className="text-gray-600 mb-1">Descrierea: {pet.description}</p>
-            <p className="text-gray-600 flex items-center">
-                <MapPin className="h-4 w-4 mr-1" />
-                {location || "Se încarcă locația..."}
-            </p>
-            <div className="flex flex-wrap gap-2 mt-4">
-                <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => onAdopt(pet.id)}>
-                    Adopție
-                </Button>
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => onFoster(pet.id)}>
-                    Foster
-                </Button>
-                <Button size="sm" className="bg-purple-600 hover:bg-purple-700" onClick={() => onDistantAdopt(pet.id)}>
-                    Adopție la distanță
-                </Button>
-            </div>
-        </div>
-    </div>
-)
+// Function to remove diacritics from Romanian text
+const removeDiacritics = (text: string): string => {
+    const diacriticsMap = {
+        ă: "a",
+        â: "a",
+        î: "i",
+        ș: "s",
+        ț: "t",
+        Ă: "A",
+        Â: "A",
+        Î: "I",
+        Ș: "S",
+        Ț: "T",
+    }
 
-const semanticSearch = async (query: string, topN = 50) => {
-    const response = await fetch(
-        `${API_BASE_URL}/api/embeddings/semantic-search?query=${encodeURIComponent(query)}&topN=${topN}`,
-        {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        },
-    )
-    if (!response.ok) throw new Error("Nu am putut efectua căutarea semantică")
-    const data = await response.json()
-
-    // The backend now returns Animal objects directly, no need to parse strings
-    return data
+    return text.replace(/[ăâîșțĂÂÎȘȚ]/g, (match) => diacriticsMap[match] || match)
 }
 
-// Remove this function entirely as the backend now returns full Animal objects
+const PetCard = ({ pet, location, onAdopt, onFoster, onDistantAdopt, index }) => {
+    // Get available adoption types for this specific animal
+    const getAvailableAdoptionTypes = (animal) => {
+        // If no adoption types are specified, show all buttons (backward compatibility)
+        if (!animal.typesOfAdoptions && !animal.adoptionTypes) {
+            return {
+                adoption: true,
+                fostering: true,
+                distantAdoption: true,
+            }
+        }
+
+        // Handle the backend format: typesOfAdoptions array
+        if (animal.typesOfAdoptions && Array.isArray(animal.typesOfAdoptions)) {
+            const adoptionTypes = {
+                adoption: false,
+                fostering: false,
+                distantAdoption: false,
+            }
+
+            // Check each type in the array
+            animal.typesOfAdoptions.forEach((type) => {
+                const lowerType = type.toLowerCase()
+
+                if (lowerType.includes("adoptie permanenta") || lowerType.includes("adoptie_permanenta")) {
+                    adoptionTypes.adoption = true
+                }
+                if (lowerType.includes("foster")) {
+                    adoptionTypes.fostering = true
+                }
+                if (lowerType.includes("adoptie la distanta") || lowerType.includes("adoptie_la_distanta")) {
+                    adoptionTypes.distantAdoption = true
+                }
+            })
+
+            return adoptionTypes
+        }
+
+        // Handle the editor format: adoptionTypes object (for backward compatibility)
+        if (animal.adoptionTypes && typeof animal.adoptionTypes === "object") {
+            return {
+                adoption: animal.adoptionTypes.adoptie_permanenta || animal.adoptionTypes.adoption || false,
+                fostering: animal.adoptionTypes.foster || animal.adoptionTypes.fostering || false,
+                distantAdoption: animal.adoptionTypes.adoptie_la_distanta || animal.adoptionTypes.distantAdoption || false,
+            }
+        }
+
+        // Default fallback - show all
+        return {
+            adoption: true,
+            fostering: true,
+            distantAdoption: true,
+        }
+    }
+
+    const availableAdoptionTypes = getAvailableAdoptionTypes(pet)
+    const adoptionTypeCount = Object.values(availableAdoptionTypes).filter(Boolean).length
+
+    return (
+        <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+            <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
+                {pet.image ? (
+                    <img
+                        src={pet.image || "/placeholder.svg"}
+                        alt={pet.name}
+                        className="w-full h-48 object-cover"
+                        onError={(e) => {
+                            e.target.src = "/placeholder.svg?height=192&width=300"
+                        }}
+                    />
+                ) : (
+                    <div className="text-gray-400">Fără imagine</div>
+                )}
+            </div>
+            <div className="p-4">
+                <h2 className="text-xl font-semibold mb-2">{pet.name}</h2>
+                <p className="text-gray-600 mb-1">Specia: {pet.species}</p>
+                <p className="text-gray-600 mb-1">Descrierea: {pet.description}</p>
+                <p className="text-gray-600 flex items-center mb-3">
+                    <MapPin className="h-4 w-4 mr-1" />
+                    {location || "Se încarcă locația..."}
+                </p>
+
+                {/* Show available adoption types as badges */}
+                <div className="mb-3">
+                    <p className="text-sm font-medium text-gray-700 mb-1">Tipuri disponibile:</p>
+                    <div className="flex flex-wrap gap-1">
+                        {availableAdoptionTypes.adoption && (
+                            <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Adopție</span>
+                        )}
+                        {availableAdoptionTypes.fostering && (
+                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">Foster</span>
+                        )}
+                        {availableAdoptionTypes.distantAdoption && (
+                            <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">Adopție la distanță</span>
+                        )}
+                    </div>
+                </div>
+
+                {/* Fixed-width button container - all buttons same size */}
+                <div className="flex flex-wrap gap-2 justify-start">
+                    {availableAdoptionTypes.adoption && (
+                        <Button
+                            className={`bg-green-600 hover:bg-green-700 text-sm ${adoptionTypeCount === 2 ? "flex-1" : "w-32"}`}
+                            onClick={() => onAdopt(pet.id)}
+                        >
+                            Adopție
+                        </Button>
+                    )}
+                    {availableAdoptionTypes.fostering && (
+                        <Button
+                            className={`bg-blue-600 hover:bg-blue-700 text-sm ${adoptionTypeCount === 2 ? "flex-1" : "w-32"}`}
+                            onClick={() => onFoster(pet.id)}
+                        >
+                            Foster
+                        </Button>
+                    )}
+                    {availableAdoptionTypes.distantAdoption && (
+                        <Button
+                            className={`bg-purple-600 hover:bg-purple-700 text-sm ${adoptionTypeCount === 2 ? "flex-1" : "w-32"}`}
+                            onClick={() => onDistantAdopt(pet.id)}
+                        >
+                            Adopție la distanță
+                        </Button>
+                    )}
+                </div>
+
+                {/* Show message if no adoption types are available */}
+                {adoptionTypeCount === 0 && (
+                    <div className="text-center py-2">
+                        <p className="text-sm text-gray-500">Nu sunt disponibile tipuri de adopție</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    )
+}
+
+const semanticSearch = async (query: string, adoptionType: string, topN = 50) => {
+    // Map frontend adoption types to backend expected values (with diacritics removed)
+    const adoptionTypeMapping = {
+        standard: "adoptie permanenta", // "adopție_permanentă" -> "adoptie permanenta"
+        foster: "foster",
+        distant: "adoptie la distanta", // "adopție_la_distanță" -> "adoptie la distanta"
+    }
+
+    // Get the backend adoption type value (already without diacritics)
+    const backendAdoptionType = adoptionTypeMapping[adoptionType] || adoptionType
+
+    // Build the URL with query parameters
+    const searchParams = new URLSearchParams({
+        query: query,
+        topN: topN.toString(),
+    })
+
+    // Add the adoption type as a list parameter (without diacritics)
+    searchParams.append("typesOfAdoption", backendAdoptionType)
+
+    console.log("Sending request with params:", searchParams.toString())
+    console.log("Backend adoption type (no diacritics):", backendAdoptionType)
+
+    const response = await fetch(`${API_BASE_URL}/api/embeddings/semantic-search?${searchParams.toString()}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+
+    if (!response.ok) {
+        const errorText = await response.text()
+        console.error("Search failed:", response.status, errorText)
+        throw new Error(`Nu am putut efectua căutarea semantică: ${response.status}`)
+    }
+
+    const data = await response.json()
+
+    // DEBUG: Log the exact order received from backend
+    console.log("=== BACKEND RESPONSE ORDER ===")
+    data.forEach((animal, index) => {
+        console.log(`${index + 1}. ${animal.name} (ID: ${animal.id})`)
+    })
+    console.log("===============================")
+
+    return data
+}
 
 const AdoptionPage = () => {
     const [searchQuery, setSearchQuery] = useState("")
@@ -76,86 +221,129 @@ const AdoptionPage = () => {
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
-        try {
-            // Get search results - now returns Animal objects directly
-            const animalResults = await semanticSearch(searchQuery)
-            setPets(animalResults)
 
-            // Fetch locations for each animal
-            animalResults.forEach((animal) => {
+        // Clear previous results and locations to avoid stale state
+        setPets([])
+        setLocations({})
+
+        try {
+            // Pass adoption type to the search function
+            const animalResults = await semanticSearch(searchQuery, adoptionType)
+
+            // DEBUG: Log the order received from backend
+            console.log("=== BACKEND RESPONSE ORDER (in handleSearch) ===")
+            animalResults.forEach((animal, index) => {
+                console.log(`${index + 1}. ${animal.name} (ID: ${animal.id})`)
+            })
+            console.log("===============================")
+
+            // CRITICAL: Set pets state immediately with the exact order from backend
+            // React's useState will preserve the array order
+            setPets([...animalResults]) // Create new array to ensure fresh state
+
+            // DEBUG: Verify what we're setting
+            console.log("=== SETTING PETS STATE ORDER ===")
+            animalResults.forEach((animal, index) => {
+                console.log(`${index + 1}. ${animal.name} (ID: ${animal.id})`)
+            })
+            console.log("=================================")
+
+            // Fetch locations asynchronously but don't let it affect the order
+            // Use Promise.allSettled to handle all location fetches
+            const locationPromises = animalResults.map(async (animal) => {
                 if (animal.userId) {
-                    fetchUserLocation(animal.id, animal.userId)
+                    try {
+                        const location = await fetchUserLocationForAnimal(animal.id, animal.userId)
+                        return { animalId: animal.id, location }
+                    } catch (error) {
+                        console.warn(`Failed to fetch location for animal ${animal.id}:`, error)
+                        return { animalId: animal.id, location: "Locație indisponibilă" }
+                    }
+                }
+                return { animalId: animal.id, location: "Locație indisponibilă" }
+            })
+
+            // Wait for all location fetches to complete
+            const locationResults = await Promise.allSettled(locationPromises)
+
+            // Update locations state with all results at once
+            const newLocations = {}
+            locationResults.forEach((result, index) => {
+                if (result.status === "fulfilled" && result.value) {
+                    newLocations[result.value.animalId] = result.value.location
+                } else {
+                    newLocations[animalResults[index].id] = "Locație indisponibilă"
                 }
             })
+
+            setLocations(newLocations)
         } catch (error) {
             console.error("Error performing search:", error)
+            // You might want to show an error message to the user here
         } finally {
             setIsLoading(false)
         }
     }
 
-    const fetchUserLocation = async (animalId, userId) => {
-        try {
-            const response = await fetch(`${API_BASE_URL}/users/${userId}`)
-            if (!response.ok) {
-                console.warn(`Failed to fetch user data for ${userId}`)
-                return
-            }
-            const userData = await response.json()
+    // Helper function to fetch location for a single animal
+    const fetchUserLocationForAnimal = async (animalId, userId) => {
+        const response = await fetch(`${API_BASE_URL}/users/${userId}`)
+        if (!response.ok) {
+            throw new Error(`Failed to fetch user data for ${userId}`)
+        }
 
-            if (userData.location && userData.location.coordinates && userData.location.coordinates.length === 2) {
-                const [longitude, latitude] = userData.location.coordinates
+        const userData = await response.json()
 
-                // Validate coordinates
-                if (
-                    typeof latitude === "number" &&
-                    typeof longitude === "number" &&
-                    latitude >= -90 &&
-                    latitude <= 90 &&
-                    longitude >= -180 &&
-                    longitude <= 180
-                ) {
-                    await fetchLocation(animalId, latitude, longitude)
-                } else {
-                    console.warn(`Invalid coordinates for animal ${animalId}: lat=${latitude}, lng=${longitude}`)
-                    setLocations((prevLocations) => ({ ...prevLocations, [animalId]: "Locație indisponibilă" }))
-                }
+        if (userData.location && userData.location.coordinates && userData.location.coordinates.length === 2) {
+            const [longitude, latitude] = userData.location.coordinates
+
+            // Validate coordinates
+            if (
+                typeof latitude === "number" &&
+                typeof longitude === "number" &&
+                latitude >= -90 &&
+                latitude <= 90 &&
+                longitude >= -180 &&
+                longitude <= 180
+            ) {
+                return await fetchLocationText(latitude, longitude)
             } else {
-                setLocations((prevLocations) => ({ ...prevLocations, [animalId]: "Locație indisponibilă" }))
+                console.warn(`Invalid coordinates for animal ${animalId}: lat=${latitude}, lng=${longitude}`)
+                return "Locație indisponibilă"
             }
-        } catch (error) {
-            console.warn(`Error fetching user location for ${userId}:`, error)
-            setLocations((prevLocations) => ({ ...prevLocations, [animalId]: "Locație indisponibilă" }))
+        } else {
+            return "Locație indisponibilă"
         }
     }
 
-    const fetchLocation = async (animalId, latitude, longitude) => {
-        try {
-            const response = await fetch(`${API_BASE_URL}/reverse-geocode?latitude=${latitude}&longitude=${longitude}`)
-            if (!response.ok) {
-                console.warn(`Reverse geocoding failed for coordinates ${latitude}, ${longitude}. Status: ${response.status}`)
-                setLocations((prevLocations) => ({ ...prevLocations, [animalId]: "Locație indisponibilă" }))
-                return
-            }
-            const address = await response.text()
-            setLocations((prevLocations) => ({ ...prevLocations, [animalId]: address }))
-        } catch (error) {
-            console.warn("Error fetching location:", error)
-            setLocations((prevLocations) => ({ ...prevLocations, [animalId]: "Locație indisponibilă" }))
+    // Helper function to fetch location text from coordinates
+    const fetchLocationText = async (latitude, longitude) => {
+        const response = await fetch(`${API_BASE_URL}/reverse-geocode?latitude=${latitude}&longitude=${longitude}`)
+        if (!response.ok) {
+            console.warn(`Reverse geocoding failed for coordinates ${latitude}, ${longitude}. Status: ${response.status}`)
+            return "Locație indisponibilă"
         }
+        return await response.text()
     }
 
     const navigateToAdoption = (animalId) => {
-        window.location.href = `/book-adoption?animalId=${animalId}`
+        window.location.href = `/book-adoption?animalId=${animalId}&type=standard`
     }
 
     const navigateToFostering = (animalId) => {
-        window.location.href = `/fostering?animalId=${animalId}`
+        window.location.href = `/fostering?animalId=${animalId}&type=foster`
     }
 
     const navigateToDistantAdoption = (animalId) => {
-        window.location.href = `/distantAdoption?animalId=${animalId}`
+        window.location.href = `/distantAdoption?animalId=${animalId}&type=distant`
     }
+
+    // DEBUG: Log the pets state when it changes
+    console.log("=== CURRENT PETS STATE ORDER ===")
+    pets.forEach((pet, index) => {
+        console.log(`${index + 1}. ${pet.name} (ID: ${pet.id})`)
+    })
+    console.log("=================================")
 
     return (
         <div className="min-h-screen">
@@ -226,9 +414,10 @@ const AdoptionPage = () => {
 
                         <div className="lg:col-span-2">
                             <Button
-                                type="submit"
-                                disabled={isLoading}
                                 className="w-full h-full py-4 px-6 text-lg bg-green-600 hover:bg-green-700 flex items-center justify-center"
+                                disabled={isLoading}
+                                onClick={handleSearch}
+                                type="submit"
                             >
                                 {isLoading ? <Loader2 className="animate-spin w-6 h-6" /> : <Search className="w-6 h-6 mr-2" />}
                                 {isLoading ? "Căutare..." : "Caută"}
@@ -257,7 +446,7 @@ const AdoptionPage = () => {
 
             <div className="max-w-6xl mx-auto px-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                    {pets.map((pet) => (
+                    {pets.map((pet, index) => (
                         <PetCard
                             key={pet.id}
                             pet={pet}
@@ -265,6 +454,7 @@ const AdoptionPage = () => {
                             onAdopt={navigateToAdoption}
                             onFoster={navigateToFostering}
                             onDistantAdopt={navigateToDistantAdoption}
+                            index={index}
                         />
                     ))}
                 </div>

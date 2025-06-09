@@ -1,11 +1,132 @@
-import { useState, useEffect } from "react"
-import { LogOut, PawPrint, Pencil, Trash } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { LogOut, PawPrint, Pencil, Trash, ChevronLeft, ChevronRight, X } from "lucide-react"
 import Button from "./ui/Button"
 import Input from "./ui/Input"
 import Label from "./ui/Label"
 import Textarea from "./ui/Textarea"
 import { RadioGroup, RadioGroupItem } from "./ui/Radio-group"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card"
+import { Checkbox } from "./ui/Checkbox"
+
+// Image Carousel Component
+const ImageCarousel = ({ images, onRemove, editable = false }) => {
+    const [currentIndex, setCurrentIndex] = useState(0)
+    const [touchStart, setTouchStart] = useState(null)
+    const [touchEnd, setTouchEnd] = useState(null)
+
+    const minSwipeDistance = 50
+
+    const onTouchStart = (e) => {
+        setTouchEnd(null)
+        setTouchStart(e.targetTouches[0].clientX)
+    }
+
+    const onTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX)
+
+    const onTouchEnd = () => {
+        if (!touchStart || !touchEnd) return
+        const distance = touchStart - touchEnd
+        const isLeftSwipe = distance > minSwipeDistance
+        const isRightSwipe = distance < -minSwipeDistance
+
+        if (isLeftSwipe && currentIndex < images.length - 1) {
+            setCurrentIndex(currentIndex + 1)
+        }
+        if (isRightSwipe && currentIndex > 0) {
+            setCurrentIndex(currentIndex - 1)
+        }
+    }
+
+    const goToPrevious = () => {
+        setCurrentIndex(currentIndex > 0 ? currentIndex - 1 : images.length - 1)
+    }
+
+    const goToNext = () => {
+        setCurrentIndex(currentIndex < images.length - 1 ? currentIndex + 1 : 0)
+    }
+
+    const removeImage = (index) => {
+        if (onRemove) {
+            onRemove(index)
+            if (currentIndex >= images.length - 1) {
+                setCurrentIndex(Math.max(0, images.length - 2))
+            }
+        }
+    }
+
+    if (!images || images.length === 0) {
+        return (
+            <div className="w-full h-48 bg-gray-100 flex items-center justify-center rounded-lg">
+                <div className="text-gray-400">Fără imagini</div>
+            </div>
+        )
+    }
+
+    return (
+        <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden">
+            <div className="w-full h-full" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+                <img
+                    src={images[currentIndex] || "/placeholder.svg"}
+                    alt={`Image ${currentIndex + 1}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                        e.target.src = "/placeholder.svg?height=200&width=200"
+                    }}
+                />
+            </div>
+
+            {/* Navigation arrows */}
+            {images.length > 1 && (
+                <>
+                    <button
+                        onClick={goToPrevious}
+                        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-1 rounded-full hover:bg-opacity-70 transition-opacity"
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <button
+                        onClick={goToNext}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-1 rounded-full hover:bg-opacity-70 transition-opacity"
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                    </button>
+                </>
+            )}
+
+            {/* Remove button for editable mode */}
+            {editable && (
+                <button
+                    onClick={() => removeImage(currentIndex)}
+                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors"
+                >
+                    <X className="h-3 w-3" />
+                </button>
+            )}
+
+            {/* Dots indicator */}
+            {images.length > 1 && (
+                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
+                    {images.map((_, index) => (
+                        <button
+                            key={index}
+                            onClick={() => setCurrentIndex(index)}
+                            className={`w-2 h-2 rounded-full transition-colors ${
+                                index === currentIndex ? "bg-white" : "bg-white bg-opacity-50"
+                            }`}
+                        />
+                    ))}
+                </div>
+            )}
+
+            {/* Image counter */}
+            {images.length > 1 && (
+                <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+                    {currentIndex + 1} / {images.length}
+                </div>
+            )}
+        </div>
+    )
+}
 
 const EditorCatalog = () => {
     const [animals, setAnimals] = useState([])
@@ -13,15 +134,19 @@ const EditorCatalog = () => {
         name: "",
         species: "",
         description: "",
-        image: "", // Now a simple URL string
+        image: [], // Changed to array to match DTO
         userId: "",
     })
-    const [imageInputMethod, setImageInputMethod] = useState("url") // "url" or "file"
-    const [selectedFile, setSelectedFile] = useState(null)
-    const [filePreview, setFilePreview] = useState(null)
+    const [selectedFiles, setSelectedFiles] = useState([]) // Changed to array
+    const [filePreviews, setFilePreviews] = useState([]) // Changed to array
     const [location, setLocation] = useState("")
     const [contact, setContact] = useState("")
     const [userType, setUserType] = useState("individual")
+    const [adoptionTypes, setAdoptionTypes] = useState({
+        adoptie_permanenta: false,
+        foster: false,
+        adoptie_la_distanta: false,
+    })
     const [isEditing, setIsEditing] = useState(false)
     const [editingId, setEditingId] = useState(null)
     const [loading, setLoading] = useState(false)
@@ -30,6 +155,7 @@ const EditorCatalog = () => {
     const [successMessage, setSuccessMessage] = useState(null)
 
     const API_BASE_URL = "http://localhost:8083"
+    const fileInputRef = useRef(null)
 
     useEffect(() => {
         fetchCurrentUserId()
@@ -93,7 +219,6 @@ const EditorCatalog = () => {
             const userData = await response.json()
             console.log("User data:", userData)
 
-            // Update state with user data
             if (userData.contact) setContact(userData.contact)
             if (userData.type) setUserType(userData.type)
         } catch (err) {
@@ -123,7 +248,13 @@ const EditorCatalog = () => {
             const data = await response.json()
             console.log("Fetched animals:", data)
 
-            setAnimals(data)
+            // Ensure images is always an array
+            const processedData = data.map((animal) => ({
+                ...animal,
+                image: animal.image || (animal.images ? animal.images : []),
+            }))
+
+            setAnimals(processedData)
         } catch (err) {
             console.error("Error fetching animals:", err)
             setError("Failed to load animals. Please try again later.")
@@ -132,41 +263,90 @@ const EditorCatalog = () => {
         }
     }
 
-    const handleImageUrlChange = (e) => {
-        const imageUrl = e.target.value
+    const handleFileSelect = (e) => {
+        const files = Array.from(e.target.files)
+        if (files.length === 0) return
+
+        // Limit to 5 images maximum
+        const maxImages = 5
+        const currentImageCount = filePreviews.length
+        const availableSlots = maxImages - currentImageCount
+
+        if (availableSlots <= 0) {
+            setError(`Poți adăuga maximum ${maxImages} imagini.`)
+            return
+        }
+
+        const filesToProcess = files.slice(0, availableSlots)
+
+        if (files.length > availableSlots) {
+            setError(
+                `Ai selectat ${files.length} imagini, dar poți adăuga doar ${availableSlots} mai multe. Primele ${availableSlots} au fost adăugate.`,
+            )
+        }
+
+        const newSelectedFiles = [...selectedFiles, ...filesToProcess]
+        setSelectedFiles(newSelectedFiles)
+
+        // Process each file for preview
+        filesToProcess.forEach((file) => {
+            const reader = new FileReader()
+            reader.onload = (e) => {
+                const newPreview = e.target.result
+                setFilePreviews((prev) => [...prev, newPreview])
+                setNewAnimal((prevAnimal) => ({
+                    ...prevAnimal,
+                    image: [...prevAnimal.image, newPreview],
+                }))
+            }
+            reader.readAsDataURL(file)
+        })
+
+        // Clear the input so the same files can be selected again if needed
+        if (fileInputRef.current) {
+            fileInputRef.current.value = ""
+        }
+    }
+
+    const removeImage = (index) => {
+        const newPreviews = filePreviews.filter((_, i) => i !== index)
+        const newSelectedFiles = selectedFiles.filter((_, i) => i !== index)
+        const newImages = newAnimal.image.filter((_, i) => i !== index)
+
+        setFilePreviews(newPreviews)
+        setSelectedFiles(newSelectedFiles)
         setNewAnimal({
             ...newAnimal,
-            image: imageUrl,
+            image: newImages,
         })
     }
 
-    const handleFileSelect = (e) => {
-        const file = e.target.files[0]
-        if (file) {
-            setSelectedFile(file)
-
-            // Create preview URL
-            const reader = new FileReader()
-            reader.onload = (e) => {
-                setFilePreview(e.target.result)
-                setNewAnimal({
-                    ...newAnimal,
-                    image: e.target.result, // Store base64 data URL
-                })
-            }
-            reader.readAsDataURL(file)
+    const clearAllImages = () => {
+        setSelectedFiles([])
+        setFilePreviews([])
+        setNewAnimal({
+            ...newAnimal,
+            image: [],
+        })
+        if (fileInputRef.current) {
+            fileInputRef.current.value = ""
         }
     }
 
-    const clearFileSelection = () => {
-        setSelectedFile(null)
-        setFilePreview(null)
-        if (imageInputMethod === "file") {
-            setNewAnimal({
-                ...newAnimal,
-                image: "",
-            })
-        }
+    const handleAdoptionTypeToggle = (type) => {
+        setAdoptionTypes((prev) => ({
+            ...prev,
+            [type]: !prev[type],
+        }))
+    }
+
+    // Convert adoption types object to list format for DTO
+    const convertAdoptionTypesToList = (adoptionTypesObj) => {
+        const types = []
+        if (adoptionTypesObj.adoptie_permanenta) types.push("adoptie_permanenta")
+        if (adoptionTypesObj.foster) types.push("foster")
+        if (adoptionTypesObj.adoptie_la_distanta) types.push("adoptie_la_distanta")
+        return types
     }
 
     const addAnimal = async (e) => {
@@ -182,6 +362,13 @@ const EditorCatalog = () => {
             return
         }
 
+        // Check if at least one adoption type is selected
+        const hasSelectedAdoptionType = Object.values(adoptionTypes).some((type) => type === true)
+        if (!hasSelectedAdoptionType) {
+            setError("Vă rugăm să selectați cel puțin un tip de adopție.")
+            return
+        }
+
         try {
             setLoading(true)
             setError(null)
@@ -193,15 +380,17 @@ const EditorCatalog = () => {
                 throw new Error("User ID is not available")
             }
 
+            // Create AnimalDTO exactly as specified
             const animalDTO = {
                 name: newAnimal.name,
                 species: newAnimal.species,
                 description: newAnimal.description,
-                image: newAnimal.image, // Now a simple URL string
+                image: newAnimal.image, // List<String> as per DTO
                 userId: currentId,
+                typesOfAdoption: convertAdoptionTypesToList(adoptionTypes), // List<String> as per DTO
             }
 
-            console.log("Creating animal with data:", animalDTO)
+            console.log("Creating animal with AnimalDTO:", animalDTO)
 
             const animalResponse = await fetch(`${API_BASE_URL}/createAnimal`, {
                 method: "POST",
@@ -285,7 +474,6 @@ const EditorCatalog = () => {
                 }
             }
 
-            // Fetch the updated animals list
             await fetchUserAnimals()
 
             // Reset form
@@ -293,15 +481,19 @@ const EditorCatalog = () => {
                 name: "",
                 species: "",
                 description: "",
-                image: "",
+                image: [],
                 userId: "",
             })
             setLocation("")
+            setAdoptionTypes({
+                adoptie_permanenta: false,
+                foster: false,
+                adoptie_la_distanta: false,
+            })
             setIsEditing(false)
             setEditingId(null)
-            setImageInputMethod("url")
-            setSelectedFile(null)
-            setFilePreview(null)
+            setSelectedFiles([])
+            setFilePreviews([])
 
             if (hasErrors) {
                 setError(`Animalul a fost salvat, dar unele actualizări au eșuat: ${errorMessages.join(", ")}`)
@@ -325,6 +517,13 @@ const EditorCatalog = () => {
             return
         }
 
+        // Check if at least one adoption type is selected
+        const hasSelectedAdoptionType = Object.values(adoptionTypes).some((type) => type === true)
+        if (!hasSelectedAdoptionType) {
+            setError("Vă rugăm să selectați cel puțin un tip de adopție.")
+            return
+        }
+
         try {
             setLoading(true)
             setError(null)
@@ -336,23 +535,25 @@ const EditorCatalog = () => {
                 throw new Error("User ID is not available")
             }
 
-            const animalFields = {
+            // Create AnimalDTO exactly as specified
+            const animalDTO = {
                 name: newAnimal.name,
                 species: newAnimal.species,
                 description: newAnimal.description,
-                image: newAnimal.image, // Now a simple URL string
+                image: newAnimal.image, // List<String> as per DTO
                 userId: currentId,
+                typesOfAdoption: convertAdoptionTypesToList(adoptionTypes), // List<String> as per DTO
             }
 
             const updateData = Object.fromEntries(
-                Object.entries(animalFields).filter(([_, value]) => value !== undefined && value !== null && value !== ""),
+                Object.entries(animalDTO).filter(([_, value]) => value !== undefined && value !== null && value !== ""),
             )
 
             let hasErrors = false
             const errorMessages = []
 
             if (Object.keys(updateData).length > 0) {
-                console.log("Updating animal with data:", updateData)
+                console.log("Updating animal with AnimalDTO:", updateData)
 
                 const animalResponse = await fetch(`${API_BASE_URL}/updateFullAnimal/${editingId}`, {
                     method: "PUT",
@@ -432,7 +633,6 @@ const EditorCatalog = () => {
                 }
             }
 
-            // Refresh the animals list
             await fetchUserAnimals()
 
             // Reset form
@@ -440,15 +640,19 @@ const EditorCatalog = () => {
                 name: "",
                 species: "",
                 description: "",
-                image: "",
+                image: [],
                 userId: "",
             })
             setLocation("")
+            setAdoptionTypes({
+                adoptie_permanenta: false,
+                foster: false,
+                adoptie_la_distanta: false,
+            })
             setIsEditing(false)
             setEditingId(null)
-            setImageInputMethod("url")
-            setSelectedFile(null)
-            setFilePreview(null)
+            setSelectedFiles([])
+            setFilePreviews([])
 
             if (hasErrors) {
                 setError(`Animalul a fost actualizat, dar unele actualizări au eșuat: ${errorMessages.join(", ")}`)
@@ -499,29 +703,46 @@ const EditorCatalog = () => {
             name: animal.name,
             species: animal.species,
             description: animal.description,
-            image: animal.image || "",
+            image: animal.image || [],
             userId: animal.userId,
         })
         setLocation(animal.place || "")
         setContact(animal.contact || "")
         setUserType(animal.type || "individual")
+
+        // Convert typesOfAdoption list back to object format
+        const adoptionTypesObj = {
+            adoptie_permanenta: false,
+            foster: false,
+            adoptie_la_distanta: false,
+        }
+
+        if (animal.typesOfAdoption && Array.isArray(animal.typesOfAdoption)) {
+            animal.typesOfAdoption.forEach((type) => {
+                if (adoptionTypesObj.hasOwnProperty(type)) {
+                    adoptionTypesObj[type] = true
+                }
+            })
+        } else if (animal.adoptionTypes) {
+            // Backward compatibility
+            adoptionTypesObj.adoptie_permanenta = animal.adoptionTypes.adoptie_permanenta || false
+            adoptionTypesObj.foster = animal.adoptionTypes.foster || false
+            adoptionTypesObj.adoptie_la_distanta = animal.adoptionTypes.adoptie_la_distanta || false
+        }
+
+        setAdoptionTypes(adoptionTypesObj)
         setIsEditing(true)
         setEditingId(animal.id)
         setError(null)
         setSuccessMessage(null)
 
-        // Determine if the existing image is a URL or base64 data
-        if (animal.image) {
-            if (animal.image.startsWith("data:")) {
-                setImageInputMethod("file")
-                setFilePreview(animal.image)
-            } else {
-                setImageInputMethod("url")
-            }
+        // Handle existing images
+        if (animal.image && animal.image.length > 0) {
+            setFilePreviews(animal.image)
         } else {
-            setImageInputMethod("url")
+            setFilePreviews([])
         }
-        setSelectedFile(null)
+        setSelectedFiles([])
     }
 
     const handleCancel = () => {
@@ -529,18 +750,22 @@ const EditorCatalog = () => {
             name: "",
             species: "",
             description: "",
-            image: "",
+            image: [],
             userId: "",
         })
         setLocation("")
         setContact("")
+        setAdoptionTypes({
+            adoptie_permanenta: false,
+            foster: false,
+            adoptie_la_distanta: false,
+        })
         setIsEditing(false)
         setEditingId(null)
         setError(null)
         setSuccessMessage(null)
-        setImageInputMethod("url")
-        setSelectedFile(null)
-        setFilePreview(null)
+        setSelectedFiles([])
+        setFilePreviews([])
     }
 
     return (
@@ -671,66 +896,90 @@ const EditorCatalog = () => {
                             </div>
 
                             <div>
-                                <Label>Imagine Animal</Label>
-                                <RadioGroup
-                                    value={imageInputMethod}
-                                    onValueChange={setImageInputMethod}
-                                    className="flex flex-row space-x-4 mb-4"
-                                >
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="url" id="url-method" />
-                                        <Label htmlFor="url-method">URL Imagine</Label>
+                                <Label className="text-base font-medium mb-3 block">Tipuri de Adopție Disponibile</Label>
+                                <p className="text-sm text-gray-600 mb-4">
+                                    Selectați tipurile de adopție disponibile pentru acest animal (cel puțin unul):
+                                </p>
+                                <div className="space-y-3">
+                                    <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                                        <Checkbox
+                                            id="adoptie_permanenta"
+                                            checked={adoptionTypes.adoptie_permanenta}
+                                            onCheckedChange={(checked) => handleAdoptionTypeToggle("adoptie_permanenta")}
+                                            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                                        />
+                                        <Label htmlFor="adoptie_permanenta" className="flex-1 cursor-pointer font-medium text-green-700">
+                                            Adopție permanentă
+                                        </Label>
+                                        <div className="w-4 h-4 rounded-full bg-green-100 border-2 border-green-600"></div>
                                     </div>
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="file" id="file-method" />
-                                        <Label htmlFor="file-method">Încarcă Fișier</Label>
-                                    </div>
-                                </RadioGroup>
 
-                                {imageInputMethod === "url" ? (
+                                    <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                                        <Checkbox
+                                            id="foster"
+                                            checked={adoptionTypes.foster}
+                                            onCheckedChange={(checked) => handleAdoptionTypeToggle("foster")}
+                                            className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                                        />
+                                        <Label htmlFor="foster" className="flex-1 cursor-pointer font-medium text-blue-700">
+                                            Foster
+                                        </Label>
+                                        <div className="w-4 h-4 rounded-full bg-blue-100 border-2 border-blue-600"></div>
+                                    </div>
+
+                                    <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                                        <Checkbox
+                                            id="adoptie_la_distanta"
+                                            checked={adoptionTypes.adoptie_la_distanta}
+                                            onCheckedChange={(checked) => handleAdoptionTypeToggle("adoptie_la_distanta")}
+                                            className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                                        />
+                                        <Label htmlFor="adoptie_la_distanta" className="flex-1 cursor-pointer font-medium text-purple-700">
+                                            Adopție la distanță
+                                        </Label>
+                                        <div className="w-4 h-4 rounded-full bg-purple-100 border-2 border-purple-600"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <Label>Imagini Animal (maximum 5)</Label>
+                                <div className="space-y-2 mt-2">
                                     <Input
-                                        id="imageUrl"
-                                        type="url"
-                                        value={newAnimal.image}
-                                        onChange={handleImageUrlChange}
-                                        placeholder="Introduceți URL-ul imaginii (ex: https://example.com/image.jpg)"
+                                        ref={fileInputRef}
+                                        id="imageFiles"
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={handleFileSelect}
+                                        className="cursor-pointer"
                                     />
-                                ) : (
-                                    <div className="space-y-2">
-                                        <Input
-                                            id="imageFile"
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleFileSelect}
-                                            className="cursor-pointer"
-                                        />
-                                        {selectedFile && (
-                                            <div className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                                                <span className="text-sm text-gray-600">{selectedFile.name}</span>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={clearFileSelection}
-                                                    className="text-red-600 hover:text-red-700"
-                                                >
-                                                    Șterge
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                                    <p className="text-sm text-gray-500">
+                                        Poți selecta până la 5 imagini. Imaginile vor fi afișate într-un carusel cu funcție de swipe.
+                                    </p>
 
-                                {(newAnimal.image || filePreview) && (
-                                    <div className="relative mt-4">
-                                        <img
-                                            src={filePreview || newAnimal.image || "/placeholder.svg"}
-                                            alt="Preview"
-                                            className="w-full max-h-64 object-cover rounded-lg"
-                                            onError={(e) => {
-                                                e.target.src = "/placeholder.svg?height=200&width=200"
-                                            }}
-                                        />
+                                    {filePreviews.length > 0 && (
+                                        <div className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                      <span className="text-sm text-gray-600">
+                        {filePreviews.length} imagine{filePreviews.length !== 1 ? "i" : ""} selectată
+                          {filePreviews.length !== 1 ? "e" : ""}
+                      </span>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={clearAllImages}
+                                                className="text-red-600 hover:text-red-700"
+                                            >
+                                                Șterge toate
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {filePreviews.length > 0 && (
+                                    <div className="mt-4">
+                                        <ImageCarousel images={filePreviews} onRemove={removeImage} editable={true} />
                                     </div>
                                 )}
                             </div>
@@ -762,20 +1011,7 @@ const EditorCatalog = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {animals.map((animal) => (
                                 <Card key={animal.id} className="overflow-hidden">
-                                    <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
-                                        {animal.image ? (
-                                            <img
-                                                src={animal.image || "/placeholder.svg"}
-                                                alt={animal.name}
-                                                className="w-full h-48 object-cover"
-                                                onError={(e) => {
-                                                    e.target.src = "/placeholder.svg?height=200&width=200"
-                                                }}
-                                            />
-                                        ) : (
-                                            <div className="text-gray-400">Fără imagine</div>
-                                        )}
-                                    </div>
+                                    <ImageCarousel images={animal.image} />
                                     <CardContent className="p-4">
                                         <h3 className="text-xl font-bold">{animal.name}</h3>
                                         <p className="text-sm text-gray-500">{animal.species}</p>
@@ -799,6 +1035,52 @@ const EditorCatalog = () => {
                                             <p className="text-sm mt-2">
                                                 <strong>Tip:</strong> {animal.type === "individual" ? "Individual" : "Adăpost"}
                                             </p>
+                                        )}
+                                        {(animal.typesOfAdoption || animal.adoptionTypes) && (
+                                            <div className="text-sm mt-2">
+                                                <strong>Tipuri adopție disponibile:</strong>
+                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                    {/* Handle new format (typesOfAdoption list) */}
+                                                    {animal.typesOfAdoption &&
+                                                        Array.isArray(animal.typesOfAdoption) &&
+                                                        animal.typesOfAdoption.map((type) => (
+                                                            <span
+                                                                key={type}
+                                                                className={`px-2 py-1 rounded-full text-xs ${
+                                                                    type === "adoptie_permanenta"
+                                                                        ? "bg-green-100 text-green-800"
+                                                                        : type === "foster"
+                                                                            ? "bg-blue-100 text-blue-800"
+                                                                            : "bg-purple-100 text-purple-800"
+                                                                }`}
+                                                            >
+                                {type === "adoptie_permanenta"
+                                    ? "Adopție permanentă"
+                                    : type === "foster"
+                                        ? "Foster"
+                                        : "Adopție la distanță"}
+                              </span>
+                                                        ))}
+                                                    {/* Handle old format (adoptionTypes object) for backward compatibility */}
+                                                    {animal.adoptionTypes && !animal.typesOfAdoption && (
+                                                        <>
+                                                            {animal.adoptionTypes.adoptie_permanenta && (
+                                                                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
+                                  Adopție permanentă
+                                </span>
+                                                            )}
+                                                            {animal.adoptionTypes.foster && (
+                                                                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">Foster</span>
+                                                            )}
+                                                            {animal.adoptionTypes.adoptie_la_distanta && (
+                                                                <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">
+                                  Adopție la distanță
+                                </span>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
                                         )}
                                         <div className="flex justify-end mt-4 space-x-2">
                                             <Button onClick={() => handleEdit(animal)} className="p-2 bg-blue-500 hover:bg-blue-600">
