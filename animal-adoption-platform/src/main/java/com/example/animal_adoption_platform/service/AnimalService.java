@@ -29,7 +29,7 @@ public class AnimalService {
         animal1.setSpecies(animal.getSpecies());
         animal1.setDescription(animal.getDescription());
         animal1.setUserId(animal.getUserId());
-        animal1.setImage(animal.getImage());
+        animal1.setImages(animal.getImages());
         animal1.setTypesOfAdoptions(animal.getTypesOfAdoption());
         animal1.setEmbeddings(animal.getEmbeddings());
         animalRepository.save(animal1);

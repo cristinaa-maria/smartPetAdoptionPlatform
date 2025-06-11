@@ -54,37 +54,18 @@ public class SemanticSearchService {
      * Enhanced semantic search using adaptive weighting system with keyword matching and adoption type filtering
      */
     public List<Animal> enhancedSemanticSearch(String userQuery, int topN, List<String> adoptionTypes) {
-        System.out.println("Original query: " + userQuery);
-        System.out.println("Adoption types filter: " + adoptionTypes);
-
-        // Generate embedding for query
         List<Float> queryEmbedding = embeddingService.embedTexts(List.of(userQuery)).get(0);
-
-        // Extract species/location from query
         Map<String, String> extracted = rdfGraphService.extractSpeciesAndLocation(userQuery);
         String species = extracted.get("species");
         String location = extracted.get("location");
-
-        // Get users in a map for quick lookup
         Map<String, User> userMap = userRepository.findAll()
                 .stream()
                 .collect(Collectors.toMap(User::getId, u -> u));
-
-        // Get animals with adoption type filtering first, then species filtering
         List<Animal> animals = getFilteredAnimals(species, adoptionTypes);
-
-        // Filter by location if specified and known
         List<Animal> candidates = filterByLocation(animals, location, userMap);
-
-        // Calculate similarities with adaptive weighting
         List<ScoredAnimal> scored = calculateAdaptiveSimilarities(candidates, queryEmbedding, userQuery);
 
-        // Apply enhanced keyword scoring
-
-        // Enhanced sorting with keyword priority
         scored.sort((a, b) -> {
-
-            // Otherwise, use the combined similarity score
             return Float.compare(b.similarity, a.similarity);
         });
 
@@ -176,22 +157,41 @@ public class SemanticSearchService {
             rdfWeight = 0.6f;
         }
         // For longer, descriptive queries - favor text embeddings
+        if (animal.getDescription() != null) {
+            int matchCount = countKeywordMatches(userQuery, animal.getDescription());
 
+            // Dacă sunt cel puțin 2 potriviri semantice/cheie, acordăm bonus
+            if (matchCount >= 2) {
+                textWeight = Math.min(1.0f, textWeight + 0.15f);
+                rdfWeight = 1.0f - textWeight;
+            }
+        }
         // If query contains location terms, slightly favor RDF
         if (hasLocationTerms) {
             rdfWeight = Math.min(0.5f, rdfWeight + 0.1f);
             textWeight = 1.0f - rdfWeight;
         }
 
-        // If animal has rich description, increase text weight
-        if (animal.getDescription() != null && animal.getDescription().length() > 150) {
-            textWeight = Math.min(0.9f, textWeight + 0.1f);
-            rdfWeight = 1.0f - textWeight;
-        }
 
         return new float[]{textWeight, rdfWeight};
     }
 
+    private int countKeywordMatches(String query, String description) {
+        String[] queryWords = query.toLowerCase().split("\\s+");
+        String[] descriptionWords = description.toLowerCase().split("\\s+");
+
+        Set<String> descriptionSet = new HashSet<>(Arrays.asList(descriptionWords));
+
+        int matchCount = 0;
+        for (String word : queryWords) {
+            if (descriptionSet.contains(word)) {
+                matchCount++;
+            }
+            // (opțional) aici poți include și sinonime sau stem-uri dacă folosești NLP
+        }
+
+        return matchCount;
+    }
     /**
      * Helper method to detect specific animal terms in query
      */
@@ -228,12 +228,13 @@ public class SemanticSearchService {
 
             rdfSim = calculateRdfQuerySimilarity(animal.getId(), userQuery);
 
-            // Calcul scor total
+            System.out.println("Scor RDF: " + rdfSim);
+            System.out.println("Scor text: " + textSim);
             float[] weights = calculateAdaptiveWeights(userQuery, animal);
             float keywordScore = calculateKeywordMatchScore(animal, userQuery);
+            scored = applyAdditionalScoring(scored, userQuery);
 
-// Bonus pre-aplicat
-            float bonus = keywordScore * 1.2f;
+            float bonus = keywordScore * 2.5f;
             float combinedSimilarity = weights[0] * textSim + weights[1] * rdfSim + bonus;
             combinedSimilarity = Math.min(1.0f, combinedSimilarity);
 
@@ -273,9 +274,6 @@ public class SemanticSearchService {
         return scored;
     }
 
-    private boolean containsAgeKeywords(String query) {
-        return query.matches(".*(tânăr|mic|adult|mare|vârst).*");
-    }
 
     /**
      * Semantic search with configurable search mode (backward compatibility)
@@ -467,25 +465,160 @@ public class SemanticSearchService {
     /**
      * Calculate RDF similarity for query-based search
      */
+    /**
+     * Calculate RDF similarity for query-based search - FIXED VERSION
+     */
     private float calculateRdfQuerySimilarity(String animalId, String query) {
+        // Get the animal's RDF embedding
+        List<Float> animalRdfEmbedding = rdf2VecService.getStoredRdfEmbedding(animalId);
+        if (animalRdfEmbedding == null || animalRdfEmbedding.isEmpty()) {
+            return 0f;
+        }
+
         // Strategy 1: Use most similar animals from RDF2Vec and check if target is among them
         List<Animal> rdfSimilar = rdf2VecService.findSimilarAnimalsByRdf(animalId, 50);
 
-        // Create a simple relevance score based on RDF similarity rank
-        for (int i = 0; i < rdfSimilar.size(); i++) {
-            if (rdfSimilar.get(i).getId().equals(animalId)) {
-                return 1.0f - (float) i / rdfSimilar.size(); // Higher score for higher rank
+        // Create a relevance score based on how well the query matches the similar animals
+        float queryMatchScore = 0f;
+        int matchingAnimals = 0;
+
+        for (Animal similarAnimal : rdfSimilar) {
+            // Calculate how well this similar animal matches the query
+            float animalQueryMatch = calculateAnimalQueryMatch(similarAnimal, query);
+            if (animalQueryMatch > 0.3f) { // Only consider good matches
+                queryMatchScore += animalQueryMatch;
+                matchingAnimals++;
             }
         }
 
-        // Strategy 2: If no direct match, use a baseline similarity
-        List<Float> animalRdfEmbedding = rdf2VecService.getStoredRdfEmbedding(animalId);
-        if (animalRdfEmbedding != null && !animalRdfEmbedding.isEmpty()) {
-            // Use average embedding as a baseline (this is a simplified approach)
-            return 0.1f; // Small baseline score
+        if (matchingAnimals > 0) {
+            // Average the match scores and apply position-based weighting
+            float avgMatchScore = queryMatchScore / matchingAnimals;
+            // Scale by how many similar animals matched (more matches = more confidence)
+            float confidenceBonus = Math.min(0.3f, (float) matchingAnimals / 10f);
+            return Math.min(1.0f, avgMatchScore + confidenceBonus);
         }
 
-        return 0f;
+        // Strategy 2: Direct attribute matching with RDF context
+        Optional<Animal> animalOpt = animalRepository.findById(animalId);
+        if (animalOpt.isPresent()) {
+            Animal animal = animalOpt.get();
+
+            // Check species match
+            Map<String, String> extracted = rdfGraphService.extractSpeciesAndLocation(query);
+            String querySpecies = extracted.get("species");
+
+            if (querySpecies != null && animal.getSpecies() != null) {
+                if (normalizeText(animal.getSpecies()).equals(normalizeText(querySpecies))) {
+                    return 0.7f;
+                }
+            }
+
+            // Check keyword matching in animal attributes
+            float keywordMatch = calculateKeywordMatchScore(animal, query);
+            if (keywordMatch > 0.4f) {
+                return keywordMatch * 0.6f; // Scale down since it's not pure RDF matching
+            }
+        }
+
+        // Strategy 3: Use RDF embedding similarity with query-representative animals
+        List<Animal> queryRepresentativeAnimals = findQueryRepresentativeAnimals(query);
+        if (!queryRepresentativeAnimals.isEmpty()) {
+            float maxSimilarity = 0f;
+
+            for (Animal representative : queryRepresentativeAnimals) {
+                List<Float> repEmbedding = rdf2VecService.getStoredRdfEmbedding(representative.getId());
+                if (repEmbedding != null && !repEmbedding.isEmpty()) {
+                    float similarity = cosineSimilarity(animalRdfEmbedding, repEmbedding);
+                    maxSimilarity = Math.max(maxSimilarity, similarity);
+                }
+            }
+
+            return maxSimilarity * 0.8f; // Scale slightly since it's indirect
+        }
+
+        return 0f; // No meaningful RDF similarity found
+    }
+
+    /**
+     * Calculate how well an animal matches a query based on attributes
+     */
+    private float calculateAnimalQueryMatch(Animal animal, String query) {
+        float score = 0f;
+        String normalizedQuery = normalizeText(query);
+        String[] queryTerms = normalizedQuery.split("\\s+");
+
+        // Check species match
+        if (animal.getSpecies() != null) {
+            String normalizedSpecies = normalizeText(animal.getSpecies());
+            for (String term : queryTerms) {
+                if (normalizedSpecies.contains(term) && term.length() > 2) {
+                    score += 0.4f;
+                    break;
+                }
+            }
+        }
+
+        // Check name match
+        if (animal.getName() != null) {
+            String normalizedName = normalizeText(animal.getName());
+            for (String term : queryTerms) {
+                if (normalizedName.contains(term) && term.length() > 2) {
+                    score += 0.3f;
+                    break;
+                }
+            }
+        }
+
+        // Check description match
+        if (animal.getDescription() != null) {
+            String normalizedDesc = normalizeText(animal.getDescription());
+            int descMatches = 0;
+            for (String term : queryTerms) {
+                if (normalizedDesc.contains(term) && term.length() > 2) {
+                    descMatches++;
+                }
+            }
+            // Bonus for multiple description matches
+            if (descMatches > 0) {
+                score += Math.min(0.4f, descMatches * 0.1f);
+            }
+        }
+
+        return Math.min(1.0f, score);
+    }
+
+    /**
+     * Find animals that are representative of the query for RDF similarity comparison
+     */
+    private List<Animal> findQueryRepresentativeAnimals(String query) {
+        String normalizedQuery = normalizeText(query);
+        String[] queryTerms = normalizedQuery.split("\\s+");
+
+        // Find animals that match the query terms well
+        List<Animal> representatives = animalRepository.findAll().stream()
+                .filter(animal -> {
+                    float matchScore = calculateAnimalQueryMatch(animal, query);
+                    return matchScore > 0.5f; // Only well-matching animals
+                })
+                .limit(5) // Limit to avoid too many comparisons
+                .collect(Collectors.toList());
+
+        // If no good matches, try to find at least species matches
+        if (representatives.isEmpty()) {
+            Map<String, String> extracted = rdfGraphService.extractSpeciesAndLocation(query);
+            String querySpecies = extracted.get("species");
+
+            if (querySpecies != null && !querySpecies.isBlank()) {
+                representatives = animalRepository.findAll().stream()
+                        .filter(animal -> animal.getSpecies() != null &&
+                                normalizeText(animal.getSpecies()).equals(normalizeText(querySpecies)))
+                        .limit(3)
+                        .collect(Collectors.toList());
+            }
+        }
+
+        return representatives;
     }
 
     /**

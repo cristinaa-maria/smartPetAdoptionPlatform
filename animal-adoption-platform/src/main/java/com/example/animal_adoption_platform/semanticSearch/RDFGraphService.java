@@ -445,4 +445,59 @@ public class RDFGraphService {
         }
     }
 
+    public List<String> getWalkSentencesFromResource(Resource start, int walkLength, int walksPerNode) {
+        List<String> sentences = new ArrayList<>();
+        Random rnd = new Random();
+
+        for (int i = 0; i < walksPerNode; i++) {
+            List<String> walk = new ArrayList<>();
+            Resource current = start;
+            walk.add(current.getURI());
+
+            for (int step = 1; step < walkLength; step++) {
+                StmtIterator stmts = current.listProperties();
+                List<Statement> edges = new ArrayList<>();
+                while (stmts.hasNext()) {
+                    edges.add(stmts.next());
+                }
+
+                if (edges.isEmpty()) break;
+
+                Statement edge = edges.get(rnd.nextInt(edges.size()));
+                if (edge.getObject().isResource()) {
+                    current = edge.getObject().asResource();
+                    walk.add(current.getURI());
+                } else {
+                    walk.add(edge.getObject().toString());
+                    break;
+                }
+            }
+
+            sentences.add(String.join(" ", walk));
+        }
+
+        return sentences;
+    }
+
+    public Resource createQueryAnimalResource(String species, String location) {
+        String ns = "http://example.org/adoption#";
+        Model m = getModel();  // ensures model is loaded
+
+        Resource queryAnimal = m.createResource(ns + "QueryAnimal_" + UUID.randomUUID());
+
+        if (species != null && !species.isBlank()) {
+            queryAnimal.addProperty(m.createProperty(ns + "species"), species.toLowerCase());
+        }
+
+        if (location != null && !location.isBlank()) {
+            // Fake location resource
+            Resource locRes = m.createResource(ns + "location_" + normalizeLocation(location));
+            queryAnimal.addProperty(m.createProperty(ns + "isLocatedIn"), locRes);
+        }
+
+        return queryAnimal;
+    }
+
+
+
 }

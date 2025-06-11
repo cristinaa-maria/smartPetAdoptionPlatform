@@ -168,64 +168,64 @@ public class RDF2VecService {
     /**
      * Updates animal RDF embeddings in the separate rdf2vecEmbeddings collection
      */
-    public void updateAnimalRdfEmbeddings() {
-        trainRDF2VecModel(); // or ensure model is trained/loaded
-
-        // Print total animals and embedding keys before starting
-        List<Animal> animals = animalRepository.findAll();
-        System.out.println("Animals in DB: " + animals.size());
-
-        if (nodeEmbeddings == null || nodeEmbeddings.isEmpty()) {
-            System.out.println("ERROR: nodeEmbeddings is null or empty. Model training may have failed!");
-            return;
-        }
-        System.out.println("nodeEmbeddings keys: " + nodeEmbeddings.keySet());
-
-        int updatedCount = 0;
-        int createdCount = 0;
-        int skippedCount = 0;
-
-        for (Animal animal : animals) {
-            String ns = "http://example.org/adoption#";
-            String animalUri = ns + "animal" + animal.getId();
-            double[] embedding = nodeEmbeddings.get(animalUri);
-
-            // Log the mapping/lookup
-            System.out.println("Processing animalId: " + animal.getId() + " | URI: " + animalUri + " | embedding: " + (embedding != null ? "FOUND" : "NOT FOUND"));
-
-            if (embedding != null) {
-                List<Float> embeddingList = Arrays.stream(embedding)
-                        .mapToObj(d -> (float) d)
-                        .collect(Collectors.toList());
-
-                Optional<RDF2VecEmbeddings> existingEmbedding = rdf2VecEmbeddingRepository.findByAnimalId(animal.getId());
-                if (existingEmbedding.isPresent()) {
-                    RDF2VecEmbeddings rdfEmbedding = existingEmbedding.get();
-                    rdfEmbedding.setEmbeddings(embeddingList);
-                    rdf2VecEmbeddingRepository.save(rdfEmbedding);
-                    updatedCount++;
-                } else {
-                    RDF2VecEmbeddings newEmbedding = new RDF2VecEmbeddings();
-                    newEmbedding.setAnimalId(animal.getId());
-                    newEmbedding.setEmbeddings(embeddingList);
-                    rdf2VecEmbeddingRepository.save(newEmbedding);
-                    createdCount++;
-                }
-            } else {
-                skippedCount++;
-            }
-        }
-
-        // Print a summary after the loop
-        System.out.println("=== RDF2Vec Embedding Save Summary ===");
-        System.out.println("Created: " + createdCount);
-        System.out.println("Updated: " + updatedCount);
-        System.out.println("Skipped (no embedding): " + skippedCount);
-
-        if ((createdCount + updatedCount) == 0) {
-            System.out.println("WARNING: No embeddings were stored! Check your animal URIs and random walks.");
-        }
-    }
+//    public void updateAnimalRdfEmbeddings() {
+//        trainRDF2VecModel(); // or ensure model is trained/loaded
+//
+//        // Print total animals and embedding keys before starting
+//        List<Animal> animals = animalRepository.findAll();
+//        System.out.println("Animals in DB: " + animals.size());
+//
+//        if (nodeEmbeddings == null || nodeEmbeddings.isEmpty()) {
+//            System.out.println("ERROR: nodeEmbeddings is null or empty. Model training may have failed!");
+//            return;
+//        }
+//        System.out.println("nodeEmbeddings keys: " + nodeEmbeddings.keySet());
+//
+//        int updatedCount = 0;
+//        int createdCount = 0;
+//        int skippedCount = 0;
+//
+//        for (Animal animal : animals) {
+//            String ns = "http://example.org/adoption#";
+//            String animalUri = ns + "animal" + animal.getId();
+//            double[] embedding = nodeEmbeddings.get(animalUri);
+//
+//            // Log the mapping/lookup
+//            System.out.println("Processing animalId: " + animal.getId() + " | URI: " + animalUri + " | embedding: " + (embedding != null ? "FOUND" : "NOT FOUND"));
+//
+//            if (embedding != null) {
+//                List<Float> embeddingList = Arrays.stream(embedding)
+//                        .mapToObj(d -> (float) d)
+//                        .collect(Collectors.toList());
+//
+//                Optional<RDF2VecEmbeddings> existingEmbedding = rdf2VecEmbeddingRepository.findByAnimalId(animal.getId());
+//                if (existingEmbedding.isPresent()) {
+//                    RDF2VecEmbeddings rdfEmbedding = existingEmbedding.get();
+//                    rdfEmbedding.setEmbeddings(embeddingList);
+//                    rdf2VecEmbeddingRepository.save(rdfEmbedding);
+//                    updatedCount++;
+//                } else {
+//                    RDF2VecEmbeddings newEmbedding = new RDF2VecEmbeddings();
+//                    newEmbedding.setAnimalId(animal.getId());
+//                    newEmbedding.setEmbeddings(embeddingList);
+//                    rdf2VecEmbeddingRepository.save(newEmbedding);
+//                    createdCount++;
+//                }
+//            } else {
+//                skippedCount++;
+//            }
+//        }
+//
+//        // Print a summary after the loop
+//        System.out.println("=== RDF2Vec Embedding Save Summary ===");
+//        System.out.println("Created: " + createdCount);
+//        System.out.println("Updated: " + updatedCount);
+//        System.out.println("Skipped (no embedding): " + skippedCount);
+//
+//        if ((createdCount + updatedCount) == 0) {
+//            System.out.println("WARNING: No embeddings were stored! Check your animal URIs and random walks.");
+//        }
+//    }
 
     /**
      * Gets RDF2Vec embedding from the database for a specific animal

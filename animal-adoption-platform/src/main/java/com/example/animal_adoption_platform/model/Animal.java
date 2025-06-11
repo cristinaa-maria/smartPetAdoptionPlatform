@@ -25,7 +25,7 @@ public class Animal {
     private String name;
     private String species;
     private String description;
-    private List<String> image;
+    private List<String> images;
     private List<String> typesOfAdoptions;
     private List<Float> embeddings;
 
