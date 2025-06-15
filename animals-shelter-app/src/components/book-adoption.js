@@ -2,6 +2,55 @@ import { useState, useEffect } from "react"
 import { format, startOfWeek, addDays, parseISO } from "date-fns"
 import { ArrowLeft } from "lucide-react"
 
+// Normalization functions
+const normalizeSpecies = (species) => {
+    if (!species) return species
+
+    const lowerSpecies = species.toLowerCase().trim()
+
+    // Check for dog variations
+    if (lowerSpecies.includes("catel") || lowerSpecies.includes("dog") || lowerSpecies.includes("caine")) {
+        return "Caine"
+    }
+
+    // Check for cat variations
+    if (lowerSpecies.includes("pisica") || lowerSpecies.includes("cat")) {
+        return "Pisica"
+    }
+
+    // Return original if no match found
+    return species
+}
+
+const normalizeUserType = (type) => {
+    if (!type) return type
+
+    const lowerType = type.toLowerCase().trim()
+
+    // Check for individual variations
+    if (
+        lowerType.includes("individual") ||
+        lowerType.includes("person") ||
+        lowerType.includes("persoana") ||
+        lowerType.includes("fizica")
+    ) {
+        return "Persoana individuala"
+    }
+
+    // Check for shelter variations
+    if (
+        lowerType.includes("shelter") ||
+        lowerType.includes("adapost") ||
+        lowerType.includes("organizatie") ||
+        lowerType.includes("organization")
+    ) {
+        return "Adapost"
+    }
+
+    // Return original if no match found
+    return type
+}
+
 export default function AdoptionBooking() {
     const [animalId, setAnimalId] = useState(null)
 
@@ -21,7 +70,7 @@ export default function AdoptionBooking() {
     const [dataLoading, setDataLoading] = useState(true)
     const [error, setError] = useState(null)
     const [animalDetails, setAnimalDetails] = useState(null)
-    const [ownerName, setOwnerName] = useState(null)
+    const [ownerInfo, setOwnerInfo] = useState(null) // Changed from ownerName to ownerInfo
 
     const API_BASE_URL = "http://localhost:8083"
 
@@ -65,26 +114,29 @@ export default function AdoptionBooking() {
                 setAnimalDetails(animal)
                 setUserId(animal.userId)
 
-                // Fetch owner name
+                // Fetch owner information (name and type)
                 if (animal.userId) {
                     try {
-                        const ownerResponse = await fetch(`${API_BASE_URL}/currentUserName/${animal.userId}`, {
+                        const ownerResponse = await fetch(`${API_BASE_URL}/users/${animal.userId}`, {
                             method: "GET",
                             credentials: "include",
                             headers: {
-                                Accept: "text/plain, */*",
+                                Accept: "application/json",
                             },
                         })
 
                         if (ownerResponse.ok) {
-                            const ownerNameText = await ownerResponse.text()
-                            console.log("Owner name:", ownerNameText)
-                            setOwnerName(ownerNameText)
+                            const ownerData = await ownerResponse.json()
+                            console.log("Owner data:", ownerData)
+                            setOwnerInfo({
+                                name: ownerData.name,
+                                type: ownerData.type,
+                            })
                         } else {
-                            console.error("Failed to fetch owner name:", ownerResponse.status)
+                            console.error("Failed to fetch owner information:", ownerResponse.status)
                         }
                     } catch (ownerError) {
-                        console.error("Error fetching owner name:", ownerError)
+                        console.error("Error fetching owner information:", ownerError)
                     }
                 }
 
@@ -207,17 +259,22 @@ export default function AdoptionBooking() {
                                         <strong>Nume:</strong> {animalDetails.name}
                                     </p>
                                     <p>
-                                        <strong>Specie:</strong> {animalDetails.species}
+                                        <strong>Specie:</strong> {normalizeSpecies(animalDetails.species)}
                                     </p>
                                     {animalDetails.breed && (
                                         <p>
                                             <strong>Rasă:</strong> {animalDetails.breed}
                                         </p>
                                     )}
-                                    {ownerName && (
-                                        <p>
-                                            <strong>Proprietar:</strong> {ownerName}
-                                        </p>
+                                    {ownerInfo && (
+                                        <div className="mt-2">
+                                            <p>
+                                                <strong>Proprietar:</strong> {ownerInfo.name}
+                                            </p>
+                                            <p>
+                                                <strong>Tip utilizator:</strong> {normalizeUserType(ownerInfo.type)}
+                                            </p>
+                                        </div>
                                     )}
                                 </div>
                             )}

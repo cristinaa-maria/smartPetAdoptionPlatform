@@ -1,6 +1,19 @@
-
 import { useState, useEffect, useRef } from "react"
-import { PawPrint, Heart, MessageCircle, Share2, LogOut, MoreVertical, Edit, Trash, Flag, X } from "lucide-react"
+import {
+    PawPrint,
+    Heart,
+    MessageCircle,
+    Share2,
+    LogOut,
+    MoreVertical,
+    Edit,
+    Trash,
+    Flag,
+    X,
+    Send,
+    ChevronDown,
+    ChevronUp,
+} from "lucide-react"
 import Label from "./ui/Label"
 import Textarea from "./ui/Textarea"
 
@@ -73,6 +86,78 @@ const PostTag = ({ type }) => {
     )
 }
 
+const CommentSection = ({ postId, comments, onAddComment, currentUserName }) => {
+    const [showComments, setShowComments] = useState(false)
+    const [newComment, setNewComment] = useState("")
+
+    const handleSubmitComment = (e) => {
+        e.preventDefault()
+        if (newComment.trim()) {
+            onAddComment(postId, newComment.trim())
+            setNewComment("")
+        }
+    }
+
+    return (
+        <div className="border-t pt-3 mt-3">
+            <button
+                onClick={() => setShowComments(!showComments)}
+                className="flex items-center text-sm text-gray-600 hover:text-gray-800 mb-3"
+            >
+                {showComments ? (
+                    <>
+                        <ChevronUp className="h-4 w-4 mr-1" />
+                        Ascunde comentariile
+                    </>
+                ) : (
+                    <>
+                        <ChevronDown className="h-4 w-4 mr-1" />
+                        Vezi comentariile ({comments.length})
+                    </>
+                )}
+            </button>
+
+            {showComments && (
+                <div className="space-y-3">
+                    {/* Existing Comments */}
+                    <div className="space-y-3 max-h-60 overflow-y-auto">
+                        {comments.map((comment) => (
+                            <div key={comment.id} className="bg-gray-50 rounded-lg p-3">
+                                <div className="flex justify-between items-start mb-1">
+                                    <span className="font-medium text-sm text-gray-900">{comment.author}</span>
+                                    <span className="text-xs text-gray-500">{comment.timestamp}</span>
+                                </div>
+                                <p className="text-sm text-gray-700">{comment.content}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Add Comment Form */}
+                    <form onSubmit={handleSubmitComment} className="flex gap-2">
+                        <div className="flex-1">
+                            <Textarea
+                                placeholder="Scrie un comentariu..."
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                className="min-h-[60px] resize-none"
+                                rows={2}
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={!newComment.trim()}
+                            className="self-end px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                        >
+                            <Send className="h-4 w-4" />
+                        </button>
+                    </form>
+                    <p className="text-xs text-gray-500">Comentezi ca: {currentUserName}</p>
+                </div>
+            )}
+        </div>
+    )
+}
+
 const getPlaceholderByTag = (tag) => {
     switch (tag) {
         case "voluntariat":
@@ -85,14 +170,220 @@ const getPlaceholderByTag = (tag) => {
     }
 }
 
+// Mock comments data
+const mockComments = {
+    "event-1": [
+        {
+            id: 12,
+            author: "Alexandra Marin",
+            content: "Ce eveniment minunat! Vom fi acolo cu toată familia. Copiii sunt foarte entuziasmați!",
+            timestamp: "20 ore în urmă",
+        },
+        {
+            id: 13,
+            author: "Bogdan Ionescu",
+            content: "Finalmente un eveniment în București! Caut un câine de talie medie pentru apartament.",
+            timestamp: "18 ore în urmă",
+        },
+        {
+            id: 14,
+            author: "Cristina Popescu",
+            content: "Consultațiile veterinare gratuite sunt o idee excelentă! Mulțumim PetPal! 🙏",
+            timestamp: "15 ore în urmă",
+        },
+        {
+            id: 15,
+            author: "Mihai Georgescu",
+            content: "Voi fi acolo ca voluntar! Cine mai vine să ajute?",
+            timestamp: "12 ore în urmă",
+        },
+        {
+            id: 16,
+            author: "Elena Radu",
+            content: "Parcul Herăstrău este locația perfectă! Ușor accesibil cu transportul public.",
+            timestamp: "10 ore în urmă",
+        },
+        {
+            id: 17,
+            author: "Andrei Stoica",
+            content: "Pot să aduc și câinele meu să socializeze cu ceilalți?",
+            timestamp: "8 ore în urmă",
+        },
+    ],
+    "event-2": [
+        {
+            id: 18,
+            author: "Maria Vasile",
+            content: "Excelentă inițiativă! Reducerile vor ajuta foarte mult familiile care adoptă.",
+            timestamp: "2 zile în urmă",
+        },
+        {
+            id: 19,
+            author: "Radu Petre",
+            content: "Clinica Veterinară Locală are o reputație foarte bună. Parteneriat perfect!",
+            timestamp: "2 zile în urmă",
+        },
+        {
+            id: 20,
+            author: "Ioana Dumitrescu",
+            content: "Serviciile de urgență 24/7 sunt esențiale. Mulțumesc pentru acest parteneriat!",
+            timestamp: "1 zi în urmă",
+        },
+        {
+            id: 21,
+            author: "Gabriel Marin",
+            content: "Cum pot beneficia de aceste reduceri? Trebuie să prezint ceva la clinică?",
+            timestamp: "1 zi în urmă",
+        },
+    ],
+    "event-3": [
+        {
+            id: 22,
+            author: "Diana Popescu",
+            content: "M-am înscris deja! Nu pot să aștept să încep să ajut animalele! 💕",
+            timestamp: "4 zile în urmă",
+        },
+        {
+            id: 23,
+            author: "Cosmin Radu",
+            content: "Programul de foster mă interesează foarte mult. Voi fi acolo!",
+            timestamp: "4 zile în urmă",
+        },
+        {
+            id: 24,
+            author: "Alina Georgescu",
+            content: "Aveți nevoie de voluntari cu experiență în fotografie? Am lucrat cu animale înainte.",
+            timestamp: "3 zile în urmă",
+        },
+        {
+            id: 25,
+            author: "Vlad Ionescu",
+            content: "Este vreo limită de vârstă pentru voluntari? Fiul meu de 16 ani vrea să participe.",
+            timestamp: "3 zile în urmă",
+        },
+        {
+            id: 26,
+            author: "Carmen Stoica",
+            content: "Orientarea este doar în română sau și în alte limbi?",
+            timestamp: "2 zile în urmă",
+        },
+    ],
+    1: [
+        {
+            id: 1,
+            author: "Maria Ionescu",
+            content: "Ce drăguț este Max! Se vede că se distrează foarte mult cu jucăria.",
+            timestamp: "1 oră în urmă",
+        },
+        {
+            id: 2,
+            author: "Andrei Popescu",
+            content: "Unde ai găsit jucăria? Și câinele meu ar avea nevoie de una așa.",
+            timestamp: "45 min în urmă",
+        },
+        {
+            id: 3,
+            author: "Elena Dumitrescu",
+            content: "Max arată foarte fericit! 🐕❤️",
+            timestamp: "30 min în urmă",
+        },
+        {
+            id: 4,
+            author: "Radu Mihai",
+            content: "Câinii adoră jucăriile care fac zgomot! Max pare să fie în al nouălea cer.",
+            timestamp: "25 min în urmă",
+        },
+        {
+            id: 5,
+            author: "Carmen Stoica",
+            content: "Așa de frumos să vezi un animal fericit și iubit! Felicitări pentru grija pe care o ai de Max! 💕",
+            timestamp: "20 min în urmă",
+        },
+    ],
+    2: [
+        {
+            id: 6,
+            author: "Cristian Marin",
+            content: "Prima vizită la veterinar poate fi stresantă pentru ei. Bella a fost curajoasă!",
+            timestamp: "3 ore în urmă",
+        },
+        {
+            id: 7,
+            author: "Ana Georgescu",
+            content: "Recomand să îi aduci o jucărie preferată data viitoare, îi va fi mai ușor.",
+            timestamp: "2 ore în urmă",
+        },
+        {
+            id: 8,
+            author: "Mihai Vasile",
+            content: "Bella este foarte frumoasă! Sper că totul a fost în regulă la control.",
+            timestamp: "2 ore în urmă",
+        },
+        {
+            id: 9,
+            author: "Ioana Petre",
+            content: "Veterinarul nostru recomandă să vii cu câteva recompense pentru a face experiența mai plăcută.",
+            timestamp: "1 oră în urmă",
+        },
+        {
+            id: 10,
+            author: "Gabriel Radu",
+            content: "Ce pisicuță frumoasă! Prima vizită este întotdeauna cea mai grea, dar se va obișnui.",
+            timestamp: "45 min în urmă",
+        },
+        {
+            id: 11,
+            author: "Daniela Popescu",
+            content: "Bella pare să fie o pisică foarte calmă. Sigur s-a comportat exemplar! 🐱",
+            timestamp: "30 min în urmă",
+        },
+    ],
+}
+
 const initialPosts = [
+    {
+        id: "event-1",
+        author: "PetPal Adoptions",
+        content:
+            "🎉 Târg de Adopții de Vară - 15 Iulie 2025! 🎉\n\nAlătură-te nouă la cel mai mare eveniment de adopție al anului! Vom avea:\n\n🐕 Peste 100 de câini și pisici care caută o casă\n🎪 Activități pentru copii și familii\n🏥 Consultații veterinare gratuite\n🎁 Premii și surprize pentru toți participanții\n\nLocația: Parcul Herăstrău, București\nOra: 10:00 - 18:00\n\nVino și găsește-ți cel mai bun prieten! Intrarea este gratuită pentru toată familia. #AdoptieDeVara #PetPalAdoptions",
+        image: "/placeholder.svg?height=400&width=600&text=Targ+de+Adoptii+de+Vara",
+        likes: 89,
+        comments: 6,
+        timestamp: "1 day ago",
+        userId: "petpal_official",
+        tag: "eveniment",
+    },
+    {
+        id: "event-2",
+        author: "PetPal Adoptions",
+        content:
+            "📢 Anunț Important - Nou Parteneriat! 📢\n\nSuntem încântați să anunțăm noul nostru parteneriat cu Clinica Veterinară Locală! 🏥\n\nCe înseamnă asta pentru tine:\n✅ Reduceri de 20% la toate consultațiile pentru animalele adoptate prin PetPal\n✅ Servicii de urgență 24/7 cu tarife preferențiale\n✅ Programe de vaccinare și deparazitare la prețuri speciale\n✅ Consiliere gratuită pentru îngrijirea animalelor de companie\n\nParteneriatul intră în vigoare din 1 August 2025. Pentru mai multe detalii, contactați-ne! #Parteneriat #IngrijireVeterinara",
+        image: "/placeholder.svg?height=400&width=600&text=Parteneriat+Clinica+Veterinara",
+        likes: 67,
+        comments: 4,
+        timestamp: "3 days ago",
+        userId: "petpal_official",
+        tag: "eveniment",
+    },
+    {
+        id: "event-3",
+        author: "PetPal Adoptions",
+        content:
+            "🙋‍♀️ Orientare pentru Voluntari - 10 August 2025! 🙋‍♂️\n\nEști interesat să ajuți animalele? Participă la orientarea noastră pentru voluntari!\n\nCe vei învăța:\n🐾 Cum să îngrijești animalele din adăpost\n📋 Proceduri de adopție și documentație\n💝 Tehnici de socializare pentru animale traumatizate\n📸 Cum să faci fotografii atractive pentru anunțuri\n🏠 Programul de foster și găzduire temporară\n\nData: 10 August 2025\nOra: 14:00 - 17:00\nLocația: Sediul PetPal Adoptions\n\nÎnscrierea este gratuită! Trimite un email la voluntari@petpal.ro #Voluntariat #AjutaAnimalele",
+        image: "/placeholder.svg?height=400&width=600&text=Orientare+Voluntari",
+        likes: 45,
+        comments: 5,
+        timestamp: "5 days ago",
+        userId: "petpal_official",
+        tag: "eveniment",
+    },
     {
         id: 1,
         author: "John Doe",
         content: "Max este fericit cu noua lui jucarie.",
-        image: "/placeholder.svg?height=300&width=500",
+        image: "/placeholder.svg?height=300&width=500&text=Max+cu+jucaria",
         likes: 15,
-        comments: 3,
+        comments: 5,
         timestamp: "2 hours ago",
         userId: "user123",
         tag: "actualizare",
@@ -101,12 +392,12 @@ const initialPosts = [
         id: 2,
         author: "Jane Smith",
         content: "Bella, pentru prima data la veterinar. Nu e foarte incantata",
-        image: "/placeholder.svg?height=300&width=500",
+        image: "/placeholder.svg?height=300&width=500&text=Bella+la+veterinar",
         likes: 10,
-        comments: 2,
+        comments: 6,
         timestamp: "5 hours ago",
         userId: "user456",
-        tag: "eveniment", // Adding a tag
+        tag: "eveniment",
     },
 ]
 
@@ -118,6 +409,15 @@ export default function PostUpdates() {
         } catch (error) {
             console.error("Error loading posts from localStorage:", error)
             return initialPosts
+        }
+    })
+    const [comments, setComments] = useState(() => {
+        try {
+            const savedComments = localStorage.getItem("petpalComments")
+            return savedComments ? JSON.parse(savedComments) : mockComments
+        } catch (error) {
+            console.error("Error loading comments from localStorage:", error)
+            return mockComments
         }
     })
     const [newPost, setNewPost] = useState({ content: "", image: "", tag: "actualizare" })
@@ -152,6 +452,14 @@ export default function PostUpdates() {
             console.error("Error saving posts to localStorage:", error)
         }
     }, [posts])
+
+    useEffect(() => {
+        try {
+            localStorage.setItem("petpalComments", JSON.stringify(comments))
+        } catch (error) {
+            console.error("Error saving comments to localStorage:", error)
+        }
+    }, [comments])
 
     useEffect(() => {
         const fetchCurrentUserId = async () => {
@@ -283,6 +591,8 @@ export default function PostUpdates() {
                 tag: newPost.tag,
             }
             setPosts([post, ...posts])
+            // Initialize empty comments array for new post
+            setComments((prev) => ({ ...prev, [post.id]: [] }))
             setNewPost({ content: "", image: "", tag: "actualizare" })
             setImagePreview(null)
             if (fileInputRef.current) {
@@ -293,6 +603,25 @@ export default function PostUpdates() {
 
     const handleLike = (postId) => {
         setPosts(posts.map((post) => (post.id === postId ? { ...post, likes: post.likes + 1 } : post)))
+    }
+
+    const handleAddComment = (postId, commentContent) => {
+        const newComment = {
+            id: Date.now(),
+            author: currentUserName,
+            content: commentContent,
+            timestamp: "Chiar acum",
+        }
+
+        setComments((prev) => ({
+            ...prev,
+            [postId]: [...(prev[postId] || []), newComment],
+        }))
+
+        // Update comment count in posts
+        setPosts(
+            posts.map((post) => (post.id === postId ? { ...post, comments: (comments[postId]?.length || 0) + 1 } : post)),
+        )
     }
 
     const handleEditClick = (post) => {
@@ -331,6 +660,12 @@ export default function PostUpdates() {
     const handleDeletePost = (postId) => {
         if (window.confirm("Ești sigur că vrei să ștergi această postare?")) {
             setPosts(posts.filter((post) => post.id !== postId))
+            // Also remove comments for this post
+            setComments((prev) => {
+                const newComments = { ...prev }
+                delete newComments[postId]
+                return newComments
+            })
         }
     }
 
@@ -342,7 +677,6 @@ export default function PostUpdates() {
 
     const handleSubmitReport = () => {
         if (reportReason.trim()) {
-            // In a real app, you would send this to your backend
             console.log(`Post ${reportedPostId} reported for: ${reportReason}`)
             alert("Mulțumim pentru raportare. O vom analiza cât mai curând.")
             setIsReportDialogOpen(false)
@@ -356,11 +690,32 @@ export default function PostUpdates() {
         return post.userId === currentUserId
     }
 
+    useEffect(() => {
+        // Check if we're linking to a specific event post
+        const urlParams = new URLSearchParams(window.location.search)
+        const eventId = urlParams.get("event")
+
+        if (eventId) {
+            // Scroll to the specific post after a short delay
+            setTimeout(() => {
+                const postElement = document.getElementById(`post-${eventId}`)
+                if (postElement) {
+                    postElement.scrollIntoView({ behavior: "smooth", block: "center" })
+                    // Add a highlight effect
+                    postElement.classList.add("ring-2", "ring-green-500", "ring-opacity-50")
+                    setTimeout(() => {
+                        postElement.classList.remove("ring-2", "ring-green-500", "ring-opacity-50")
+                    }, 3000)
+                }
+            }, 500)
+        }
+    }, [])
+
     return (
         <div className="min-h-screen bg-gray-50">
             <header className="border-b bg-white">
                 <div className="container flex h-16 items-center justify-between px-4">
-                    <a href="/public" className="flex items-center gap-2">
+                    <a href="/home" className="flex items-center gap-2">
                         <PawPrint className="h-6 w-6 text-green-600" />
                         <span className="text-xl font-bold">PetPal Adoptions</span>
                     </a>
@@ -395,6 +750,23 @@ export default function PostUpdates() {
             </header>
             <main className="container mx-auto py-8 px-4 max-w-2xl">
                 {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
+
+                {/* Reset Data Button - for development */}
+                {/*<div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">*/}
+                {/*    <p className="text-sm text-yellow-800 mb-2">*/}
+                {/*        Nu vezi postările de evenimente? Apasă butonul de mai jos pentru a reseta datele:*/}
+                {/*    </p>*/}
+                {/*    <button*/}
+                {/*        onClick={() => {*/}
+                {/*            localStorage.removeItem("petpalPosts")*/}
+                {/*            localStorage.removeItem("petpalComments")*/}
+                {/*            window.location.reload()*/}
+                {/*        }}*/}
+                {/*        className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors text-sm"*/}
+                {/*    >*/}
+                {/*        Resetează postările și comentariile*/}
+                {/*    </button>*/}
+                {/*</div>*/}
 
                 <div className="mb-8 bg-white rounded-lg shadow p-6">
                     <h2 className="text-xl font-bold mb-2">Adaugă o postare</h2>
@@ -467,7 +839,11 @@ export default function PostUpdates() {
                 </div>
 
                 {posts.map((post) => (
-                    <div key={post.id} className="mb-4 bg-white rounded-lg shadow overflow-hidden">
+                    <div
+                        key={post.id}
+                        id={`post-${post.id}`}
+                        className="mb-4 bg-white rounded-lg shadow overflow-hidden transition-all duration-300"
+                    >
                         <div className="p-4">
                             <div className="flex justify-between items-start mb-3">
                                 <div>
@@ -486,21 +862,25 @@ export default function PostUpdates() {
                                         </button>
                                     }
                                 >
-                                    <DropdownMenuItem onClick={() => handleEditClick(post)}>
-                                        <Edit className="mr-2 h-4 w-4" />
-                                        <span>Editează</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleDeletePost(post.id)}>
-                                        <Trash className="mr-2 h-4 w-4" />
-                                        <span>Șterge</span>
-                                    </DropdownMenuItem>
+                                    {isPostOwner(post) && (
+                                        <>
+                                            <DropdownMenuItem onClick={() => handleEditClick(post)}>
+                                                <Edit className="mr-2 h-4 w-4" />
+                                                <span>Editează</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleDeletePost(post.id)}>
+                                                <Trash className="mr-2 h-4 w-4" />
+                                                <span>Șterge</span>
+                                            </DropdownMenuItem>
+                                        </>
+                                    )}
                                     <DropdownMenuItem onClick={() => handleReportClick(post.id)}>
                                         <Flag className="mr-2 h-4 w-4" />
                                         <span>Raportează</span>
                                     </DropdownMenuItem>
                                 </CustomDropdownMenu>
                             </div>
-                            <p className="mb-3">{post.content}</p>
+                            <p className="mb-3 whitespace-pre-line">{post.content}</p>
                             {post.image && (
                                 <div className="mb-3 rounded-lg overflow-hidden" style={{ maxHeight: "350px" }}>
                                     <img
@@ -519,15 +899,23 @@ export default function PostUpdates() {
                                     <Heart className="mr-1 h-5 w-5" />
                                     <span>{post.likes} Aprecieri</span>
                                 </button>
-                                <button className="flex items-center text-gray-700 hover:text-green-600">
+                                <div className="flex items-center text-gray-700">
                                     <MessageCircle className="mr-1 h-5 w-5" />
-                                    <span>{post.comments} Comentarii</span>
-                                </button>
+                                    <span>{comments[post.id]?.length || 0} Comentarii</span>
+                                </div>
                                 <button className="flex items-center text-gray-700 hover:text-green-600">
                                     <Share2 className="mr-1 h-5 w-5" />
                                     <span>Distribuie</span>
                                 </button>
                             </div>
+
+                            {/* Comments Section */}
+                            <CommentSection
+                                postId={post.id}
+                                comments={comments[post.id] || []}
+                                onAddComment={handleAddComment}
+                                currentUserName={currentUserName}
+                            />
                         </div>
                     </div>
                 ))}

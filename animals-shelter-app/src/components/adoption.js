@@ -1,8 +1,10 @@
+
 import type React from "react"
 import { useState } from "react"
 import { PawPrint, Search, Loader2, MapPin, LogOut } from "lucide-react"
 import Button from "./ui/Button"
 import Input from "./ui/Input"
+import { AnimalImage } from "./catalog"
 
 // The API base URL - adjust as needed for your environment
 const API_BASE_URL = "http://localhost:8083"
@@ -25,7 +27,56 @@ const removeDiacritics = (text: string): string => {
     return text.replace(/[ăâîșțĂÂÎȘȚ]/g, (match) => diacriticsMap[match] || match)
 }
 
-const PetCard = ({ pet, location, onAdopt, onFoster, onDistantAdopt, index }) => {
+// Normalization functions
+const normalizeSpecies = (species) => {
+    if (!species) return species
+
+    const lowerSpecies = species.toLowerCase().trim()
+
+    // Check for dog variations
+    if (lowerSpecies.includes("catel") || lowerSpecies.includes("dog") || lowerSpecies.includes("caine")) {
+        return "Caine"
+    }
+
+    // Check for cat variations
+    if (lowerSpecies.includes("pisica") || lowerSpecies.includes("cat")) {
+        return "Pisica"
+    }
+
+    // Return original if no match found
+    return species
+}
+
+const normalizeUserType = (type) => {
+    if (!type) return type
+
+    const lowerType = type.toLowerCase().trim()
+
+    // Check for individual variations
+    if (
+        lowerType.includes("individual") ||
+        lowerType.includes("person") ||
+        lowerType.includes("persoana") ||
+        lowerType.includes("fizica")
+    ) {
+        return "Persoana individuala"
+    }
+
+    // Check for shelter variations
+    if (
+        lowerType.includes("shelter") ||
+        lowerType.includes("adapost") ||
+        lowerType.includes("organizatie") ||
+        lowerType.includes("organization")
+    ) {
+        return "Adapost"
+    }
+
+    // Return original if no match found
+    return type
+}
+
+const PetCard = ({ pet, location, userInfo, onAdopt, onFoster, onDistantAdopt, index }) => {
     // Get available adoption types for this specific animal
     const getAvailableAdoptionTypes = (animal) => {
         // If no adoption types are specified, show all buttons (backward compatibility)
@@ -80,29 +131,42 @@ const PetCard = ({ pet, location, onAdopt, onFoster, onDistantAdopt, index }) =>
         }
     }
 
+    // Helper function to get the primary image from pet data
+    const getPrimaryImage = (pet) => {
+        // Handle both single image and images array
+        if (pet.images && Array.isArray(pet.images) && pet.images.length > 0) {
+            return pet.images[0]
+        }
+        if (pet.image) {
+            return pet.image
+        }
+        return null
+    }
+
     const availableAdoptionTypes = getAvailableAdoptionTypes(pet)
     const adoptionTypeCount = Object.values(availableAdoptionTypes).filter(Boolean).length
+    const primaryImage = getPrimaryImage(pet)
 
     return (
         <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
-                {pet.image ? (
-                    <img
-                        src={pet.image || "/placeholder.svg"}
-                        alt={pet.name}
-                        className="w-full h-48 object-cover"
-                        onError={(e) => {
-                            e.target.src = "/placeholder.svg?height=192&width=300"
-                        }}
-                    />
-                ) : (
-                    <div className="text-gray-400">Fără imagine</div>
-                )}
+            <div className="w-full h-48 bg-gray-50 flex items-center justify-center overflow-hidden">
+                <AnimalImage src={primaryImage} alt={pet.name || "Imagine animal"} animalName={pet.name} />
             </div>
             <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{pet.name}</h2>
-                <p className="text-gray-600 mb-1">Specia: {pet.species}</p>
+                <p className="text-gray-600 mb-1">Specia: {normalizeSpecies(pet.species)}</p>
                 <p className="text-gray-600 mb-1">Descrierea: {pet.description}</p>
+                {/* Display user name and type */}
+                {userInfo && (
+                    <div className="mb-2">
+                        <p className="text-gray-600 text-sm">
+                            <span className="font-medium">Proprietar:</span> {userInfo.name}
+                        </p>
+                        <p className="text-gray-600 text-sm">
+                            <span className="font-medium">Tip utilizator:</span> {normalizeUserType(userInfo.type)}
+                        </p>
+                    </div>
+                )}
                 <p className="text-gray-600 flex items-center mb-3">
                     <MapPin className="h-4 w-4 mr-1" />
                     {location || "Se încarcă locația..."}
@@ -217,6 +281,7 @@ const AdoptionPage = () => {
     const [isLoading, setIsLoading] = useState(false)
     const [adoptionType, setAdoptionType] = useState("standard")
     const [locations, setLocations] = useState({})
+    const [userInfo, setUserInfo] = useState({}) // Add user info state
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -225,6 +290,7 @@ const AdoptionPage = () => {
         // Clear previous results and locations to avoid stale state
         setPets([])
         setLocations({})
+        setUserInfo({}) // Clear user info
 
         try {
             // Pass adoption type to the search function
@@ -248,35 +314,40 @@ const AdoptionPage = () => {
             })
             console.log("=================================")
 
-            // Fetch locations asynchronously but don't let it affect the order
+            // Fetch locations and user info asynchronously but don't let it affect the order
             // Use Promise.allSettled to handle all location fetches
             const locationPromises = animalResults.map(async (animal) => {
                 if (animal.userId) {
                     try {
-                        const location = await fetchUserLocationForAnimal(animal.id, animal.userId)
-                        return { animalId: animal.id, location }
+                        const result = await fetchUserLocationAndInfoForAnimal(animal.id, animal.userId)
+                        return { animalId: animal.id, ...result }
                     } catch (error) {
                         console.warn(`Failed to fetch location for animal ${animal.id}:`, error)
-                        return { animalId: animal.id, location: "Locație indisponibilă" }
+                        return { animalId: animal.id, location: "Locație indisponibilă", userInfo: null }
                     }
                 }
-                return { animalId: animal.id, location: "Locație indisponibilă" }
+                return { animalId: animal.id, location: "Locație indisponibilă", userInfo: null }
             })
 
             // Wait for all location fetches to complete
             const locationResults = await Promise.allSettled(locationPromises)
 
-            // Update locations state with all results at once
+            // Update locations and user info state with all results at once
             const newLocations = {}
+            const newUserInfo = {}
             locationResults.forEach((result, index) => {
                 if (result.status === "fulfilled" && result.value) {
                     newLocations[result.value.animalId] = result.value.location
+                    if (result.value.userInfo) {
+                        newUserInfo[result.value.animalId] = result.value.userInfo
+                    }
                 } else {
                     newLocations[animalResults[index].id] = "Locație indisponibilă"
                 }
             })
 
             setLocations(newLocations)
+            setUserInfo(newUserInfo)
         } catch (error) {
             console.error("Error performing search:", error)
             // You might want to show an error message to the user here
@@ -285,14 +356,22 @@ const AdoptionPage = () => {
         }
     }
 
-    // Helper function to fetch location for a single animal
-    const fetchUserLocationForAnimal = async (animalId, userId) => {
+    // Helper function to fetch location and user info for a single animal
+    const fetchUserLocationAndInfoForAnimal = async (animalId, userId) => {
         const response = await fetch(`${API_BASE_URL}/users/${userId}`)
         if (!response.ok) {
             throw new Error(`Failed to fetch user data for ${userId}`)
         }
 
         const userData = await response.json()
+
+        // Extract user info
+        const userInfo = {
+            name: userData.name,
+            type: userData.type,
+        }
+
+        let location = "Locație indisponibilă"
 
         if (userData.location && userData.location.coordinates && userData.location.coordinates.length === 2) {
             const [longitude, latitude] = userData.location.coordinates
@@ -306,14 +385,13 @@ const AdoptionPage = () => {
                 longitude >= -180 &&
                 longitude <= 180
             ) {
-                return await fetchLocationText(latitude, longitude)
+                location = await fetchLocationText(latitude, longitude)
             } else {
                 console.warn(`Invalid coordinates for animal ${animalId}: lat=${latitude}, lng=${longitude}`)
-                return "Locație indisponibilă"
             }
-        } else {
-            return "Locație indisponibilă"
         }
+
+        return { location, userInfo }
     }
 
     // Helper function to fetch location text from coordinates
@@ -451,6 +529,7 @@ const AdoptionPage = () => {
                             key={pet.id}
                             pet={pet}
                             location={locations[pet.id]}
+                            userInfo={userInfo[pet.id]}
                             onAdopt={navigateToAdoption}
                             onFoster={navigateToFostering}
                             onDistantAdopt={navigateToDistantAdoption}

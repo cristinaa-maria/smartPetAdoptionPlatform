@@ -23,24 +23,6 @@ const sampleRequests = {
         reason:
             "Îmi doresc un companion pentru activități în aer liber și sunt pregătit să ofer un cămin iubitor unui câine care are nevoie.",
     },
-    "2": {
-        id: "2",
-        petName: "Luna",
-        petType: "Pisică",
-        petBreed: "European Domestic",
-        petAge: "1 an",
-        petImage: "/placeholder.svg?height=300&width=300",
-        requesterName: "Elena Ionescu",
-        requesterEmail: "elena.ionescu@example.com",
-        requesterPhone: "0723 456 789",
-        requesterAddress: "Bulevardul Unirii 27, București",
-        requestDate: "13/04/2025",
-        requestTime: "15:45",
-        preferredAdoptionDate: "18/04/2025",
-        status: "approved",
-        reason:
-            "Îmi doresc să ofer un cămin unei pisici care are nevoie și să învăț copilul meu despre responsabilitate și compasiune.",
-    },
     "3": {
         id: "3",
         petName: "Fifi",
@@ -73,17 +55,6 @@ const sampleNotifications = {
         requesterName: "Alexandru Popescu",
         message: "Cerere nouă de adopție pentru Max",
         date: "Acum 2 ore",
-        read: false,
-    },
-    "2": {
-        id: "2",
-        type: "adoption_scheduled",
-        requestId: "2",
-        petName: "Luna",
-        adoptionDate: "15/04/2025",
-        adoptionTime: "14:30",
-        message: "Programare adopție: Luna - 15/04/2025, ora 14:30",
-        date: "Acum 1 zi",
         read: false,
     },
     "3": {

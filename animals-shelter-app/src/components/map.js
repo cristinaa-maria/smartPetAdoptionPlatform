@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react"
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet"
 import "leaflet/dist/leaflet.css"
@@ -5,6 +6,7 @@ import L from "leaflet"
 import { LogOut, PawPrint, Search, MapPin, ChevronLeft, ChevronRight } from "lucide-react"
 import Button from "./ui/Button"
 import Input from "./ui/Input"
+import { AnimalImage } from "./catalog"
 
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -84,6 +86,7 @@ const getAvailableAdoptionTypes = (animal) => {
 const ShelterMap = () => {
     const [animals, setAnimals] = useState([])
     const [locations, setLocations] = useState({})
+    const [userInfo, setUserInfo] = useState({}) // Add user info state
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     const [mapCenter, setMapCenter] = useState([44.4268, 26.1025]) // București
@@ -93,9 +96,61 @@ const ShelterMap = () => {
     const [selectedAnimal, setSelectedAnimal] = useState(null)
     const [species, setSpecies] = useState("all")
     const [isInitialLoad, setIsInitialLoad] = useState(true)
+    const [userLocation, setUserLocation] = useState(null)
+    const [isLocating, setIsLocating] = useState(false)
+    const [locationPermission, setLocationPermission] = useState(null) // 'granted', 'denied', 'prompt'
+    const [showLocationNotification, setShowLocationNotification] = useState(false)
 
     const mapRef = useRef(null)
     const API_BASE_URL = "http://localhost:8083"
+
+    const normalizeSpecies = (species) => {
+        if (!species) return species
+
+        const lowerSpecies = species.toLowerCase().trim()
+
+        // Check for dog variations
+        if (lowerSpecies.includes("catel") || lowerSpecies.includes("dog") || lowerSpecies.includes("caine")) {
+            return "Caine"
+        }
+
+        // Check for cat variations
+        if (lowerSpecies.includes("pisica") || lowerSpecies.includes("cat")) {
+            return "Pisica"
+        }
+
+        // Return original if no match found
+        return species
+    }
+
+    const normalizeUserType = (type) => {
+        if (!type) return type
+
+        const lowerType = type.toLowerCase().trim()
+
+        // Check for individual variations
+        if (
+            lowerType.includes("individual") ||
+            lowerType.includes("person") ||
+            lowerType.includes("persoana") ||
+            lowerType.includes("fizica")
+        ) {
+            return "Persoana individuala"
+        }
+
+        // Check for shelter variations
+        if (
+            lowerType.includes("shelter") ||
+            lowerType.includes("adapost") ||
+            lowerType.includes("organizatie") ||
+            lowerType.includes("organization")
+        ) {
+            return "Adapost"
+        }
+
+        // Return original if no match found
+        return type
+    }
 
     const fetchLocation = async (animalId, latitude, longitude) => {
         try {
@@ -118,13 +173,14 @@ const ShelterMap = () => {
 
     const fetchNearbyAnimals = useCallback(
         async (lat, lng, zoom) => {
+            // Prevent multiple simultaneous requests
+            if (loading) return
+
             setLoading(true)
             setError(null)
 
-            if (!isInitialLoad) {
-                setAnimals([])
-                setLocations({})
-            }
+            // Don't clear animals immediately to prevent flickering
+            // Only clear if we're doing a completely new search
 
             try {
                 const radius = calculateRadius(zoom)
@@ -144,6 +200,7 @@ const ShelterMap = () => {
                 if (userIds.length === 0) {
                     setAnimals([])
                     setLocations({})
+                    setUserInfo({})
                     setLoading(false)
                     setIsInitialLoad(false)
                     return
@@ -176,6 +233,7 @@ const ShelterMap = () => {
                             userLocation: userData?.location || null,
                             userContact: userData?.contact || null,
                             userType: userData?.type || null,
+                            userName: userData?.name || null, // Add user name
                         }))
                     } catch (err) {
                         return []
@@ -203,6 +261,18 @@ const ShelterMap = () => {
                 // Setează animalele imediat (pinii și lista apar instant)
                 setAnimals(validAnimals)
 
+                // Store user info for each animal
+                const userInfoMap = {}
+                validAnimals.forEach((animal) => {
+                    if (animal.userName || animal.userType) {
+                        userInfoMap[animal.id] = {
+                            name: animal.userName,
+                            type: animal.userType,
+                        }
+                    }
+                })
+                setUserInfo(userInfoMap)
+
                 // Fetch location pentru adrese în background (nu mai aștepți la Promise.all)
                 validAnimals.forEach((animal) => {
                     const [longitude, latitude] = animal.userLocation.coordinates
@@ -212,18 +282,60 @@ const ShelterMap = () => {
                 setError("Nu s-au putut încărca datele. Încercați din nou mai târziu.")
                 setAnimals([])
                 setLocations({})
+                setUserInfo({})
             } finally {
                 setLoading(false)
                 setIsInitialLoad(false)
             }
         },
-        [API_BASE_URL, isInitialLoad],
+        [API_BASE_URL, isInitialLoad, loading],
     )
 
     useEffect(() => {
-        fetchNearbyAnimals(mapCenter[0], mapCenter[1], zoomLevel)
-        // eslint-disable-next-line
-    }, []) // Only run once on mount
+        // Check if geolocation is supported
+        if (!navigator.geolocation) {
+            setError("Geolocation nu este suportat de browser-ul dumneavoastră")
+            fetchNearbyAnimals(mapCenter[0], mapCenter[1], zoomLevel)
+            return
+        }
+
+        // Check current permission status
+        if (navigator.permissions) {
+            navigator.permissions
+                .query({ name: "geolocation" })
+                .then((result) => {
+                    setLocationPermission(result.state)
+
+                    if (result.state === "granted") {
+                        // Permission already granted, get location immediately
+                        getUserLocationSilently()
+                    } else if (result.state === "prompt") {
+                        // Show notification to request permission
+                        setShowLocationNotification(true)
+                        // Auto-request after a short delay
+                        setTimeout(() => {
+                            getUserLocationWithPrompt()
+                        }, 2000)
+                    } else {
+                        // Permission denied, use default location
+                        fetchNearbyAnimals(mapCenter[0], mapCenter[1], zoomLevel)
+                    }
+                })
+                .catch(() => {
+                    // Fallback if permissions API not supported
+                    setShowLocationNotification(true)
+                    setTimeout(() => {
+                        getUserLocationWithPrompt()
+                    }, 2000)
+                })
+        } else {
+            // Permissions API not supported, show notification and request
+            setShowLocationNotification(true)
+            setTimeout(() => {
+                getUserLocationWithPrompt()
+            }, 2000)
+        }
+    }, [])
 
     const handleMapChange = useCallback(
         (newCenter, newZoom) => {
@@ -271,7 +383,15 @@ const ShelterMap = () => {
                 const animalSpecies = animal.species?.toLowerCase() || ""
                 const filterSpecies = species.toLowerCase()
                 if (filterSpecies === "câine") {
-                    return animalSpecies.includes("câine") || animalSpecies.includes("catelus") || animalSpecies.includes("dog")
+                    return (
+                        animalSpecies.includes("câine") ||
+                        animalSpecies.includes("catelus") ||
+                        animalSpecies.includes("dog") ||
+                        animalSpecies.includes("caine")
+                    )
+                }
+                if (filterSpecies === "pisică") {
+                    return animalSpecies.includes("pisică") || animalSpecies.includes("pisica") || animalSpecies.includes("cat")
                 }
                 return animalSpecies.includes(filterSpecies)
             })
@@ -299,8 +419,12 @@ const ShelterMap = () => {
                     handleMapChange(newCenter, newZoom)
                 }
             },
-            click: () => {
-                setSelectedAnimal(null)
+            click: (e) => {
+                // Only clear selected animal if clicking on empty map area
+                // Don't interfere with marker clicks
+                if (e.originalEvent.target.tagName !== "IMG") {
+                    setSelectedAnimal(null)
+                }
             },
         })
 
@@ -326,6 +450,71 @@ const ShelterMap = () => {
 
     const navigateToDistantAdoption = (animalId) => {
         window.location.href = `/distantAdoption?animalId=${animalId}`
+    }
+
+    // Helper function to get the primary image from animal data
+    const getPrimaryImage = (animal) => {
+        // Handle both single image and images array
+        if (animal.images && Array.isArray(animal.images) && animal.images.length > 0) {
+            return animal.images[0]
+        }
+        if (animal.image) {
+            return animal.image
+        }
+        return null
+    }
+
+    const getUserLocationSilently = () => {
+        setIsLocating(true)
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords
+                setUserLocation([latitude, longitude])
+                setMapCenter([latitude, longitude])
+                if (mapRef.current) {
+                    mapRef.current.setView([latitude, longitude], 15)
+                }
+                fetchNearbyAnimals(latitude, longitude, 15)
+                setIsLocating(false)
+                setShowLocationNotification(false)
+            },
+            (error) => {
+                console.log("Location error:", error.message)
+                // Fallback to default location without showing error
+                fetchNearbyAnimals(mapCenter[0], mapCenter[1], zoomLevel)
+                setIsLocating(false)
+                setShowLocationNotification(false)
+            },
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 },
+        )
+    }
+
+    const getUserLocationWithPrompt = () => {
+        setIsLocating(true)
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords
+                setUserLocation([latitude, longitude])
+                setMapCenter([latitude, longitude])
+                if (mapRef.current) {
+                    mapRef.current.setView([latitude, longitude], 15)
+                }
+                fetchNearbyAnimals(latitude, longitude, 15)
+                setIsLocating(false)
+                setShowLocationNotification(false)
+                setLocationPermission("granted")
+            },
+            (error) => {
+                if (error.code === error.PERMISSION_DENIED) {
+                    setLocationPermission("denied")
+                }
+                // Fallback to default location
+                fetchNearbyAnimals(mapCenter[0], mapCenter[1], zoomLevel)
+                setIsLocating(false)
+                setShowLocationNotification(false)
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+        )
     }
 
     return (
@@ -427,10 +616,37 @@ const ShelterMap = () => {
                             <div className="flex justify-between items-center mb-2">
                                 <h2 className="text-lg font-semibold">Rezultate ({sidebarAnimals.length})</h2>
                                 {loading && <span className="text-sm text-gray-500">Se încarcă...</span>}
+                                {isLocating && <span className="text-sm text-blue-500">Se localizează...</span>}
                             </div>
 
                             {error && (
                                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>
+                            )}
+                            {showLocationNotification && (
+                                <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">
+                                    <div className="flex items-center">
+                                        <MapPin className="h-4 w-4 mr-2" />
+                                        <div>
+                                            <p className="font-medium">Permiteți accesul la locație</p>
+                                            <p className="text-sm">
+                                                Pentru a găsi animale în apropierea dumneavoastră, vă rugăm să permiteți accesul la locație când
+                                                vi se solicită.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {locationPermission === "denied" && (
+                                <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+                                    <div className="flex items-center">
+                                        <MapPin className="h-4 w-4 mr-2" />
+                                        <div>
+                                            <p className="font-medium">Locația nu este disponibilă</p>
+                                            <p className="text-sm">Puteți căuta manual o adresă sau naviga pe hartă pentru a găsi animale.</p>
+                                        </div>
+                                    </div>
+                                </div>
                             )}
 
                             {!loading && sidebarAnimals.length === 0 && !isInitialLoad && (
@@ -447,6 +663,7 @@ const ShelterMap = () => {
                                 {sidebarAnimals.map((animal) => {
                                     const availableAdoptionTypes = getAvailableAdoptionTypes(animal)
                                     const adoptionTypeCount = Object.values(availableAdoptionTypes).filter(Boolean).length
+                                    const primaryImage = getPrimaryImage(animal)
 
                                     return (
                                         <div
@@ -456,24 +673,29 @@ const ShelterMap = () => {
                                             }`}
                                             onClick={() => centerMapOnAnimal(animal)}
                                         >
-                                            <div className="w-full h-32 bg-gray-100 flex items-center justify-center">
-                                                {animal.image ? (
-                                                    <img
-                                                        src={animal.image || "/placeholder.svg"}
-                                                        alt={animal.name}
-                                                        className="w-full h-32 object-cover"
-                                                        onError={(e) => {
-                                                            e.target.src = "/placeholder.svg?height=128&width=200"
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <div className="text-gray-400">Fără imagine</div>
-                                                )}
+                                            <div className="w-full h-32 bg-gray-50 flex items-center justify-center overflow-hidden">
+                                                <AnimalImage
+                                                    src={primaryImage}
+                                                    alt={animal.name || "Imagine animal"}
+                                                    animalName={animal.name}
+                                                />
                                             </div>
                                             <div className="p-4">
                                                 <h2 className="text-xl font-semibold mb-2">{animal.name}</h2>
-                                                <p className="text-gray-600 mb-1">Specia: {animal.species}</p>
+                                                <p className="text-gray-600 mb-1">Specia: {normalizeSpecies(animal.species)}</p>
                                                 <p className="text-gray-600 mb-1">Descrierea: {animal.description}</p>
+                                                {/* Display user name and type */}
+                                                {userInfo[animal.id] && (
+                                                    <div className="mb-2">
+                                                        <p className="text-gray-600 text-sm">
+                                                            <span className="font-medium">Proprietar:</span> {userInfo[animal.id].name}
+                                                        </p>
+                                                        <p className="text-gray-600 text-sm">
+                                                            <span className="font-medium">Tip utilizator:</span>{" "}
+                                                            {normalizeUserType(userInfo[animal.id].type)}
+                                                        </p>
+                                                    </div>
+                                                )}
                                                 <p className="text-gray-600 flex items-center mb-3">
                                                     <MapPin className="h-4 w-4 mr-1" />
                                                     {locations[animal.id] || "Se încarcă locația..."}
@@ -572,6 +794,7 @@ const ShelterMap = () => {
                             // Add a tiny random offset to each marker's position (±0.00005 degrees, approximately ±5 meters)
                             const randomOffset = () => (Math.random() - 0.5) * 0.0001
                             const position = [latitude + randomOffset(), longitude + randomOffset()]
+                            const primaryImage = getPrimaryImage(animal)
 
                             return (
                                 <Marker
@@ -579,24 +802,36 @@ const ShelterMap = () => {
                                     position={position}
                                     icon={createAnimalIcon(animal.id)}
                                     eventHandlers={{
-                                        click: () => setSelectedAnimal(animal),
+                                        click: (e) => {
+                                            e.originalEvent.stopPropagation()
+                                            setSelectedAnimal(animal)
+                                        },
                                     }}
                                 >
                                     <Popup>
                                         <div className="text-center max-w-xs">
-                                            {animal.image && (
-                                                <img
-                                                    src={animal.image || "/placeholder.svg"}
-                                                    alt={animal.name}
-                                                    className="w-full h-24 object-cover mb-2 rounded"
-                                                    onError={(e) => {
-                                                        e.target.src = "/placeholder.svg?height=96&width=200"
-                                                    }}
+                                            <div className="w-full h-24 bg-gray-50 flex items-center justify-center overflow-hidden mb-2 rounded">
+                                                <AnimalImage
+                                                    src={primaryImage}
+                                                    alt={animal.name || "Imagine animal"}
+                                                    animalName={animal.name}
                                                 />
-                                            )}
+                                            </div>
                                             <h2 className="text-xl font-semibold mb-2">{animal.name}</h2>
-                                            <p className="text-gray-600 mb-1">Specia: {animal.species}</p>
+                                            <p className="text-gray-600 mb-1">Specia: {normalizeSpecies(animal.species)}</p>
                                             <p className="text-gray-600 mb-1">Descrierea: {animal.description}</p>
+                                            {/* Display user name and type in popup */}
+                                            {userInfo[animal.id] && (
+                                                <div className="mb-2">
+                                                    <p className="text-gray-600 text-sm">
+                                                        <span className="font-medium">Proprietar:</span> {userInfo[animal.id].name}
+                                                    </p>
+                                                    <p className="text-gray-600 text-sm">
+                                                        <span className="font-medium">Tip utilizator:</span>{" "}
+                                                        {normalizeUserType(userInfo[animal.id].type)}
+                                                    </p>
+                                                </div>
+                                            )}
                                             <p className="text-gray-600 flex items-center justify-center mb-3">
                                                 <MapPin className="h-4 w-4 mr-1" />
                                                 {locations[animal.id] || "Se încarcă locația..."}
@@ -677,6 +912,25 @@ const ShelterMap = () => {
                                 </Marker>
                             )
                         })}
+                        {userLocation && (
+                            <Marker
+                                position={userLocation}
+                                icon={
+                                    new L.DivIcon({
+                                        html: '<div class="flex items-center justify-center w-8 h-8 bg-blue-500 rounded-full border-2 border-white"><div class="w-4 h-4 bg-white rounded-full"></div></div>',
+                                        className: "user-location-marker",
+                                        iconSize: [32, 32],
+                                        iconAnchor: [16, 16],
+                                    })
+                                }
+                            >
+                                <Popup>
+                                    <div className="text-center">
+                                        <p className="font-medium">Locația ta curentă</p>
+                                    </div>
+                                </Popup>
+                            </Marker>
+                        )}
                     </MapContainer>
 
                     <button
