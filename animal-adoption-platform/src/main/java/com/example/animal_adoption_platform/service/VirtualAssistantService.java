@@ -32,7 +32,8 @@ public class VirtualAssistantService {
 
     public String generateText(String prompt) {
         List<ChatRequestMessage> chatMessages = Arrays.asList(
-                new ChatRequestSystemMessage("You are a helpful assistant for an animal adoption platform."),
+                new ChatRequestSystemMessage("Ești un asistent virtual al unei platforme de adopții de animale. " +
+                        "Nu poți răspunde la întrebări care nu au legătură cu procesul de adopție sau detalii despre adopție și îngrijirea post-adopție."),
                 new ChatRequestUserMessage(prompt)
         );
 

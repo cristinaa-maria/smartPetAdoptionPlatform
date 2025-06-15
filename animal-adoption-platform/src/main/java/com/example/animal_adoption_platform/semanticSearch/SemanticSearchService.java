@@ -228,24 +228,23 @@ public class SemanticSearchService {
 
             rdfSim = calculateRdfQuerySimilarity(animal.getId(), userQuery);
 
-            System.out.println("Scor RDF: " + rdfSim);
-            System.out.println("Scor text: " + textSim);
             float[] weights = calculateAdaptiveWeights(userQuery, animal);
             float keywordScore = calculateKeywordMatchScore(animal, userQuery);
-            scored = applyAdditionalScoring(scored, userQuery);
-
-            float bonus = keywordScore * 2.5f;
+            
+            float bonus = keywordScore * 0.5f;
             float combinedSimilarity = weights[0] * textSim + weights[1] * rdfSim + bonus;
             combinedSimilarity = Math.min(1.0f, combinedSimilarity);
 
             if (combinedSimilarity > 0) {
                 scored.add(new ScoredAnimal(animal, combinedSimilarity));
             }
-
         }
+
+        scored = applyAdditionalScoring(scored, userQuery);
 
         return scored;
     }
+
 
     /**
      * Updated applyAdditionalScoring method with enhanced keyword matching

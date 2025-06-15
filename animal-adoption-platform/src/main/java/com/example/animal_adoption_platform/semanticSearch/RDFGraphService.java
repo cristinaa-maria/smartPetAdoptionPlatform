@@ -29,13 +29,11 @@ public class RDFGraphService {
 
     public void generateRDFGraph() {
         model = ModelFactory.createDefaultModel();
-        String ns = "http://example.org/adoption#";
+        String ns = "http://adoption/";
 
         List<User> users = userRepository.findAll();
         List<Animal> animals = animalRepository.findAll();
         Map<String, User> userMap = users.stream().collect(Collectors.toMap(User::getId, u -> u));
-
-
         for (Animal animal : animals) {
             String originalSpecies = animal.getSpecies();
             String species = originalSpecies;
@@ -51,16 +49,10 @@ public class RDFGraphService {
             } else {
                 species = "";
             }
-
-            System.out.println("Final normalized species: '" + species + "'");
-
             Resource animalResource = model.createResource(ns + "animal" + animal.getId())
                     .addProperty(model.createProperty(ns + "name"), animal.getName())
                     .addProperty(model.createProperty(ns + "species"), species)
                     .addProperty(model.createProperty(ns + "description"), animal.getDescription() != null ? animal.getDescription() : "");
-
-
-            // Location relationship
             if (animal.getUserId() != null && userMap.containsKey(animal.getUserId())) {
                 Resource userResource = model.getResource(ns + "user" + animal.getUserId());
                 animalResource.addProperty(model.createProperty(ns + "postedBy"), userResource);
@@ -75,7 +67,7 @@ public class RDFGraphService {
             }
         }
 
-        System.out.println("\n=== RDF GRAPH GENERATION COMPLETE ===");
+
 
         // Debug: Print all animals in RDF
         debugAnimalsInRDF();
@@ -145,7 +137,7 @@ public class RDFGraphService {
     }
 
     public List<String> getAllDescriptionsFromRDF() {
-        String ns = "http://example.org/adoption#";
+        String ns = "http://adoption/";
         return model.listResourcesWithProperty(model.getProperty(ns + "description"))
                 .toList()
                 .stream()
@@ -256,7 +248,7 @@ public class RDFGraphService {
         System.out.println("Extracted species: '" + species + "'");
         System.out.println("Extracted location: '" + location + "'");
 
-        String ns = "http://example.org/adoption#";
+        String ns = "http://adoption/";
         StringBuilder sparql = new StringBuilder();
         sparql.append("PREFIX : <").append(ns).append(">\n");
         sparql.append("SELECT ?animal ?species ?name WHERE {\n");
@@ -330,7 +322,7 @@ public class RDFGraphService {
 
     public void debugAnimalsInRDF() {
         System.out.println("\n=== ALL ANIMALS IN RDF ===");
-        String ns = "http://example.org/adoption#";
+        String ns = "http://adoption/";
         String sparql = "PREFIX : <" + ns + ">\n" +
                 "SELECT ?animal ?name ?species WHERE {\n" +
                 "  ?animal :name ?name .\n" +
@@ -387,7 +379,7 @@ public class RDFGraphService {
     }
 
     public List<List<String>> generateRandomWalks(int walkLength, int walksPerNode) {
-        String ns = "http://example.org/adoption#";
+        String ns = "http://adoption/";
         List<List<String>> walks = new ArrayList<>();
 
         // All animal nodes
@@ -480,7 +472,7 @@ public class RDFGraphService {
     }
 
     public Resource createQueryAnimalResource(String species, String location) {
-        String ns = "http://example.org/adoption#";
+        String ns = "http://adoption/";
         Model m = getModel();  // ensures model is loaded
 
         Resource queryAnimal = m.createResource(ns + "QueryAnimal_" + UUID.randomUUID());
