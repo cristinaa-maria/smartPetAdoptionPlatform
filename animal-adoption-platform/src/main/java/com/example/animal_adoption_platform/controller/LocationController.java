@@ -3,6 +3,7 @@ package com.example.animal_adoption_platform.controller;
 import com.example.animal_adoption_platform.model.User;
 import com.example.animal_adoption_platform.service.LocationService;
 import com.example.animal_adoption_platform.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +14,7 @@ import java.util.Map;
 @RestController
 @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class LocationController {
+    @Autowired
     private final LocationService locationService;
     private final UserService userService;
 
@@ -63,14 +65,17 @@ public class LocationController {
     @PostMapping("/nearbyClinics")
     public ResponseEntity<List<String>> getNearbyClinics(@RequestBody Map<String, Object> requestBody) {
         try {
-            double latitude = ((Number) requestBody.get("latitude")).doubleValue();
-            double longitude = ((Number) requestBody.get("longitude")).doubleValue();
+            double latMin = ((Number) requestBody.get("latMin")).doubleValue();
+            double latMax = ((Number) requestBody.get("latMax")).doubleValue();
+            double lonMin = ((Number) requestBody.get("lonMin")).doubleValue();
+            double lonMax = ((Number) requestBody.get("lonMax")).doubleValue();
+            String query = requestBody.getOrDefault("query", "clinica veterinara").toString();
 
-            List<String> clinics = locationService.getNearbyVetClinicNames(latitude, longitude);
+            List<String> clinics = locationService.searchClinicsInBoundingBox(latMin, latMax, lonMin, lonMax, query);
             return ResponseEntity.ok(clinics);
+
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(List.of(e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(List.of("Eroare: " + e.getMessage()));
         }
     }
-
 }

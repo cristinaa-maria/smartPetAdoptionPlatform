@@ -52,6 +52,8 @@ public class AnimalService {
             case "description":
                 animal.setDescription(modifiedValue);
                 break;
+            case "typesOfAdoptions":
+                animal.setTypesOfAdoptions(List.of(modifiedField));
             default:
                 throw new IllegalArgumentException("Invalid field: " + modifiedField);
         }

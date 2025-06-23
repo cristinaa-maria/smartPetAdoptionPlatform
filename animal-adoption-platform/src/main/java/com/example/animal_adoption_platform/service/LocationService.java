@@ -1,5 +1,10 @@
 package com.example.animal_adoption_platform.service;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONArray;
+import com.example.animal_adoption_platform.model.User;
+import com.example.animal_adoption_platform.repository.UserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,15 +13,24 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class LocationService {
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private UserRepository userRepository;
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper mapper = new ObjectMapper();
@@ -80,15 +94,90 @@ public class LocationService {
         }
     }
 
-    /**
-     * Returnează lista de clinici veterinare apropiate (exemplu - implementare dummy, modifică după nevoie).
-     */
-    public List<String> getNearbyVetClinicNames(double latitude, double longitude) {
-        // Aici poți folosi Overpass API, sau poți implementa logică custom.
-        // Exemplu simplu (mock):
-        return List.of("Clinica Vet1", "Clinica Vet2");
+    public List<String> searchClinicsInBoundingBox(double latMin, double latMax,
+                                                   double lonMin, double lonMax,
+                                                   String keyword) {
+        List<String> vetClinics = new ArrayList<>();
+        try {
+            if (latMin > latMax) {
+                double temp = latMin;
+                latMin = latMax;
+                latMax = temp;
+            }
+            if (lonMin > lonMax) {
+                double temp = lonMin;
+                lonMin = lonMax;
+                lonMax = temp;
+            }
+
+            System.out.println("=== CLINIC SEARCH DEBUG (Backend) ===");
+            System.out.println("Bounding box: latMin=" + latMin + ", latMax=" + latMax +
+                    ", lonMin=" + lonMin + ", lonMax=" + lonMax);
+            System.out.println("Keyword: " + keyword);
+
+            // 2. Construim URL corect pentru viewbox
+            String searchUrl = String.format(
+                    "https://nominatim.openstreetmap.org/search?q=%s&format=json&bounded=1&viewbox=%f,%f,%f,%f&limit=50&countrycodes=ro",
+                    URLEncoder.encode(keyword, "UTF-8"),
+                    lonMin, latMax, lonMax, latMin // left, top, right, bottom
+            );
+
+            System.out.println("Search URL: " + searchUrl);
+
+            // 3. Trimitem request
+            JSONArray results = sendGetRequestArray(searchUrl);
+            System.out.println("Raw results count: " + results.length());
+
+            // 4. Parcurgem rezultatele și returnăm doar numele (fără coordonate)
+            for (int i = 0; i < results.length(); i++) {
+                JSONObject obj = results.getJSONObject(i);
+                String displayName = obj.optString("display_name", "");
+
+                // Filtrăm doar rezultatele care par să fie clinici veterinare
+                if (displayName.toLowerCase().contains("veterinar") ||
+                        displayName.toLowerCase().contains("vet") ||
+                        displayName.toLowerCase().contains("clinica")) {
+
+                    // Returnăm doar numele fără coordonate
+                    vetClinics.add(displayName);
+                    System.out.println("Added clinic: " + displayName);
+                }
+            }
+
+            System.out.println("Filtered clinics count: " + vetClinics.size());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Error searching clinics: " + e.getMessage());
+            vetClinics.add("Eroare la căutarea clinicilor: " + e.getMessage());
+        }
+
+        return vetClinics;
     }
 
-    // Orice alte metode ai mai avea, păstrează-le aici cu aceeași semnătură ca înainte!
-    // public <Tip> metodaTa(...) { ... }
+    private JSONArray sendGetRequestArray(String urlString) throws Exception {
+        HttpURLConnection conn = (HttpURLConnection) new URL(urlString).openConnection();
+        conn.setRequestMethod("GET");
+        conn.setRequestProperty("User-Agent", "VetClinicFinder/1.0");
+
+        // Add delay to respect rate limits
+        Thread.sleep(100);
+
+        int responseCode = conn.getResponseCode();
+        System.out.println("Nominatim response code: " + responseCode);
+
+        if (responseCode != 200) {
+            throw new Exception("HTTP Error: " + responseCode);
+        }
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        StringBuilder resultStr = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            resultStr.append(line);
+        }
+        reader.close();
+
+        return new JSONArray(resultStr.toString());
+    }
 }
