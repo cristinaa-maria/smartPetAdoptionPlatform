@@ -20,7 +20,7 @@ public class VirtualAssistantService {
     private final String model;
 
     public VirtualAssistantService() {
-        String key = "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";
+        String key =  APIKEY;
         String endpoint = "https://models.inference.ai.azure.com";
         this.model = "gpt-4o";
 
