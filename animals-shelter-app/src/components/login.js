@@ -39,12 +39,9 @@ export default function Login() {
             }
 
             if (response.ok) {
-                // If we have a token, use it
                 if (data.token) {
                     localStorage.setItem("token", data.token)
                 } else {
-                    // If no token but successful login, create a temporary one
-                    // This is a fallback and should be replaced with proper token handling
                     localStorage.setItem("token", "temp-auth-" + Date.now())
                 }
                 navigate("/home")

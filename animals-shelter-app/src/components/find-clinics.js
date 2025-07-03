@@ -1,13 +1,12 @@
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet"
 import "leaflet/dist/leaflet.css"
 import L from "leaflet"
-import { Search, MapPin, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, MapPin, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import Button from "./ui/Button"
 import Input from "./ui/Input"
 import { Card, CardContent } from "./ui/Card"
 
-// Fix Leaflet icon issues
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
     iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
@@ -15,7 +14,6 @@ L.Icon.Default.mergeOptions({
     shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 })
 
-// Replace the current clinic icon with a plain red pin
 const clinicIcon = new L.Icon({
     iconUrl: "https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
     shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
@@ -25,198 +23,218 @@ const clinicIcon = new L.Icon({
     shadowSize: [41, 41],
 })
 
-// Custom icon for home/fixed position
-const homeIcon = new L.Icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/1946/1946488.png",
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    popupAnchor: [0, -36],
+const selectedClinicIcon = new L.Icon({
+    iconUrl: "https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+    shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+    iconSize: [30, 49],
+    iconAnchor: [15, 49],
+    popupAnchor: [1, -34],
+    shadowSize: [49, 49],
 })
-
-// Mock data for clinics
-const MOCK_CLINICS = [
-    "Clinica Veterinară PetCare",
-    "Animal Hospital Dr. Popescu",
-    "Centrul Veterinar Anima Vet",
-    "Clinica Veterinară Happy Pets",
-    "Spitalul Veterinar Bucharest",
-    "Cabinet Veterinar Sănătate Animală",
-    "Clinica de Urgență Veterinară 24/7",
-    "Centrul Medical Veterinar Paws & Claws",
-]
-
-// Mock geocoded locations for the clinics
-const MOCK_LOCATIONS = {
-    "Clinica Veterinară PetCare": {
-        latitude: 44.4268,
-        longitude: 26.1025,
-        address: "Strada Academiei 35, București, România",
-    },
-    "Animal Hospital Dr. Popescu": {
-        latitude: 44.4358,
-        longitude: 26.1225,
-        address: "Bulevardul Magheru 27, București, România",
-    },
-    "Centrul Veterinar Anima Vet": {
-        latitude: 44.4168,
-        longitude: 26.0925,
-        address: "Strada Lipscani 43, București, România",
-    },
-    "Clinica Veterinară Happy Pets": {
-        latitude: 44.4468,
-        longitude: 26.0825,
-        address: "Calea Victoriei 118, București, România",
-    },
-    "Spitalul Veterinar Bucharest": {
-        latitude: 44.4368,
-        longitude: 26.1125,
-        address: "Bulevardul Carol I 53, București, România",
-    },
-    "Cabinet Veterinar Sănătate Animală": {
-        latitude: 44.4218,
-        longitude: 26.0975,
-        address: "Strada Doamnei 17-19, București, România",
-    },
-    "Clinica de Urgență Veterinară 24/7": {
-        latitude: 44.4318,
-        longitude: 26.1075,
-        address: "Strada Ion Câmpineanu 25, București, România",
-    },
-    "Centrul Medical Veterinar Paws & Claws": {
-        latitude: 44.4418,
-        longitude: 26.0875,
-        address: "Strada Brezoianu 23-25, București, România",
-    },
-}
-
-// Fixed position for a pin (e.g., your home or current location)
-const FIXED_POSITION = {
-    latitude: 44.43,
-    longitude: 26.1,
-    name: "Locația mea",
-    address: "Piața Universității, București, România",
-}
 
 export default function FindVetClinics() {
     const [searchAddress, setSearchAddress] = useState("")
     const [clinics, setClinics] = useState([])
     const [clinicLocations, setClinicLocations] = useState({})
+    const [geocodingProgress, setGeocodingProgress] = useState({ current: 0, total: 0 })
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
-    const [mapCenter, setMapCenter] = useState([44.4268, 26.1025]) // București center
+    const [mapCenter, setMapCenter] = useState([44.4268, 26.1025]) // București
     const [zoomLevel, setZoomLevel] = useState(13)
     const [sidebarOpen, setSidebarOpen] = useState(true)
     const [selectedClinic, setSelectedClinic] = useState(null)
-    const [useMockData, setUseMockData] = useState(true)
-
     const mapRef = useRef(null)
     const API_BASE_URL = "http://localhost:8083"
-
+    const DEBUG_LARGE_SEARCH = false
     const calculateRadius = (zoom) => {
-        return Math.max(0.5, 50 / Math.pow(1.5, zoom - 5))
+        return Math.max(5, 200 / Math.pow(1.1, zoom - 8))
     }
 
-    // Function to geocode clinic names to get their locations
+    const radiusToLatLngDegrees = (radiusKm) => {
+        return radiusKm / 100
+    }
+
+    const calculateBoundingBox = (centerLat, centerLng, radiusKm) => {
+        const radiusDegrees = radiusToLatLngDegrees(radiusKm)
+
+        return {
+            latMin: centerLat - radiusDegrees,
+            latMax: centerLat + radiusDegrees,
+            lonMin: centerLng - radiusDegrees,
+            lonMax: centerLng + radiusDegrees,
+        }
+    }
+
     const geocodeClinicNames = async (clinicNames) => {
         const locations = {}
+        const total = clinicNames.length
+        const BATCH_SIZE = 3
+        const DELAY_BETWEEN_BATCHES = 800
 
-        for (const name of clinicNames) {
-            try {
-                // Use OpenStreetMap Nominatim to geocode the clinic name + "veterinar" in the current map area
-                const query = `${name} veterinar`
-                const response = await fetch(
-                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&viewbox=${
-                        mapCenter[1] - 0.1
-                    },${mapCenter[0] - 0.1},${mapCenter[1] + 0.1},${mapCenter[0] + 0.1}`,
-                )
-                const data = await response.json()
 
-                if (data && data.length > 0) {
-                    locations[name] = {
-                        latitude: Number.parseFloat(data[0].lat),
-                        longitude: Number.parseFloat(data[0].lon),
-                        address: data[0].display_name,
+        setGeocodingProgress({ current: 0, total })
+        for (let i = 0; i < clinicNames.length; i += BATCH_SIZE) {
+            const batch = clinicNames.slice(i, i + BATCH_SIZE)
+            const batchPromises = batch.map(async (name, batchIndex) => {
+                const globalIndex = i + batchIndex
+
+                try {
+                    console.log(`Geocoding clinic ${globalIndex + 1}/${total}: "${name}"`)
+                    let response = await fetch(
+                        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(name)}&countrycodes=ro&limit=3`,
+                    )
+                    let data = await response.json()
+                    if (!data || data.length === 0) {
+                        response = await fetch(
+                            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(name + " veterinar")}&countrycodes=ro&limit=3`,
+                        )
+                        data = await response.json()
                     }
+
+                    if (data && data.length > 0) {
+                        const result = data[0]
+                        const lat = Number.parseFloat(result.lat)
+                        const lng = Number.parseFloat(result.lon)
+                        if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                            const location = {
+                                latitude: lat,
+                                longitude: lng,
+                                address: result.display_name,
+                            }
+                            setClinicLocations((prev) => ({
+                                ...prev,
+                                [name]: location,
+                            }))
+
+                            return { name, location }
+                        } else {
+                            throw new Error("Invalid coordinates")
+                        }
+                    } else {
+                        throw new Error("No geocoding results")
+                    }
+                } catch (error) {
+                    const randomOffset = () => (Math.random() - 0.5) * 0.02
+                    const fallbackLocation = {
+                        latitude: 44.4268 + randomOffset(),
+                        longitude: 26.1025 + randomOffset(),
+                        address: name + " (locație aproximativă)",
+                    }
+                    setClinicLocations((prev) => ({
+                        ...prev,
+                        [name]: fallbackLocation,
+                    }))
+
+                    console.log(`⚠ Using fallback location for "${name}"`)
+                    return { name, location: fallbackLocation }
                 }
-            } catch (error) {
-                console.error(`Error geocoding clinic "${name}":`, error)
+            })
+            const batchResults = await Promise.allSettled(batchPromises)
+            const completedCount = Math.min(i + BATCH_SIZE, total)
+            setGeocodingProgress({ current: completedCount, total })
+            if (i + BATCH_SIZE < clinicNames.length) {
+                await new Promise((resolve) => setTimeout(resolve, DELAY_BETWEEN_BATCHES))
             }
         }
 
+        setGeocodingProgress({ current: 0, total: 0 })
+        console.log(`Optimized geocoding complete: ${Object.keys(locations).length}/${total} locations processed`)
         return locations
     }
 
     const fetchNearbyClinics = useCallback(
-        async (lat, lng, zoom) => {
+        async (lat, lng, zoom = zoomLevel) => {
             setLoading(true)
             setError("")
+            setSelectedClinic(null)
 
             try {
-                // Check if we should use mock data
-                if (useMockData) {
-                    console.log("Using mock data for clinics")
-                    setClinics(MOCK_CLINICS)
-                    setClinicLocations(MOCK_LOCATIONS)
-                    setLoading(false)
-                    return
+                let bounds
+                if (mapRef.current) {
+                    const mapBounds = mapRef.current.getBounds()
+                    bounds = {
+                        latMin: mapBounds.getSouth(),
+                        latMax: mapBounds.getNorth(),
+                        lonMin: mapBounds.getWest(),
+                        lonMax: mapBounds.getEast(),
+                    }
+                } else {
+                    const radiusKm = calculateRadius(zoom)
+                    bounds = calculateBoundingBox(lat, lng, radiusKm)
                 }
 
-                const radius = calculateRadius(zoom)
-                console.log(`Searching for clinics with radius: ${radius}km at [${lat}, ${lng}]`)
+
+                const requestBody = {
+                    latMin: bounds.latMin,
+                    latMax: bounds.latMax,
+                    lonMin: bounds.lonMin,
+                    lonMax: bounds.lonMax,
+                    query: "veterinar",
+                }
+
 
                 const response = await fetch(`${API_BASE_URL}/nearbyClinics`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({
-                        latitude: lat,
-                        longitude: lng,
-                    }),
+                    body: JSON.stringify(requestBody),
                     credentials: "include",
                 })
 
                 if (!response.ok) {
-                    throw new Error(`Failed to fetch nearby clinics: ${response.status}`)
+                    let errorMessage = `Failed to fetch nearby clinics: ${response.status}`
+                    try {
+                        const errorData = await response.json()
+                        errorMessage = errorData?.message || errorData?.[0] || errorMessage
+                    } catch (e) {
+                    }
+                    throw new Error(errorMessage)
                 }
 
                 const clinicNames = await response.json()
-                console.log("Received clinic names:", clinicNames)
+                if (clinicNames.some((name) => name.toLowerCase().includes("eroare"))) {
+                    console.warn("API returned error messages:", clinicNames)
+                    setError("Serviciul de căutare clinici nu este disponibil momentan.")
+                    setClinics([])
+                    setClinicLocations({})
+                    return
+                }
 
                 if (clinicNames && clinicNames.length > 0) {
                     setClinics(clinicNames)
-
-                    // Geocode clinic names to get their locations
-                    const locations = await geocodeClinicNames(clinicNames)
-                    setClinicLocations(locations)
-
-                    console.log(`Found ${clinicNames.length} clinics:`, clinicNames)
-                    console.log("Geocoded locations:", locations)
+                    setClinicLocations({})
+                    geocodeClinicNames(clinicNames)
                 } else {
-                    // If no clinics found, use mock data
-                    console.log("No clinics found, using mock data")
-                    setClinics(MOCK_CLINICS)
-                    setClinicLocations(MOCK_LOCATIONS)
+                    setClinics([])
+                    setClinicLocations({})
                 }
             } catch (error) {
-                console.error("Error fetching nearby clinics:", error)
-                setError("A apărut o eroare la căutare. Se afișează date de exemplu.")
-
-                // Use mock data on error
-                console.log("Using mock data due to error")
-                setClinics(MOCK_CLINICS)
-                setClinicLocations(MOCK_LOCATIONS)
+                setError(`A apărut o eroare la căutare: ${error.message || error}.`)
+                setClinics([])
+                setClinicLocations({})
             } finally {
                 setLoading(false)
             }
         },
-        [API_BASE_URL, useMockData],
+        [API_BASE_URL, zoomLevel],
+    )
+    const debouncedSearch = useCallback(
+        (() => {
+            let timeoutId
+            return (lat, lng, zoom) => {
+                clearTimeout(timeoutId)
+                timeoutId = setTimeout(() => {
+                    fetchNearbyClinics(lat, lng, zoom)
+                }, 500)
+            }
+        })(),
+        [fetchNearbyClinics],
     )
 
     useEffect(() => {
-        // Fetch clinics when component mounts or map center changes
-        fetchNearbyClinics(mapCenter[0], mapCenter[1], zoomLevel)
-    }, [fetchNearbyClinics, mapCenter, zoomLevel])
+        debouncedSearch(mapCenter[0], mapCenter[1], zoomLevel)
+    }, [debouncedSearch, mapCenter, zoomLevel])
 
     const searchByAddress = async (e) => {
         e.preventDefault()
@@ -225,17 +243,24 @@ export default function FindVetClinics() {
         setLoading(true)
         try {
             const response = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`,
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}&countrycodes=ro`,
             )
             const data = await response.json()
 
             if (data && data.length > 0) {
                 const { lat, lon } = data[0]
-                setMapCenter([Number.parseFloat(lat), Number.parseFloat(lon)])
-                if (mapRef.current) {
-                    mapRef.current.setView([Number.parseFloat(lat), Number.parseFloat(lon)], zoomLevel)
+                const newLat = Number.parseFloat(lat)
+                const newLng = Number.parseFloat(lon)
+
+                if (!isNaN(newLat) && !isNaN(newLng)) {
+                    setMapCenter([newLat, newLng])
+                    if (mapRef.current) {
+                        mapRef.current.setView([newLat, newLng], zoomLevel)
+                    }
+                    fetchNearbyClinics(newLat, newLng, zoomLevel)
+                } else {
+                    setError("Coordonate invalide pentru adresa specificată")
                 }
-                fetchNearbyClinics(Number.parseFloat(lat), Number.parseFloat(lon), zoomLevel)
             } else {
                 setError("Adresa nu a putut fi găsită")
             }
@@ -256,16 +281,20 @@ export default function FindVetClinics() {
                 const center = map.getCenter()
                 const newCenter = [center.lat, center.lng]
                 const newZoom = map.getZoom()
-
                 if (
-                    Math.abs(newCenter[0] - mapCenter[0]) > 0.01 ||
-                    Math.abs(newCenter[1] - mapCenter[1]) > 0.01 ||
+                    Math.abs(newCenter[0] - mapCenter[0]) > 0.005 ||
+                    Math.abs(newCenter[1] - mapCenter[1]) > 0.005 ||
                     newZoom !== zoomLevel
                 ) {
                     setMapCenter(newCenter)
                     setZoomLevel(newZoom)
-                    fetchNearbyClinics(center.lat, center.lng, newZoom)
                 }
+            },
+            zoomend: () => {
+                const center = map.getCenter()
+                const newZoom = map.getZoom()
+                setZoomLevel(newZoom)
+                fetchNearbyClinics(center.lat, center.lng, newZoom)
             },
             click: () => {
                 setSelectedClinic(null)
@@ -279,38 +308,71 @@ export default function FindVetClinics() {
         const location = clinicLocations[clinicName]
         if (!location || !location.latitude || !location.longitude) return
 
-        if (mapRef.current) {
-            mapRef.current.setView([location.latitude, location.longitude], 15)
+        const lat = Number(location.latitude)
+        const lng = Number(location.longitude)
+
+        if (!isNaN(lat) && !isNaN(lng)) {
+            if (mapRef.current) {
+                mapRef.current.setView([lat, lng], 15)
+            }
+            setSelectedClinic(clinicName)
         }
+    }
+
+    const handleMarkerClick = (clinicName) => {
         setSelectedClinic(clinicName)
-    }
-
-    // Remove the toggleMockData function
-    // const toggleMockData = () => {
-    //   setUseMockData(!useMockData)
-    //   fetchNearbyClinics(mapCenter[0], mapCenter[1], zoomLevel)
-    // }
-
-    const centerMapOnFixedPosition = () => {
-        if (mapRef.current) {
-            mapRef.current.setView([FIXED_POSITION.latitude, FIXED_POSITION.longitude], 15)
+        const clinicElement = document.getElementById(`clinic-card-${clinicName}`)
+        if (clinicElement) {
+            clinicElement.scrollIntoView({ behavior: "smooth", block: "center" })
         }
-        setSelectedClinic(null)
     }
+
+    const clinicMarkers = useMemo(() => {
+        return Object.entries(clinicLocations).map(([clinicName, location]) => {
+            const isSelected = selectedClinic === clinicName
+            return {
+                key: clinicName,
+                clinicName: clinicName,
+                position: [location.latitude, location.longitude],
+                location: location,
+                isSelected: isSelected,
+            }
+        })
+    }, [clinicLocations, selectedClinic])
 
     return (
         <div className="h-screen flex flex-col">
             <header className="border-b bg-white z-10">
-                <div className="container flex h-16 items-center px-4">
-                    <button className="flex items-center text-lg font-bold" onClick={() => window.history.back()}>
-                        <ChevronLeft className="h-6 w-6 text-green-500 mr-2" />
-                        PetPal Adopție
-                    </button>
+                <div className="container flex h-16 items-center justify-between px-4">
+                    <div className="flex items-center">
+                        <button
+                            className="mr-3 p-2 rounded-full hover:bg-teal-50 transition-colors flex items-center"
+                            onClick={() => window.history.back()}
+                            title="Înapoi"
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-teal-600">
+                                <path
+                                    d="M19 12H5M12 19L5 12L12 5"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                            </svg>
+                        </button>
+
+                        <button
+                            className="mr-2 p-2 rounded-full hover:bg-gray-100 lg:hidden"
+                            onClick={() => setSidebarOpen(!sidebarOpen)}
+                        >
+                            {sidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+                        </button>
+                        <h1 className="text-xl font-bold">Găsește Clinici Veterinare în apropiere</h1>
+                    </div>
                 </div>
             </header>
 
             <div className="flex flex-1 overflow-hidden">
-                {/* Sidebar */}
                 <div
                     className={`${
                         sidebarOpen ? "w-full lg:w-96" : "w-0"
@@ -334,9 +396,31 @@ export default function FindVetClinics() {
                     <div className="flex-1 overflow-y-auto">
                         <div className="p-4">
                             <div className="flex justify-between items-center mb-2">
-                                <h2 className="text-lg font-semibold">Rezultate ({clinics.length})</h2>
+                                <h2 className="text-lg font-semibold">
+                                    Rezultate ({clinics.length})
+                                    {clinicMarkers.length !== clinics.length && clinics.length > 0 && (
+                                        <span className="text-sm text-gray-500 ml-1">({clinicMarkers.length} pe hartă)</span>
+                                    )}
+                                </h2>
                                 {loading && <span className="text-sm text-gray-500">Se încarcă...</span>}
                             </div>
+
+                            {geocodingProgress.total > 0 && (
+                                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                                    <div className="flex items-center gap-2">
+                                        <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                                        <span className="text-sm text-blue-700">
+                      Localizez clinicile: {geocodingProgress.current}/{geocodingProgress.total}
+                    </span>
+                                    </div>
+                                    <div className="mt-2 w-full bg-blue-200 rounded-full h-2">
+                                        <div
+                                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                            style={{ width: `${(geocodingProgress.current / geocodingProgress.total) * 100}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                            )}
 
                             {error && (
                                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>
@@ -347,91 +431,94 @@ export default function FindVetClinics() {
                                     <MapPin className="h-12 w-12 mx-auto text-gray-400 mb-2" />
                                     <p className="text-gray-500">Nu s-au găsit clinici veterinare în această zonă.</p>
                                     <p className="text-gray-500 text-sm mt-2">
-                                        Încercați să măriți raza de căutare sau să vă deplasați în altă zonă.
+                                        Încercați să căutați o altă adresă sau să vă deplasați pe hartă.
                                     </p>
                                 </div>
                             )}
 
                             <div className="space-y-4">
-                                {clinics.map((clinicName, index) => (
-                                    <Card
-                                        key={index}
-                                        className={`overflow-hidden cursor-pointer hover:shadow-md transition-shadow ${
-                                            selectedClinic === clinicName ? "border-blue-500 border-2" : ""
-                                        }`}
-                                        onClick={() => centerMapOnClinic(clinicName)}
-                                    >
-                                        <CardContent className="p-4">
-                                            <div className="flex items-start">
-                                                <MapPin className="h-5 w-5 mr-2 mt-0.5 text-blue-500 flex-shrink-0" />
-                                                <div className="flex-1">
-                                                    <h3 className="font-bold text-lg">{clinicName}</h3>
-                                                    {clinicLocations[clinicName] && clinicLocations[clinicName].address && (
-                                                        <p className="text-gray-600 text-sm mt-1">{clinicLocations[clinicName].address}</p>
-                                                    )}
+                                {clinics.map((clinicName, index) => {
+                                    const hasLocation = clinicLocations[clinicName]
+                                    const isSelected = selectedClinic === clinicName
+
+                                    return (
+                                        <Card
+                                            key={`clinic-${index}-${clinicName}`}
+                                            id={`clinic-card-${clinicName}`}
+                                            className={`overflow-hidden cursor-pointer hover:shadow-md transition-all duration-200 ${
+                                                isSelected ? "border-blue-500 border-2 bg-blue-50" : ""
+                                            } ${!hasLocation ? "opacity-60" : ""}`}
+                                            onClick={() => centerMapOnClinic(clinicName)}
+                                        >
+                                            <CardContent className="p-4">
+                                                <div className="flex items-start">
+                                                    <div className="flex items-center mr-2 mt-0.5">
+                                                        {hasLocation ? (
+                                                            <MapPin
+                                                                className={`h-5 w-5 flex-shrink-0 ${isSelected ? "text-blue-600" : "text-red-500"}`}
+                                                            />
+                                                        ) : (
+                                                            <Loader2 className="h-4 w-4 animate-spin text-gray-400 flex-shrink-0" />
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <h3 className={`font-bold text-lg ${isSelected ? "text-blue-700" : ""}`}>{clinicName}</h3>
+                                                        {hasLocation && hasLocation.address && (
+                                                            <p className="text-gray-600 text-sm mt-1">{hasLocation.address}</p>
+                                                        )}
+                                                        {hasLocation && (
+                                                            <p className="text-xs text-gray-500 mt-1">
+                                                                Lat: {hasLocation.latitude?.toFixed(4)}, Lng: {hasLocation.longitude?.toFixed(4)}
+                                                            </p>
+                                                        )}
+                                                        {!hasLocation && <p className="text-xs text-gray-400 mt-1">Se localizează...</p>}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                ))}
+                                            </CardContent>
+                                        </Card>
+                                    )
+                                })}
                             </div>
                         </div>
                     </div>
 
                     <div className="p-3 border-t text-xs text-gray-500 text-center">
-                        Raza de căutare: ~{calculateRadius(zoomLevel).toFixed(1)} km
+                        Raza de căutare: {calculateRadius(zoomLevel).toFixed(1)} km | Pinuri: {clinicMarkers.length}
                     </div>
                 </div>
 
-                {/* Map container */}
                 <div className="flex-grow relative">
-                    <MapContainer center={mapCenter} zoom={zoomLevel} className="h-full w-full">
+                    <MapContainer
+                        center={mapCenter}
+                        zoom={zoomLevel}
+                        className="h-full w-full"
+                        key="map-container" // Stable key to prevent remounting
+                    >
                         <TileLayer
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         />
                         <MapController />
-
-                        {/* Fixed position marker */}
-                        <Marker
-                            position={[FIXED_POSITION.latitude, FIXED_POSITION.longitude]}
-                            icon={homeIcon}
-                            eventHandlers={{
-                                click: () => {
-                                    setSelectedClinic(null)
-                                },
-                            }}
-                        >
-                            <Popup>
-                                <div className="text-center max-w-xs">
-                                    <h2 className="text-xl font-semibold mb-2">{FIXED_POSITION.name}</h2>
-                                    <p className="text-gray-600 mb-1">{FIXED_POSITION.address}</p>
-                                </div>
-                            </Popup>
-                        </Marker>
-
-                        {/* Clinic markers */}
-                        {Object.entries(clinicLocations).map(([clinicName, location], index) => {
-                            if (!location || !location.latitude || !location.longitude) return null
-
-                            return (
-                                <Marker
-                                    key={index}
-                                    position={[location.latitude, location.longitude]}
-                                    icon={clinicIcon}
-                                    eventHandlers={{
-                                        click: () => setSelectedClinic(clinicName),
-                                    }}
-                                >
-                                    <Popup>
-                                        <div className="text-center max-w-xs">
-                                            <h2 className="text-xl font-semibold mb-2">{clinicName}</h2>
-                                            {location.address && <p className="text-gray-600 mb-1">{location.address}</p>}
-                                        </div>
-                                    </Popup>
-                                </Marker>
-                            )
-                        })}
+                        {clinicMarkers.map((marker) => (
+                            <Marker
+                                key={marker.key}
+                                position={marker.position}
+                                icon={marker.isSelected ? selectedClinicIcon : clinicIcon}
+                                eventHandlers={{
+                                    click: () => handleMarkerClick(marker.clinicName),
+                                }}
+                            >
+                                <Popup>
+                                    <div className="text-center max-w-xs">
+                                        <h2 className="text-xl font-semibold mb-2">{marker.clinicName}</h2>
+                                        {marker.location.address && <p className="text-gray-600 mb-1">{marker.location.address}</p>}
+                                        <p className="text-xs text-gray-500">
+                                            {marker.location.latitude?.toFixed(4)}, {marker.location.longitude?.toFixed(4)}
+                                        </p>
+                                    </div>
+                                </Popup>
+                            </Marker>
+                        ))}
                     </MapContainer>
 
                     <button

@@ -29,28 +29,25 @@ export default function Signup() {
                     name,
                     email,
                     password,
-                    type: "regular" // Adding a default user type
+                    type: "regular"
                 }),
             })
 
-            // Check if the response is JSON or text
             const contentType = response.headers.get("content-type")
             let data
 
             if (contentType && contentType.includes("application/json")) {
                 data = await response.json()
             } else {
-                // Handle text response
                 const text = await response.text()
                 data = { message: text }
             }
 
             if (response.ok) {
-                // If we have a token, use it
                 if (data.token) {
                     localStorage.setItem("token", data.token)
                 }
-                navigate("/login") // Redirect to login after successful registration
+                navigate("/login")
             } else {
                 setError(data.error || data.message || "Registration failed. Please try again.")
             }

@@ -15,10 +15,8 @@ L.Icon.Default.mergeOptions({
     shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 })
 
-// Remove the single animalIcon constant and replace with this function
 const createAnimalIcon = (animalId) => {
-    // Create different sizes based on animal ID to ensure consistency
-    const sizes = [25, 30, 35, 40] // Different icon sizes
+    const sizes = [25, 30, 35, 40]
     const sizeIndex = Number.parseInt(animalId) % sizes.length
     const iconSize = sizes[sizeIndex]
 
@@ -31,7 +29,6 @@ const createAnimalIcon = (animalId) => {
 }
 
 const getAvailableAdoptionTypes = (animal) => {
-    // If no adoption types are specified, show all buttons (backward compatibility)
     if (!animal.typesOfAdoptions && !animal.adoptionTypes) {
         return {
             adoption: true,
@@ -40,15 +37,12 @@ const getAvailableAdoptionTypes = (animal) => {
         }
     }
 
-    // Handle the backend format: typesOfAdoptions array
     if (animal.typesOfAdoptions && Array.isArray(animal.typesOfAdoptions)) {
         const adoptionTypes = {
             adoption: false,
             fostering: false,
             distantAdoption: false,
         }
-
-        // Check each type in the array
         animal.typesOfAdoptions.forEach((type) => {
             const lowerType = type.toLowerCase()
 
@@ -65,8 +59,6 @@ const getAvailableAdoptionTypes = (animal) => {
 
         return adoptionTypes
     }
-
-    // Handle the editor format: adoptionTypes object (for backward compatibility)
     if (animal.adoptionTypes && typeof animal.adoptionTypes === "object") {
         return {
             adoption: animal.adoptionTypes.adoptie_permanenta || animal.adoptionTypes.adoption || false,
@@ -75,7 +67,6 @@ const getAvailableAdoptionTypes = (animal) => {
         }
     }
 
-    // Default fallback - show all
     return {
         adoption: true,
         fostering: true,
@@ -86,10 +77,10 @@ const getAvailableAdoptionTypes = (animal) => {
 const ShelterMap = () => {
     const [animals, setAnimals] = useState([])
     const [locations, setLocations] = useState({})
-    const [userInfo, setUserInfo] = useState({}) // Add user info state
+    const [userInfo, setUserInfo] = useState({})
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
-    const [mapCenter, setMapCenter] = useState([44.4268, 26.1025]) // București
+    const [mapCenter, setMapCenter] = useState([44.4268, 26.1025])
     const [zoomLevel, setZoomLevel] = useState(13)
     const [searchAddress, setSearchAddress] = useState("")
     const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -98,7 +89,7 @@ const ShelterMap = () => {
     const [isInitialLoad, setIsInitialLoad] = useState(true)
     const [userLocation, setUserLocation] = useState(null)
     const [isLocating, setIsLocating] = useState(false)
-    const [locationPermission, setLocationPermission] = useState(null) // 'granted', 'denied', 'prompt'
+    const [locationPermission, setLocationPermission] = useState(null)
     const [showLocationNotification, setShowLocationNotification] = useState(false)
 
     const mapRef = useRef(null)
@@ -109,17 +100,13 @@ const ShelterMap = () => {
 
         const lowerSpecies = species.toLowerCase().trim()
 
-        // Check for dog variations
         if (lowerSpecies.includes("catel") || lowerSpecies.includes("dog") || lowerSpecies.includes("caine")) {
             return "Caine"
         }
 
-        // Check for cat variations
         if (lowerSpecies.includes("pisica") || lowerSpecies.includes("cat")) {
             return "Pisica"
         }
-
-        // Return original if no match found
         return species
     }
 
@@ -128,7 +115,6 @@ const ShelterMap = () => {
 
         const lowerType = type.toLowerCase().trim()
 
-        // Check for individual variations
         if (
             lowerType.includes("individual") ||
             lowerType.includes("person") ||
@@ -138,7 +124,6 @@ const ShelterMap = () => {
             return "Persoana individuala"
         }
 
-        // Check for shelter variations
         if (
             lowerType.includes("shelter") ||
             lowerType.includes("adapost") ||
@@ -148,7 +133,6 @@ const ShelterMap = () => {
             return "Adapost"
         }
 
-        // Return original if no match found
         return type
     }
 
@@ -166,21 +150,15 @@ const ShelterMap = () => {
     }
 
     const calculateRadius = (zoom) => {
-        // Invert the logic: lower zoom = larger radius, higher zoom = smaller radius
-        // This makes sense because when zoomed out, you want to see animals in a larger area
         return Math.max(1, 100 / Math.pow(1.2, zoom - 8))
     }
 
     const fetchNearbyAnimals = useCallback(
         async (lat, lng, zoom) => {
-            // Prevent multiple simultaneous requests
             if (loading) return
 
             setLoading(true)
             setError(null)
-
-            // Don't clear animals immediately to prevent flickering
-            // Only clear if we're doing a completely new search
 
             try {
                 const radius = calculateRadius(zoom)
@@ -206,7 +184,6 @@ const ShelterMap = () => {
                     return
                 }
 
-                // Fetch all animals and user data in parallel
                 const animalPromises = userIds.map(async (userId) => {
                     try {
                         const [animalResponse, userResponse] = await Promise.all([
@@ -233,7 +210,7 @@ const ShelterMap = () => {
                             userLocation: userData?.location || null,
                             userContact: userData?.contact || null,
                             userType: userData?.type || null,
-                            userName: userData?.name || null, // Add user name
+                            userName: userData?.name || null,
                         }))
                     } catch (err) {
                         return []
@@ -242,8 +219,6 @@ const ShelterMap = () => {
 
                 const animalArrays = await Promise.all(animalPromises)
                 const allAnimals = animalArrays.flat()
-
-                // Validare animale cu coordonate valide (doar acestea rămân)
                 const validAnimals = allAnimals.filter((animal) => {
                     const hasValidLocation =
                         animal.userLocation &&
@@ -257,11 +232,7 @@ const ShelterMap = () => {
                     return hasValidLocation
                 })
 
-                // --- MODIFICARE IMPORTANTĂ ---
-                // Setează animalele imediat (pinii și lista apar instant)
                 setAnimals(validAnimals)
-
-                // Store user info for each animal
                 const userInfoMap = {}
                 validAnimals.forEach((animal) => {
                     if (animal.userName || animal.userType) {
@@ -272,8 +243,6 @@ const ShelterMap = () => {
                     }
                 })
                 setUserInfo(userInfoMap)
-
-                // Fetch location pentru adrese în background (nu mai aștepți la Promise.all)
                 validAnimals.forEach((animal) => {
                     const [longitude, latitude] = animal.userLocation.coordinates
                     fetchLocation(animal.id, latitude, longitude)
@@ -292,14 +261,12 @@ const ShelterMap = () => {
     )
 
     useEffect(() => {
-        // Check if geolocation is supported
         if (!navigator.geolocation) {
             setError("Geolocation nu este suportat de browser-ul dumneavoastră")
             fetchNearbyAnimals(mapCenter[0], mapCenter[1], zoomLevel)
             return
         }
 
-        // Check current permission status
         if (navigator.permissions) {
             navigator.permissions
                 .query({ name: "geolocation" })
@@ -307,29 +274,23 @@ const ShelterMap = () => {
                     setLocationPermission(result.state)
 
                     if (result.state === "granted") {
-                        // Permission already granted, get location immediately
                         getUserLocationSilently()
                     } else if (result.state === "prompt") {
-                        // Show notification to request permission
                         setShowLocationNotification(true)
-                        // Auto-request after a short delay
                         setTimeout(() => {
                             getUserLocationWithPrompt()
                         }, 2000)
                     } else {
-                        // Permission denied, use default location
                         fetchNearbyAnimals(mapCenter[0], mapCenter[1], zoomLevel)
                     }
                 })
                 .catch(() => {
-                    // Fallback if permissions API not supported
                     setShowLocationNotification(true)
                     setTimeout(() => {
                         getUserLocationWithPrompt()
                     }, 2000)
                 })
         } else {
-            // Permissions API not supported, show notification and request
             setShowLocationNotification(true)
             setTimeout(() => {
                 getUserLocationWithPrompt()
@@ -375,7 +336,6 @@ const ShelterMap = () => {
         }
     }
 
-    // Filtrare specii (toate animalele au coordonate valide)
     const filteredAnimals =
         species === "all"
             ? animals
@@ -420,8 +380,6 @@ const ShelterMap = () => {
                 }
             },
             click: (e) => {
-                // Only clear selected animal if clicking on empty map area
-                // Don't interfere with marker clicks
                 if (e.originalEvent.target.tagName !== "IMG") {
                     setSelectedAnimal(null)
                 }
@@ -452,9 +410,7 @@ const ShelterMap = () => {
         window.location.href = `/distantAdoption?animalId=${animalId}`
     }
 
-    // Helper function to get the primary image from animal data
     const getPrimaryImage = (animal) => {
-        // Handle both single image and images array
         if (animal.images && Array.isArray(animal.images) && animal.images.length > 0) {
             return animal.images[0]
         }
@@ -480,7 +436,6 @@ const ShelterMap = () => {
             },
             (error) => {
                 console.log("Location error:", error.message)
-                // Fallback to default location without showing error
                 fetchNearbyAnimals(mapCenter[0], mapCenter[1], zoomLevel)
                 setIsLocating(false)
                 setShowLocationNotification(false)
@@ -508,7 +463,6 @@ const ShelterMap = () => {
                 if (error.code === error.PERMISSION_DENIED) {
                     setLocationPermission("denied")
                 }
-                // Fallback to default location
                 fetchNearbyAnimals(mapCenter[0], mapCenter[1], zoomLevel)
                 setIsLocating(false)
                 setShowLocationNotification(false)
@@ -555,7 +509,6 @@ const ShelterMap = () => {
             </header>
 
             <div className="flex flex-1 overflow-hidden">
-                {/* Sidebar */}
                 <div
                     className={`${
                         sidebarOpen ? "w-full lg:w-96" : "w-0"
@@ -684,7 +637,6 @@ const ShelterMap = () => {
                                                 <h2 className="text-xl font-semibold mb-2">{animal.name}</h2>
                                                 <p className="text-gray-600 mb-1">Specia: {normalizeSpecies(animal.species)}</p>
                                                 <p className="text-gray-600 mb-1">Descrierea: {animal.description}</p>
-                                                {/* Display user name and type */}
                                                 {userInfo[animal.id] && (
                                                     <div className="mb-2">
                                                         <p className="text-gray-600 text-sm">
@@ -701,7 +653,6 @@ const ShelterMap = () => {
                                                     {locations[animal.id] || "Se încarcă locația..."}
                                                 </p>
 
-                                                {/* Show available adoption types as badges */}
                                                 <div className="mb-3">
                                                     <p className="text-sm font-medium text-gray-700 mb-1">Tipuri disponibile:</p>
                                                     <div className="flex flex-wrap gap-1">
@@ -720,8 +671,6 @@ const ShelterMap = () => {
                                                         )}
                                                     </div>
                                                 </div>
-
-                                                {/* Fixed-width button container - all buttons same size */}
                                                 <div className="flex flex-wrap gap-2 justify-start">
                                                     {availableAdoptionTypes.adoption && (
                                                         <Button
@@ -760,8 +709,6 @@ const ShelterMap = () => {
                                                         </Button>
                                                     )}
                                                 </div>
-
-                                                {/* Show message if no adoption types are available */}
                                                 {adoptionTypeCount === 0 && (
                                                     <div className="text-center py-2">
                                                         <p className="text-sm text-gray-500">Nu sunt disponibile tipuri de adopție</p>
@@ -779,8 +726,6 @@ const ShelterMap = () => {
                         Raza de căutare: ~{calculateRadius(zoomLevel).toFixed(1)} km
                     </div>
                 </div>
-
-                {/* Map container */}
                 <div className="flex-grow relative">
                     <MapContainer center={mapCenter} zoom={zoomLevel} className="h-full w-full">
                         <TileLayer
@@ -791,7 +736,6 @@ const ShelterMap = () => {
 
                         {mapAnimals.map((animal) => {
                             const [longitude, latitude] = animal.userLocation.coordinates
-                            // Add a tiny random offset to each marker's position (±0.00005 degrees, approximately ±5 meters)
                             const randomOffset = () => (Math.random() - 0.5) * 0.0001
                             const position = [latitude + randomOffset(), longitude + randomOffset()]
                             const primaryImage = getPrimaryImage(animal)
@@ -820,7 +764,6 @@ const ShelterMap = () => {
                                             <h2 className="text-xl font-semibold mb-2">{animal.name}</h2>
                                             <p className="text-gray-600 mb-1">Specia: {normalizeSpecies(animal.species)}</p>
                                             <p className="text-gray-600 mb-1">Descrierea: {animal.description}</p>
-                                            {/* Display user name and type in popup */}
                                             {userInfo[animal.id] && (
                                                 <div className="mb-2">
                                                     <p className="text-gray-600 text-sm">
@@ -836,8 +779,6 @@ const ShelterMap = () => {
                                                 <MapPin className="h-4 w-4 mr-1" />
                                                 {locations[animal.id] || "Se încarcă locația..."}
                                             </p>
-
-                                            {/* Show available adoption types as badges */}
                                             <div className="mb-3">
                                                 <p className="text-sm font-medium text-gray-700 mb-1">Tipuri disponibile:</p>
                                                 <div className="flex flex-wrap gap-1 justify-center">

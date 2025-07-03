@@ -1,24 +1,19 @@
-import { useState, useEffect } from "react"
-import { format, startOfWeek, addDays, parseISO } from "date-fns"
+import { useState, useEffect, useMemo } from "react"
+import { format, addDays, parseISO } from "date-fns"
+import { ro } from "date-fns/locale"
 import { ArrowLeft } from "lucide-react"
 
-// Normalization functions
 const normalizeSpecies = (species) => {
     if (!species) return species
 
     const lowerSpecies = species.toLowerCase().trim()
-
-    // Check for dog variations
     if (lowerSpecies.includes("catel") || lowerSpecies.includes("dog") || lowerSpecies.includes("caine")) {
         return "Caine"
     }
 
-    // Check for cat variations
     if (lowerSpecies.includes("pisica") || lowerSpecies.includes("cat")) {
         return "Pisica"
     }
-
-    // Return original if no match found
     return species
 }
 
@@ -27,7 +22,6 @@ const normalizeUserType = (type) => {
 
     const lowerType = type.toLowerCase().trim()
 
-    // Check for individual variations
     if (
         lowerType.includes("individual") ||
         lowerType.includes("person") ||
@@ -37,7 +31,6 @@ const normalizeUserType = (type) => {
         return "Persoana individuala"
     }
 
-    // Check for shelter variations
     if (
         lowerType.includes("shelter") ||
         lowerType.includes("adapost") ||
@@ -47,8 +40,11 @@ const normalizeUserType = (type) => {
         return "Adapost"
     }
 
-    // Return original if no match found
     return type
+}
+
+const capitalizeFirstLetter = (string) => {
+    return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
 export default function AdoptionBooking() {
@@ -70,7 +66,7 @@ export default function AdoptionBooking() {
     const [dataLoading, setDataLoading] = useState(true)
     const [error, setError] = useState(null)
     const [animalDetails, setAnimalDetails] = useState(null)
-    const [ownerInfo, setOwnerInfo] = useState(null) // Changed from ownerName to ownerInfo
+    const [ownerInfo, setOwnerInfo] = useState(null)
 
     const API_BASE_URL = "http://localhost:8083"
 
@@ -78,7 +74,6 @@ export default function AdoptionBooking() {
         const fetchRequiredData = async () => {
             setDataLoading(true)
             try {
-                // Fetch current user ID (adopter)
                 const userResponse = await fetch(`${API_BASE_URL}/currentUserId`, {
                     method: "GET",
                     credentials: "include",
@@ -114,7 +109,6 @@ export default function AdoptionBooking() {
                 setAnimalDetails(animal)
                 setUserId(animal.userId)
 
-                // Fetch owner information (name and type)
                 if (animal.userId) {
                     try {
                         const ownerResponse = await fetch(`${API_BASE_URL}/users/${animal.userId}`, {
@@ -157,16 +151,21 @@ export default function AdoptionBooking() {
         }
     }, [animalId])
 
-    const start = startOfWeek(new Date(), { weekStartsOn: 1 })
-    const dateOptions = Array.from({ length: 10 }, (_, i) => {
-        const day = addDays(start, i)
-        return {
-            value: day.toISOString(),
-            label: format(day, "dd/MM/yyyy"),
-        }
-    })
+    const dateOptions = useMemo(() => {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
 
-    // Generate time options - 10:00 to 19:00
+        return Array.from({ length: 14 }, (_, i) => {
+            const day = addDays(today, i)
+            return {
+                value: day.toISOString(),
+                label: format(day, "dd/MM/yyyy"),
+                dayName: format(day, "EEEE", { locale: ro }),
+                index: i,
+            }
+        })
+    }, [])
+
     const timeOptions = Array.from({ length: 10 }, (_, i) => {
         const hour = 10 + i
         return {
@@ -175,8 +174,29 @@ export default function AdoptionBooking() {
         }
     })
 
+    const getSelectedDateDisplay = () => {
+        if (!date) return "Alege o dată"
+
+        const selectedOption = dateOptions.find((option) => option.value === date)
+        if (!selectedOption) {
+            try {
+                const parsedDate = parseISO(date)
+                const dayName = format(parsedDate, "EEEE", { locale: ro })
+                const dateLabel = format(parsedDate, "dd/MM/yyyy")
+                return `${capitalizeFirstLetter(dayName)} - ${dateLabel}`
+            } catch {
+                return "Data invalidă"
+            }
+        }
+
+        const { index, dayName, label } = selectedOption
+
+        if (index === 0) return `Astăzi - ${label}`
+        if (index === 1) return `Mâine - ${label}`
+        return `${capitalizeFirstLetter(dayName)} - ${label}`
+    }
+
     const handleConfirm = async () => {
-        // Form validation
         if (!date || !time) {
             setMessage("Te rugăm să selectezi atât data, cât și ora adopției.")
             return
@@ -216,7 +236,8 @@ export default function AdoptionBooking() {
 
             if (response.ok) {
                 console.log("Adoption created successfully")
-                setMessage(`Ai programat adopția pe ${format(selectedDate, "dd/MM/yyyy")} la ${time}.`)
+                const formattedDate = format(selectedDate, "dd MMMM yyyy", { locale: ro })
+                setMessage(`Ai programat adopția pe ${formattedDate} la ora ${time}.`)
             } else {
                 const errorText = await response.text()
                 console.error("Server error response:", errorText)
@@ -237,12 +258,12 @@ export default function AdoptionBooking() {
     return (
         <div className="flex flex-col min-h-screen">
             <div className="flex items-center gap-2 p-4 bg-white shadow-sm">
-                <ArrowLeft className="h-6 w-6 text-green-600" onClick={handleReturn} />
-                <span className="text-xl font-bold">PetPal Adopție</span>
+                <ArrowLeft className="h-6 w-6 text-green-600 cursor-pointer" onClick={handleReturn} />
+                <span className="text-lg sm:text-xl font-bold">PetPal Adopție</span>
             </div>
-            <div className="flex-1 flex flex-col items-center justify-center p-4">
+            <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
                 <div className="w-full max-w-2xl">
-                    <h1 className="text-4xl font-bold mb-12 text-center">Programare Adopție</h1>
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-8 sm:mb-12 text-center">Programare Adopție</h1>
 
                     {dataLoading ? (
                         <div className="text-center py-8">
@@ -253,29 +274,31 @@ export default function AdoptionBooking() {
                     ) : (
                         <div className="space-y-8">
                             {animalDetails && (
-                                <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
-                                    <h2 className="text-xl font-semibold mb-2">Detalii animal:</h2>
-                                    <p>
-                                        <strong>Nume:</strong> {animalDetails.name}
-                                    </p>
-                                    <p>
-                                        <strong>Specie:</strong> {normalizeSpecies(animalDetails.species)}
-                                    </p>
-                                    {animalDetails.breed && (
+                                <div className="p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-md">
+                                    <h2 className="text-lg sm:text-xl font-semibold mb-2">Detalii animal:</h2>
+                                    <div className="space-y-1 text-sm sm:text-base">
                                         <p>
-                                            <strong>Rasă:</strong> {animalDetails.breed}
+                                            <strong>Nume:</strong> {animalDetails.name}
                                         </p>
-                                    )}
-                                    {ownerInfo && (
-                                        <div className="mt-2">
+                                        <p>
+                                            <strong>Specie:</strong> {normalizeSpecies(animalDetails.species)}
+                                        </p>
+                                        {animalDetails.breed && (
                                             <p>
-                                                <strong>Proprietar:</strong> {ownerInfo.name}
+                                                <strong>Rasă:</strong> {animalDetails.breed}
                                             </p>
-                                            <p>
-                                                <strong>Tip utilizator:</strong> {normalizeUserType(ownerInfo.type)}
-                                            </p>
-                                        </div>
-                                    )}
+                                        )}
+                                        {ownerInfo && (
+                                            <div className="mt-2 pt-2 border-t border-gray-200">
+                                                <p>
+                                                    <strong>Proprietar:</strong> {ownerInfo.name}
+                                                </p>
+                                                <p>
+                                                    <strong>Tip utilizator:</strong> {normalizeUserType(ownerInfo.type)}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                             <div>
@@ -299,18 +322,36 @@ export default function AdoptionBooking() {
                                     <label className="text-base font-medium">Selectează data:</label>
                                 </div>
                                 <select
-                                    className="w-full p-3 border border-gray-300 rounded-md"
+                                    className="w-full p-3 sm:p-3 border border-gray-300 rounded-md text-sm sm:text-base"
                                     value={date || ""}
-                                    onChange={(e) => setDate(e.target.value)}
+                                    onChange={(e) => {
+                                        console.log("Selected date value:", e.target.value)
+                                        console.log(
+                                            "Available options:",
+                                            dateOptions.map((opt) => ({ value: opt.value, label: opt.dayName })),
+                                        )
+                                        setDate(e.target.value)
+                                    }}
                                 >
                                     <option value="" disabled>
                                         Alege o dată
                                     </option>
-                                    {dateOptions.map((option) => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
+                                    {dateOptions.map((option) => {
+                                        const displayText =
+                                            option.index === 0
+                                                ? `Astăzi - ${option.label}`
+                                                : option.index === 1
+                                                    ? `Mâine - ${option.label}`
+                                                    : `${capitalizeFirstLetter(option.dayName)} - ${option.label}`
+
+                                        console.log(`Option: value=${option.value}, display=${displayText}, dayName=${option.dayName}`)
+
+                                        return (
+                                            <option key={option.value} value={option.value}>
+                                                {displayText}
+                                            </option>
+                                        )
+                                    })}
                                 </select>
                             </div>
                             <div>
@@ -327,32 +368,42 @@ export default function AdoptionBooking() {
                                     </svg>
                                     <label className="text-base font-medium">Selectează ora:</label>
                                 </div>
-                                <select
-                                    className="w-full p-3 border border-gray-300 rounded-md"
-                                    value={time || ""}
-                                    onChange={(e) => setTime(e.target.value)}
-                                >
-                                    <option value="" disabled>
-                                        Alege o oră
-                                    </option>
-                                    {timeOptions.map((option) => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
+                                <div className="relative">
+                                    <select
+                                        className="w-full p-3 sm:p-3 border border-gray-300 rounded-md text-sm sm:text-base appearance-none bg-white"
+                                        value={time || ""}
+                                        onChange={(e) => {
+                                            console.log("Selected time value:", e.target.value)
+                                            setTime(e.target.value)
+                                        }}
+                                    >
+                                        <option value="" disabled>
+                                            Alege o oră
                                         </option>
-                                    ))}
-                                </select>
+                                        {timeOptions.map((option) => (
+                                            <option key={option.value} value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                        </svg>
+                                    </div>
+                                </div>
                             </div>
                             <button
-                                className="w-full bg-green-600 hover:bg-green-700 text-white p-4 text-lg rounded-md"
+                                className="w-full bg-green-600 hover:bg-green-700 text-white p-3 sm:p-4 text-base sm:text-lg rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 onClick={handleConfirm}
-                                disabled={isLoading}
+                                disabled={isLoading || !date || !time}
                             >
                                 {isLoading ? "Se procesează..." : "Confirmă programarea"}
                             </button>
                             {message && (
                                 <div
-                                    className={`mt-6 p-4 border rounded-md text-center text-lg ${
-                                        message.includes("eroare")
+                                    className={`mt-6 p-3 sm:p-4 border rounded-md text-center text-sm sm:text-lg ${
+                                        message.includes("eroare") || message.includes("rugăm")
                                             ? "bg-red-50 border-red-200 text-red-700"
                                             : "bg-green-50 border-green-200 text-green-700"
                                     }`}
@@ -361,14 +412,13 @@ export default function AdoptionBooking() {
                                 </div>
                             )}
 
-                            {/* Added veterinary clinic link */}
                             <div className="mt-8 text-center">
                                 <a
                                     href="/find-clinics"
-                                    className="inline-flex items-center text-green-600 hover:text-green-800 text-lg font-medium"
+                                    className="inline-flex items-center text-green-600 hover:text-green-800 text-base sm:text-lg font-medium transition-colors"
                                 >
                                     <svg
-                                        className="w-5 h-5 mr-2"
+                                        className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -381,7 +431,7 @@ export default function AdoptionBooking() {
                                             d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                                         ></path>
                                     </svg>
-                                    Găsește veterinar ușor pentru noul tău prieten, tot aici
+                                    <span className="text-sm sm:text-base">Găsește veterinar ușor pentru noul tău prieten, tot aici</span>
                                 </a>
                             </div>
                         </div>

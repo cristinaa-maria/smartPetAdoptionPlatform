@@ -1,24 +1,20 @@
-
 import { useState, useEffect } from "react"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, CreditCard, DollarSign, Clock, Info } from "lucide-react"
 
-// Normalization functions
+
 const normalizeSpecies = (species) => {
     if (!species) return species
 
     const lowerSpecies = species.toLowerCase().trim()
 
-    // Check for dog variations
     if (lowerSpecies.includes("catel") || lowerSpecies.includes("dog") || lowerSpecies.includes("caine")) {
         return "Caine"
     }
 
-    // Check for cat variations
     if (lowerSpecies.includes("pisica") || lowerSpecies.includes("cat")) {
         return "Pisica"
     }
 
-    // Return original if no match found
     return species
 }
 
@@ -27,7 +23,6 @@ const normalizeUserType = (type) => {
 
     const lowerType = type.toLowerCase().trim()
 
-    // Check for individual variations
     if (
         lowerType.includes("individual") ||
         lowerType.includes("person") ||
@@ -37,7 +32,6 @@ const normalizeUserType = (type) => {
         return "Persoana individuala"
     }
 
-    // Check for shelter variations
     if (
         lowerType.includes("shelter") ||
         lowerType.includes("adapost") ||
@@ -47,7 +41,6 @@ const normalizeUserType = (type) => {
         return "Adapost"
     }
 
-    // Return original if no match found
     return type
 }
 
@@ -65,7 +58,7 @@ export default function DistantAdoptionBooking() {
     const [dataLoading, setDataLoading] = useState(true)
     const [error, setError] = useState(null)
     const [animalDetails, setAnimalDetails] = useState(null)
-    const [ownerInfo, setOwnerInfo] = useState(null) // Changed from ownerName to ownerInfo
+    const [ownerInfo, setOwnerInfo] = useState(null)
 
     const API_BASE_URL = "http://localhost:8083"
 
@@ -102,7 +95,6 @@ export default function DistantAdoptionBooking() {
                 setAnimalDetails(animal)
                 setUserId(animal.userId)
 
-                // Fetch owner information (name and type)
                 if (animal.userId) {
                     try {
                         const ownerResponse = await fetch(`${API_BASE_URL}/users/${animal.userId}`, {
@@ -146,6 +138,63 @@ export default function DistantAdoptionBooking() {
         return { value: month.toString(), label: `${month} ${month === 1 ? "lună" : "luni"}` }
     })
 
+    const getSuggestedAmounts = (selectedPeriod) => {
+        const monthlyBase = 50
+        const period = Number.parseInt(selectedPeriod) || 1
+        return [
+            monthlyBase * period,
+            Math.round(monthlyBase * period * 1.5),
+            monthlyBase * period * 2,
+            Math.round(monthlyBase * period * 3),
+        ]
+    }
+
+    const formatCardNumber = (value) => {
+        const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "")
+        const matches = v.match(/\d{4,16}/g)
+        const match = (matches && matches[0]) || ""
+        const parts = []
+
+        for (let i = 0, len = match.length; i < len; i += 4) {
+            parts.push(match.substring(i, i + 4))
+        }
+
+        if (parts.length) {
+            return parts.join(" ")
+        } else {
+            return v
+        }
+    }
+
+    const formatExpiry = (value) => {
+        const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "")
+        if (v.length >= 2) {
+            return v.substring(0, 2) + "/" + v.substring(2, 4)
+        }
+        return v
+    }
+
+    const handleCardNumberChange = (e) => {
+        const formatted = formatCardNumber(e.target.value)
+        if (formatted.length <= 19) {
+            setCardNumber(formatted)
+        }
+    }
+
+    const handleExpiryChange = (e) => {
+        const formatted = formatExpiry(e.target.value)
+        if (formatted.length <= 5) {
+            setCardExpiry(formatted)
+        }
+    }
+
+    const handleCVCChange = (e) => {
+        const value = e.target.value.replace(/[^0-9]/gi, "")
+        if (value.length <= 4) {
+            setCardCVC(value)
+        }
+    }
+
     const handleConfirm = async () => {
         if (!period || !amount || !cardNumber || !cardExpiry || !cardCVC) {
             setMessage("Te rugăm să completezi toate câmpurile.")
@@ -154,6 +203,21 @@ export default function DistantAdoptionBooking() {
 
         if (!adopterId || !userId) {
             setMessage("Informațiile despre utilizator sau animal lipsesc. Te rugăm să încerci din nou.")
+            return
+        }
+
+        if (Number.parseInt(amount) < 10) {
+            setMessage("Suma minimă pentru sponsorizare este de 10 RON.")
+            return
+        }
+
+        if (cardNumber.replace(/\s/g, "").length < 13) {
+            setMessage("Numărul cardului pare să fie incomplet.")
+            return
+        }
+
+        if (cardCVC.length < 3) {
+            setMessage("Codul CVC trebuie să aibă cel puțin 3 cifre.")
             return
         }
 
@@ -169,7 +233,7 @@ export default function DistantAdoptionBooking() {
                 period,
                 amount,
                 paymentInfo: {
-                    cardNumber,
+                    cardNumber: cardNumber.replace(/\s/g, ""), // Remove spaces for API
                     cardExpiry,
                     cardCVC,
                 },
@@ -203,13 +267,15 @@ export default function DistantAdoptionBooking() {
     return (
         <div className="flex flex-col min-h-screen">
             <div className="flex items-center gap-2 p-4 bg-white shadow-sm">
-                <ArrowLeft className="h-6 w-6 text-green-600" onClick={handleReturn} />
-                <span className="text-xl font-bold">PetPal Adopție la Distanță</span>
+                <ArrowLeft className="h-6 w-6 text-green-600 cursor-pointer" onClick={handleReturn} />
+                <span className="text-lg sm:text-xl font-bold">PetPal Adopție la Distanță</span>
             </div>
 
-            <div className="flex-1 flex flex-col items-center justify-center p-4">
+            <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
                 <div className="w-full max-w-2xl">
-                    <h1 className="text-4xl font-bold mb-12 text-center">Programare Adopție la Distanță</h1>
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-8 sm:mb-12 text-center">
+                        Programare Adopție la Distanță
+                    </h1>
 
                     {dataLoading ? (
                         <div className="text-center py-8">
@@ -220,36 +286,52 @@ export default function DistantAdoptionBooking() {
                     ) : (
                         <div className="space-y-8">
                             {animalDetails && (
-                                <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
-                                    <h2 className="text-xl font-semibold mb-2">Detalii animal:</h2>
-                                    <p>
-                                        <strong>Nume:</strong> {animalDetails.name}
-                                    </p>
-                                    <p>
-                                        <strong>Specie:</strong> {normalizeSpecies(animalDetails.species)}
-                                    </p>
-                                    {animalDetails.breed && (
+                                <div className="p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-md">
+                                    <h2 className="text-lg sm:text-xl font-semibold mb-2">Detalii animal:</h2>
+                                    <div className="space-y-1 text-sm sm:text-base">
                                         <p>
-                                            <strong>Rasă:</strong> {animalDetails.breed}
+                                            <strong>Nume:</strong> {animalDetails.name}
                                         </p>
-                                    )}
-                                    {ownerInfo && (
-                                        <div className="mt-2">
+                                        <p>
+                                            <strong>Specie:</strong> {normalizeSpecies(animalDetails.species)}
+                                        </p>
+                                        {animalDetails.breed && (
                                             <p>
-                                                <strong>Proprietar:</strong> {ownerInfo.name}
+                                                <strong>Rasă:</strong> {animalDetails.breed}
                                             </p>
-                                            <p>
-                                                <strong>Tip utilizator:</strong> {normalizeUserType(ownerInfo.type)}
-                                            </p>
-                                        </div>
-                                    )}
+                                        )}
+                                        {ownerInfo && (
+                                            <div className="mt-2 pt-2 border-t border-gray-200">
+                                                <p>
+                                                    <strong>Proprietar:</strong> {ownerInfo.name}
+                                                </p>
+                                                <p>
+                                                    <strong>Tip utilizator:</strong> {normalizeUserType(ownerInfo.type)}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
 
+                            <div className="p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-md">
+                                <div className="flex items-start gap-2 mb-2">
+                                    <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                                    <h3 className="text-base sm:text-lg font-semibold text-blue-800">Despre Adopția la Distanță</h3>
+                                </div>
+                                <p className="text-blue-700 text-xs sm:text-sm leading-relaxed">
+                                    Adopția la distanță îți permite să susții financiar îngrijirea unui animal fără să îl iei acasă.
+                                    Contribuția ta ajută la hrană, îngrijire veterinară și alte necesități ale animalului.
+                                </p>
+                            </div>
+
                             <div>
-                                <label className="text-base font-medium">Selectează perioada (luni):</label>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Clock className="h-5 w-5 text-green-600" />
+                                    <label className="text-base font-medium">Selectează perioada (luni):</label>
+                                </div>
                                 <select
-                                    className="w-full p-3 border border-gray-300 rounded-md"
+                                    className="w-full p-3 sm:p-3 border border-gray-300 rounded-md text-sm sm:text-base"
                                     value={period || ""}
                                     onChange={(e) => setPeriod(e.target.value)}
                                 >
@@ -265,43 +347,91 @@ export default function DistantAdoptionBooking() {
                             </div>
 
                             <div>
-                                <label className="text-base font-medium">Introdu suma minimă (RON):</label>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <DollarSign className="h-5 w-5 text-green-600" />
+                                    <label className="text-base font-medium">Introdu suma (RON):</label>
+                                </div>
                                 <input
                                     type="number"
-                                    className="w-full p-3 border border-gray-300 rounded-md"
+                                    className="w-full p-3 sm:p-3 border border-gray-300 rounded-md text-sm sm:text-base"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
-                                    placeholder="Ex: 50"
+                                    placeholder="Minim 10 RON"
+                                    min="10"
                                 />
+                                {period && (
+                                    <div className="mt-2">
+                                        <p className="text-xs sm:text-sm text-gray-600 mb-2">Sume sugerate:</p>
+                                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                                            {getSuggestedAmounts(period).map((suggestedAmount) => (
+                                                <button
+                                                    key={suggestedAmount}
+                                                    type="button"
+                                                    className="px-2 sm:px-3 py-1 bg-green-100 text-green-700 rounded-md text-xs sm:text-sm hover:bg-green-200 transition-colors"
+                                                    onClick={() => setAmount(suggestedAmount.toString())}
+                                                >
+                                                    {suggestedAmount} RON
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div>
-                                <label className="text-base font-medium">Introdu datele cardului:</label>
-                                <input
-                                    type="text"
-                                    className="w-full p-3 border border-gray-300 rounded-md"
-                                    placeholder="Număr card"
-                                    value={cardNumber}
-                                    onChange={(e) => setCardNumber(e.target.value)}
-                                />
-                                <input
-                                    type="text"
-                                    className="w-full p-3 mt-2 border border-gray-300 rounded-md"
-                                    placeholder="MM/YY"
-                                    value={cardExpiry}
-                                    onChange={(e) => setCardExpiry(e.target.value)}
-                                />
-                                <input
-                                    type="text"
-                                    className="w-full p-3 mt-2 border border-gray-300 rounded-md"
-                                    placeholder="CVC"
-                                    value={cardCVC}
-                                    onChange={(e) => setCardCVC(e.target.value)}
-                                />
+                                <div className="flex items-center gap-2 mb-2">
+                                    <CreditCard className="h-5 w-5 text-green-600" />
+                                    <label className="text-base font-medium">Datele cardului:</label>
+                                </div>
+                                <div className="space-y-3">
+                                    <input
+                                        type="text"
+                                        className="w-full p-3 border border-gray-300 rounded-md text-sm sm:text-base"
+                                        placeholder="1234 5678 9012 3456"
+                                        value={cardNumber}
+                                        onChange={handleCardNumberChange}
+                                    />
+                                    <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                                        <input
+                                            type="text"
+                                            className="w-full p-3 border border-gray-300 rounded-md text-sm sm:text-base"
+                                            placeholder="MM/YY"
+                                            value={cardExpiry}
+                                            onChange={handleExpiryChange}
+                                        />
+                                        <input
+                                            type="text"
+                                            className="w-full p-3 border border-gray-300 rounded-md text-sm sm:text-base"
+                                            placeholder="CVC"
+                                            value={cardCVC}
+                                            onChange={handleCVCChange}
+                                        />
+                                    </div>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-2">
+                                    🔒 Datele tale sunt securizate și criptate. Nu stocăm informațiile cardului.
+                                </p>
                             </div>
 
+                            {amount && period && (
+                                <div className="p-3 sm:p-4 bg-green-50 border border-green-200 rounded-md">
+                                    <h3 className="font-semibold text-green-800 mb-2 text-sm sm:text-base">Rezumat sponsorizare:</h3>
+                                    <div className="space-y-1 text-xs sm:text-sm text-green-700">
+                                        <p>
+                                            <strong>Perioadă:</strong> {period} {period === "1" ? "lună" : "luni"}
+                                        </p>
+                                        <p>
+                                            <strong>Sumă totală:</strong> {amount} RON
+                                        </p>
+                                        <p>
+                                            <strong>Sumă lunară:</strong> {Math.round(Number.parseInt(amount) / Number.parseInt(period))} RON
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
                             <button
-                                className="w-full bg-green-600 hover:bg-green-700 text-white p-4 text-lg rounded-md"
+                                className="w-full bg-green-600 hover:bg-green-700 text-white p-3 sm:p-4 text-base sm:text-lg rounded-md transition-colors"
                                 onClick={handleConfirm}
                                 disabled={isLoading}
                             >
@@ -309,7 +439,13 @@ export default function DistantAdoptionBooking() {
                             </button>
 
                             {message && (
-                                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md text-green-700 text-center text-lg">
+                                <div
+                                    className={`mt-6 p-3 sm:p-4 border rounded-md text-center text-sm sm:text-lg ${
+                                        message.includes("eroare") || message.includes("incomplet") || message.includes("minimă")
+                                            ? "bg-red-50 border-red-200 text-red-700"
+                                            : "bg-green-50 border-green-200 text-green-700"
+                                    }`}
+                                >
                                     {message}
                                 </div>
                             )}

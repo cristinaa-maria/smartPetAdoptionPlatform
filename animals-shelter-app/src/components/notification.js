@@ -43,7 +43,6 @@ const sampleRequests = {
     },
 }
 
-// Sample notifications data - in a real app, this would come from an API
 const sampleNotifications = {
     "1": {
         id: "1",
@@ -71,7 +70,6 @@ const sampleNotifications = {
     },
 }
 
-// Enhanced useSearchParams hook to handle different URL formats
 const useSearchParams = () => {
     const [params, setParams] = useState({})
 
@@ -79,19 +77,14 @@ const useSearchParams = () => {
         if (typeof window !== "undefined") {
             console.log("Current URL:", window.location.href)
 
-            // Get the current URL
             const url = window.location.href
             const paramsObj = {}
-
-            // Extract request ID from path
-            // This will match patterns like /notification/1 or /notification/abc123
             const pathMatch = url.match(/\/notification\/([^/?]+)/)
             if (pathMatch && pathMatch[1]) {
                 console.log("Found ID in path:", pathMatch[1])
                 paramsObj.id = pathMatch[1]
             }
 
-            // Parse query parameters
             const searchParams = new URLSearchParams(window.location.search)
             for (const [key, value] of searchParams.entries()) {
                 console.log(`Found query param: ${key}=${value}`)
@@ -106,7 +99,7 @@ const useSearchParams = () => {
     return params
 }
 
-// Custom hook to handle routing
+
 const useRouter = () => {
     const push = useCallback((path) => {
         if (typeof window !== "undefined") {
@@ -126,7 +119,6 @@ const useRouter = () => {
 export default function Notification() {
     console.log("Notification component rendering")
 
-    // Move hooks inside the component
     const router = useRouter()
     const searchParams = useSearchParams()
     const requestId = searchParams.id
@@ -144,7 +136,6 @@ export default function Notification() {
 
     const API_BASE_URL = "http://localhost:8083"
 
-    // Manually extract ID from URL if searchParams hook isn't working
     useEffect(() => {
         if (!requestId && typeof window !== "undefined") {
             const url = window.location.href
@@ -162,18 +153,15 @@ export default function Notification() {
         }
     }, [requestId])
 
-    // Function to fetch data with a specific ID
     const fetchRequestDataWithId = async (id) => {
         console.log("Fetching data for request ID:", id)
 
         try {
-            // Using sample data for demonstration
             setTimeout(() => {
                 if (sampleRequests[id]) {
                     setRequest(sampleRequests[id])
                     console.log("Found request data:", sampleRequests[id])
 
-                    // If notification ID is provided, fetch notification details
                     const urlParams = new URLSearchParams(window.location.search)
                     const notifId = urlParams.get("notificationId")
 
@@ -186,7 +174,7 @@ export default function Notification() {
                     setError("Cererea de adopție nu a fost găsită")
                 }
                 setLoading(false)
-            }, 800) // Simulate API delay
+            }, 800)
         } catch (err) {
             console.error("Error fetching adoption request:", err)
             setError("Nu s-a putut încărca cererea de adopție")
@@ -194,7 +182,6 @@ export default function Notification() {
         }
     }
 
-    // Update the fetchRequestData function to log more information
     const fetchRequestData = async () => {
         console.log("Search params:", searchParams)
         console.log("Request ID from params:", requestId)
@@ -202,17 +189,15 @@ export default function Notification() {
 
         if (!requestId) {
             console.warn("No request ID found in params, will try manual extraction")
-            return // The manual extraction effect will handle this case
+            return
         }
 
         try {
-            // Using sample data for demonstration
             setTimeout(() => {
                 if (sampleRequests[requestId]) {
                     setRequest(sampleRequests[requestId])
                     console.log("Found request data:", sampleRequests[requestId])
 
-                    // If notification ID is provided, fetch notification details
                     if (notificationId && sampleNotifications[notificationId]) {
                         setNotification(sampleNotifications[notificationId])
                         console.log(`Loaded notification: ${notificationId} for request: ${requestId}`)
@@ -222,7 +207,7 @@ export default function Notification() {
                     setError("Cererea de adopție nu a fost găsită")
                 }
                 setLoading(false)
-            }, 800) // Simulate API delay
+            }, 800)
         } catch (err) {
             console.error("Error fetching adoption request:", err)
             setError("Nu s-a putut încărca cererea de adopție")
@@ -244,10 +229,8 @@ export default function Notification() {
         setProcessingAction(true)
 
         try {
-            // Simulate API call
             await new Promise((resolve) => setTimeout(resolve, 1000))
 
-            // Update local state to reflect the change
             setRequest({
                 ...request,
                 status: confirmationAction === "approve" ? "approved" : "declined",
@@ -400,7 +383,6 @@ export default function Notification() {
                         </p>
                     </div>
 
-                    {/* Display notification information if available */}
                     {notification && (
                         <div className="mt-2 bg-green-50 p-3 rounded-md border border-green-200">
                             <p className="text-sm text-gray-700">
@@ -427,7 +409,6 @@ export default function Notification() {
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Left column - Pet Information */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
@@ -452,8 +433,6 @@ export default function Notification() {
                             </div>
                         </CardContent>
                     </Card>
-
-                    {/* Middle column - Requester Information */}
                     <Card className="md:col-span-2">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
@@ -515,7 +494,6 @@ export default function Notification() {
                     </Card>
                 </div>
 
-                {/* Action buttons */}
                 {!actionComplete && request.status === "pending" && (
                     <div className="mt-8 flex justify-center gap-4">
                         <Button
@@ -546,7 +524,6 @@ export default function Notification() {
                 )}
             </main>
 
-            {/* Confirmation Dialog */}
             {showConfirmation && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-4">
@@ -604,7 +581,6 @@ export default function Notification() {
     )
 }
 
-// Helper functions
 function getStatusColor(status) {
     switch (status) {
         case "approved":

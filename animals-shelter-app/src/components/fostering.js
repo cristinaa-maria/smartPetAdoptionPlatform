@@ -2,23 +2,19 @@ import { useState, useEffect } from "react"
 import { format, addDays, parseISO } from "date-fns"
 import { ArrowLeft } from "lucide-react"
 
-// Normalization functions
 const normalizeSpecies = (species) => {
     if (!species) return species
 
     const lowerSpecies = species.toLowerCase().trim()
 
-    // Check for dog variations
     if (lowerSpecies.includes("catel") || lowerSpecies.includes("dog") || lowerSpecies.includes("caine")) {
         return "Caine"
     }
 
-    // Check for cat variations
     if (lowerSpecies.includes("pisica") || lowerSpecies.includes("cat")) {
         return "Pisica"
     }
 
-    // Return original if no match found
     return species
 }
 
@@ -27,7 +23,6 @@ const normalizeUserType = (type) => {
 
     const lowerType = type.toLowerCase().trim()
 
-    // Check for individual variations
     if (
         lowerType.includes("individual") ||
         lowerType.includes("person") ||
@@ -37,7 +32,6 @@ const normalizeUserType = (type) => {
         return "Persoana individuala"
     }
 
-    // Check for shelter variations
     if (
         lowerType.includes("shelter") ||
         lowerType.includes("adapost") ||
@@ -47,7 +41,6 @@ const normalizeUserType = (type) => {
         return "Adapost"
     }
 
-    // Return original if no match found
     return type
 }
 
@@ -102,7 +95,6 @@ export default function FosteringBooking() {
                 setAnimalDetails(animal)
                 setUserId(animal.userId)
 
-                // Fetch owner information (name and type)
                 if (animal.userId) {
                     try {
                         const ownerResponse = await fetch(`${API_BASE_URL}/users/${animal.userId}`, {
@@ -143,9 +135,13 @@ export default function FosteringBooking() {
     }, [animalId])
 
     const today = new Date()
-    const dateOptions = Array.from({ length: 10 }, (_, i) => {
+    const dateOptions = Array.from({ length: 14 }, (_, i) => {
         const day = addDays(today, i)
-        return { value: day.toISOString(), label: format(day, "dd/MM/yyyy") }
+        return {
+            value: day.toISOString(),
+            label: format(day, "dd/MM/yyyy"),
+            dayName: format(day, "EEEE"), // Add day name for better UX
+        }
     })
 
     const periodOptions = Array.from({ length: 12 }, (_, i) => {
@@ -215,13 +211,13 @@ export default function FosteringBooking() {
     return (
         <div className="flex flex-col min-h-screen">
             <div className="flex items-center gap-2 p-4 bg-white shadow-sm">
-                <ArrowLeft className="h-6 w-6 text-green-600" onClick={handleReturn} />
-                <span className="text-xl font-bold">PetPal Foster</span>
+                <ArrowLeft className="h-6 w-6 text-green-600 cursor-pointer" onClick={handleReturn} />
+                <span className="text-lg sm:text-xl font-bold">PetPal Foster</span>
             </div>
 
-            <div className="flex-1 flex flex-col items-center justify-center p-4">
+            <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
                 <div className="w-full max-w-2xl">
-                    <h1 className="text-4xl font-bold mb-12 text-center">Programare Fostering</h1>
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-8 sm:mb-12 text-center">Programare Fostering</h1>
 
                     {dataLoading ? (
                         <div className="text-center py-8">
@@ -232,54 +228,86 @@ export default function FosteringBooking() {
                     ) : (
                         <div className="space-y-8">
                             {animalDetails && (
-                                <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
-                                    <h2 className="text-xl font-semibold mb-2">Detalii animal:</h2>
-                                    <p>
-                                        <strong>Nume:</strong> {animalDetails.name}
-                                    </p>
-                                    <p>
-                                        <strong>Specie:</strong> {normalizeSpecies(animalDetails.species)}
-                                    </p>
-                                    {animalDetails.breed && (
+                                <div className="p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-md">
+                                    <h2 className="text-lg sm:text-xl font-semibold mb-2">Detalii animal:</h2>
+                                    <div className="space-y-1 text-sm sm:text-base">
                                         <p>
-                                            <strong>Rasă:</strong> {animalDetails.breed}
+                                            <strong>Nume:</strong> {animalDetails.name}
                                         </p>
-                                    )}
-                                    {ownerInfo && (
-                                        <div className="mt-2">
+                                        <p>
+                                            <strong>Specie:</strong> {normalizeSpecies(animalDetails.species)}
+                                        </p>
+                                        {animalDetails.breed && (
                                             <p>
-                                                <strong>Proprietar:</strong> {ownerInfo.name}
+                                                <strong>Rasă:</strong> {animalDetails.breed}
                                             </p>
-                                            <p>
-                                                <strong>Tip utilizator:</strong> {normalizeUserType(ownerInfo.type)}
-                                            </p>
-                                        </div>
-                                    )}
+                                        )}
+                                        {ownerInfo && (
+                                            <div className="mt-2 pt-2 border-t border-gray-200">
+                                                <p>
+                                                    <strong>Proprietar:</strong> {ownerInfo.name}
+                                                </p>
+                                                <p>
+                                                    <strong>Tip utilizator:</strong> {normalizeUserType(ownerInfo.type)}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
 
                             <div>
-                                <label className="text-base font-medium">Selectează data de început:</label>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z"
+                                            stroke="#10B981"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                        <path
+                                            d="M16 2V6M8 2V6M3 10H21M8 14H8.01M12 14H12.01M16 14H16.01M8 18H8.01M12 18H12.01M16 18H16.01"
+                                            stroke="#10B981"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    </svg>
+                                    <label className="text-base font-medium">Selectează data de început:</label>
+                                </div>
                                 <select
-                                    className="w-full p-3 border border-gray-300 rounded-md"
+                                    className="w-full p-3 sm:p-3 border border-gray-300 rounded-md text-sm sm:text-base"
                                     value={date || ""}
                                     onChange={(e) => setDate(e.target.value)}
                                 >
                                     <option value="" disabled>
                                         Alege o dată
                                     </option>
-                                    {dateOptions.map((option) => (
+                                    {dateOptions.map((option, index) => (
                                         <option key={option.value} value={option.value}>
-                                            {option.label}
+                                            {index === 0 ? "Astăzi" : index === 1 ? "Mâine" : option.dayName} - {option.label}
                                         </option>
                                     ))}
                                 </select>
                             </div>
 
                             <div>
-                                <label className="text-base font-medium">Selectează perioada (luni):</label>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="12" cy="12" r="9" stroke="#10B981" strokeWidth="2" />
+                                        <path
+                                            d="M12 7V12L15 15"
+                                            stroke="#10B981"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    </svg>
+                                    <label className="text-base font-medium">Selectează perioada (luni):</label>
+                                </div>
                                 <select
-                                    className="w-full p-3 border border-gray-300 rounded-md"
+                                    className="w-full p-3 sm:p-3 border border-gray-300 rounded-md text-sm sm:text-base"
                                     value={period || ""}
                                     onChange={(e) => setPeriod(e.target.value)}
                                 >
@@ -295,7 +323,7 @@ export default function FosteringBooking() {
                             </div>
 
                             <button
-                                className="w-full bg-green-600 hover:bg-green-700 text-white p-4 text-lg rounded-md"
+                                className="w-full bg-green-600 hover:bg-green-700 text-white p-3 sm:p-4 text-base sm:text-lg rounded-md transition-colors"
                                 onClick={handleConfirm}
                                 disabled={isLoading}
                             >
@@ -303,10 +331,25 @@ export default function FosteringBooking() {
                             </button>
 
                             {message && (
-                                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md text-green-700 text-center text-lg">
+                                <div
+                                    className={`mt-6 p-3 sm:p-4 border rounded-md text-center text-sm sm:text-lg ${
+                                        message.includes("eroare")
+                                            ? "bg-red-50 border-red-200 text-red-700"
+                                            : "bg-green-50 border-green-200 text-green-700"
+                                    }`}
+                                >
                                     {message}
                                 </div>
                             )}
+
+                            <div className="mt-8 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-md">
+                                <h3 className="text-base sm:text-lg font-semibold text-blue-800 mb-2">Despre Fostering</h3>
+                                <p className="text-blue-700 text-xs sm:text-sm leading-relaxed">
+                                    Fostering-ul este o formă temporară de îngrijire care oferă animalelor un mediu sigur și iubitor în
+                                    timp ce așteaptă să găsească o familie permanentă. Este o experiență minunată atât pentru tine, cât și
+                                    pentru animalul pe care îl ajuți!
+                                </p>
+                            </div>
                         </div>
                     )}
                 </div>

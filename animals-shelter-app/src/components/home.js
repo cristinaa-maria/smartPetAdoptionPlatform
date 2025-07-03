@@ -3,7 +3,6 @@ import Button from "./ui/Button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "./ui/Card"
 import { PawPrint, Calendar, Info, LogOut, ArrowRight, Bell, Clock, Menu, X } from "lucide-react"
 
-// Custom navigation hook that doesn't rely on Next.js
 const useCustomNavigation = () => {
     const navigate = useCallback((path) => {
         window.location.href = path
@@ -154,7 +153,6 @@ export default function Homepage() {
         }
     }, [showNotifications, mobileMenuOpen])
 
-    // Format notification message based on type
     const formatNotificationContent = (notification) => {
         switch (notification.type) {
             case "adoption_request":
@@ -234,7 +232,6 @@ export default function Homepage() {
                         <span className="text-lg sm:text-xl font-bold">PetPal Adoptions</span>
                     </a>
 
-                    {/* Desktop Navigation */}
                     <nav className="hidden lg:flex gap-4 xl:gap-6 items-center">
                         <a className="text-sm font-medium hover:text-green-600 transition-colors" href="#">
                             Acasă
@@ -251,8 +248,6 @@ export default function Homepage() {
                         <a className="text-sm font-medium hover:text-green-600 transition-colors" href="/community">
                             Alătură-te comunității
                         </a>
-
-                        {/* Notification Icon */}
                         <div className="relative">
                             <button
                                 className="flex items-center justify-center text-gray-700 hover:text-green-600 transition-colors"
@@ -266,7 +261,6 @@ export default function Homepage() {
                                 )}
                             </button>
 
-                            {/* Notification Dropdown */}
                             {showNotifications && (
                                 <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg z-50 py-1 border notification-container">
                                     <div className="p-2 border-b flex justify-between items-center">
@@ -313,9 +307,7 @@ export default function Homepage() {
                         </button>
                     </nav>
 
-                    {/* Mobile Menu Button and Notifications */}
                     <div className="flex items-center gap-2 lg:hidden">
-                        {/* Mobile Notification Icon */}
                         <div className="relative">
                             <button
                                 className="flex items-center justify-center text-gray-700 hover:text-green-600 transition-colors p-2"
@@ -329,7 +321,6 @@ export default function Homepage() {
                                 )}
                             </button>
 
-                            {/* Mobile Notification Dropdown */}
                             {showNotifications && (
                                 <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-md shadow-lg z-50 py-1 border notification-container">
                                     <div className="p-2 border-b flex justify-between items-center">
@@ -373,7 +364,6 @@ export default function Homepage() {
                     </div>
                 </div>
 
-                {/* Mobile Menu */}
                 {mobileMenuOpen && (
                     <div className="lg:hidden border-t bg-white mobile-menu-container">
                         <nav className="flex flex-col p-4 space-y-3">
@@ -543,7 +533,7 @@ export default function Homepage() {
                             <span>PetPal Adoptions</span>
                         </a>
                         <p className="text-xs sm:text-sm text-gray-500 md:text-base">
-                            © 2023 PetPal Adoptions. Toate drepturile rezervate.
+                            © 2025 PetPal Adoptions. Toate drepturile rezervate.
                         </p>
                     </div>
                     <nav className="flex gap-4 md:gap-6 justify-center">
