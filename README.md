@@ -1,0 +1,2 @@
+This project aims to facilitate the pet adoption process by implementing an online platform that uses semantic search as it main search technology. By leveraging this technology, the project seeks to improve the results obtained during the search for an adoptable pet thanks to semantic search's key capability to understand context and intent behind a search query.
+As for the technology used we have: React for front-end, Spring Boot for back-end and MongoDB for the database.
