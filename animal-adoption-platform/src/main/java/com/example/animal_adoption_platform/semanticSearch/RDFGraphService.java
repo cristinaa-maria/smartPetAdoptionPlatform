@@ -69,7 +69,6 @@ public class RDFGraphService {
 
 
 
-        // Debug: Print all animals in RDF
         debugAnimalsInRDF();
     }
 
@@ -83,7 +82,6 @@ public class RDFGraphService {
         System.out.println("  Extracting species from: '" + text + "'");
         System.out.println("  Normalized text: '" + normalizedText + "'");
 
-        // Cat words - checked FIRST
         List<String> catWords = List.of(
                 "pisica", "pisică", "pisicuta", "pisicuţa", "pisicuța",
                 "pisoias", "pisoiaș", "pisoiasi", "pisoiași",
@@ -91,7 +89,6 @@ public class RDFGraphService {
                 "feline", "felina", "miaulă", "miaună"
         );
 
-        // Check for cat words FIRST
         for (String word : catWords) {
             String normalizedWord = normalizeText(word);
             if (normalizedText.matches(".*\\b" + Pattern.quote(normalizedWord) + "\\b.*")) {
@@ -100,7 +97,6 @@ public class RDFGraphService {
             }
         }
 
-        // Dog words - checked SECOND
         List<String> dogWords = List.of(
                 "catel", "căţel", "cătel", "caine", "căine",
                 "catelus", "cățeluș", "catelusul", "cățelușul",
@@ -116,7 +112,6 @@ public class RDFGraphService {
             }
         }
 
-        System.out.println("  ✗ No species found in text");
         return "";
     }
 
@@ -151,10 +146,8 @@ public class RDFGraphService {
 
         Map<String, String> result = new HashMap<>();
 
-        // Normalize query
         String normalizedQuery = normalizeText(userQuery);
 
-        // --- SPECIES EXTRACTION (existing logic) ---
         List<String> catWords = List.of(
                 "pisica", "pisică", "pisicuta", "pisicuţa", "pisicuța",
                 "pisoias", "pisoiaș", "pisoiasi", "pisoiași",
@@ -169,7 +162,6 @@ public class RDFGraphService {
 
         String extractedSpecies = null;
 
-        // Check for cat words FIRST
         for (String word : catWords) {
             String normalizedWord = normalizeText(word);
             if (normalizedQuery.matches(".*\\b" + Pattern.quote(normalizedWord) + "\\b.*")) {
@@ -177,7 +169,7 @@ public class RDFGraphService {
                 break;
             }
         }
-        // Only check for dog words if no cat word was found
+
         if (extractedSpecies == null) {
             for (String word : dogWords) {
                 String normalizedWord = normalizeText(word);
@@ -188,20 +180,17 @@ public class RDFGraphService {
             }
         }
 
-        // --- LOCATION EXTRACTION (improved) ---
-        // List of common Romanian cities and counties (add as needed!)
+
         List<String> knownCities = List.of(
                 "bucuresti", "bucurești", "arad", "cluj", "cluj-napoca", "iasi", "iași",
                 "constanta", "constanța", "timisoara", "timișoara", "brasov", "brașov",
                 "galati", "galați", "ploiesti", "ploiesti", "craiova", "oradea", "pitesti",
                 "sibiu", "baia mare", "buzau", "targu mures", "târgu mureș", "alba iulia"
-                // Add more as needed
+
         );
 
         String extractedLocation = null;
-        // Try to find a city in the query
         for (String city : knownCities) {
-            // Normalize city for accent insensitivity
             String normalizedCity = normalizeText(city);
             if (normalizedQuery.contains(normalizedCity)) {
                 extractedLocation = normalizedCity;
@@ -209,16 +198,12 @@ public class RDFGraphService {
             }
         }
 
-        // Fallback: look for a word after "in", "din", "la"
         if (extractedLocation == null) {
             String[] words = normalizedQuery.split("\\s+");
             for (int i = 0; i < words.length - 1; i++) {
                 if (words[i].equals("in") || words[i].equals("din") || words[i].equals("la")) {
-                    // Next word is probably a city
                     String maybeCity = words[i + 1];
-                    // Remove punctuation, etc.
                     maybeCity = maybeCity.replaceAll("[^a-zăâîșț]", "");
-                    // Only accept if it's not a stopword or animal adjective
                     if (maybeCity.length() > 2) {
                         extractedLocation = maybeCity;
                         break;
@@ -230,15 +215,11 @@ public class RDFGraphService {
         result.put("species", extractedSpecies);
         result.put("location", extractedLocation);
 
-        System.out.println("FINAL EXTRACTION RESULT:");
-        System.out.println("  Species: '" + extractedSpecies + "'");
-        System.out.println("  Location: '" + extractedLocation + "'");
 
         return result;
     }
 
     public List<Resource> getAnimalsMatchingQuery(String userQuery) {
-        System.out.println("\n=== ANIMALS MATCHING QUERY ===");
 
         Map<String, String> extracted = extractSpeciesAndLocation(userQuery);
         String species = extracted.get("species");
@@ -255,7 +236,6 @@ public class RDFGraphService {
         sparql.append("  ?animal :name ?name .\n");
         sparql.append("  ?animal :species ?species .\n");
 
-        // CRITICAL: Only filter by species if we found one
         if (species != null && !species.isEmpty()) {
             sparql.append("  FILTER(?species = \"").append(species).append("\")\n");
             System.out.println("Adding species filter: ?species = \"" + species + "\"");
@@ -263,7 +243,6 @@ public class RDFGraphService {
             System.out.println("NO SPECIES FILTER - will return all animals");
         }
 
-        // Location filter
         if (location != null && !location.isEmpty()) {
             sparql.append("  ?animal :isLocatedIn ?loc .\n");
             sparql.append("  ?loc :city ?city .\n");
@@ -293,7 +272,6 @@ public class RDFGraphService {
                 count++;
                 System.out.println("Result #" + count + ": " + animalName + " - Species: '" + animalSpecies + "'");
 
-                // IMPORTANT: Check if this result should be here
                 if (species != null && !species.isEmpty() && !species.equals(animalSpecies)) {
                     System.out.println("  ⚠️  WARNING: This animal has species '" + animalSpecies + "' but we filtered for '" + species + "'!");
                 }
@@ -347,42 +325,11 @@ public class RDFGraphService {
         System.out.println("=========================");
     }
 
-    // Helper methods for location extraction (keeping existing ones)
-    private boolean isLikelyLocation(String text) {
-        if (text == null || text.length() < 3) return false;
-        String normalized = normalizeText(text);
-        List<String> locationWords = List.of(
-                "bucuresti", "constanta", "cluj", "timisoara", "iasi", "brasov",
-                "sector", "cartier", "strada", "boulevard", "zona"
-        );
-        for (String locWord : locationWords) {
-            if (normalized.contains(locWord)) return true;
-        }
-        List<String> animalAdjectives = List.of(
-                "vesel", "vesela", "prietenos", "prietenosa", "energic", "energica",
-                "iubitor", "iubitoare", "inteligent", "inteligenta", "mic", "mica",
-                "mare", "frumos", "frumoasa", "linistit", "linistita", "jucaus", "jucausa"
-        );
-        for (String adj : animalAdjectives) {
-            if (normalizeText(adj).equals(normalized)) return false;
-        }
-        return true;
-    }
-
-    private boolean containsLocationIndicators(String query) {
-        String normalized = normalizeText(query);
-        List<String> indicators = List.of("in", "din", "la", "sector", "zona", "cartier");
-        for (String indicator : indicators) {
-            if (normalized.contains(indicator)) return true;
-        }
-        return false;
-    }
 
     public List<List<String>> generateRandomWalks(int walkLength, int walksPerNode) {
         String ns = "http://adoption/";
         List<List<String>> walks = new ArrayList<>();
 
-        // All animal nodes
         List<Resource> animalResources = model.listResourcesWithProperty(model.getProperty(ns + "species")).toList();
         Random rnd = new Random();
 
@@ -399,14 +346,10 @@ public class RDFGraphService {
                     }
                     if (edges.isEmpty()) break;
                     Statement edge = edges.get(rnd.nextInt(edges.size()));
-                    // Add property URI as a step (optional, can include or skip)
-                    // walk.add(edge.getPredicate().getURI());
-                    // Next node
                     if (edge.getObject().isResource()) {
                         current = edge.getObject().asResource();
                         walk.add(current.getURI());
                     } else {
-                        // It's a literal, include it and end walk
                         walk.add(edge.getObject().toString());
                         break;
                     }
@@ -428,68 +371,14 @@ public class RDFGraphService {
         return sentences;
     }
 
-    public void saveRDFToFile(String filename) {
-        try (FileOutputStream out = new FileOutputStream(filename)) {
-            model.write(out, "TURTLE");
-            System.out.println("RDF saved to " + filename);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public List<String> getWalkSentencesFromResource(Resource start, int walkLength, int walksPerNode) {
-        List<String> sentences = new ArrayList<>();
-        Random rnd = new Random();
-
-        for (int i = 0; i < walksPerNode; i++) {
-            List<String> walk = new ArrayList<>();
-            Resource current = start;
-            walk.add(current.getURI());
-
-            for (int step = 1; step < walkLength; step++) {
-                StmtIterator stmts = current.listProperties();
-                List<Statement> edges = new ArrayList<>();
-                while (stmts.hasNext()) {
-                    edges.add(stmts.next());
-                }
-
-                if (edges.isEmpty()) break;
-
-                Statement edge = edges.get(rnd.nextInt(edges.size()));
-                if (edge.getObject().isResource()) {
-                    current = edge.getObject().asResource();
-                    walk.add(current.getURI());
-                } else {
-                    walk.add(edge.getObject().toString());
-                    break;
-                }
-            }
-
-            sentences.add(String.join(" ", walk));
-        }
-
-        return sentences;
-    }
-
-    public Resource createQueryAnimalResource(String species, String location) {
-        String ns = "http://adoption/";
-        Model m = getModel();  // ensures model is loaded
-
-        Resource queryAnimal = m.createResource(ns + "QueryAnimal_" + UUID.randomUUID());
-
-        if (species != null && !species.isBlank()) {
-            queryAnimal.addProperty(m.createProperty(ns + "species"), species.toLowerCase());
-        }
-
-        if (location != null && !location.isBlank()) {
-            // Fake location resource
-            Resource locRes = m.createResource(ns + "location_" + normalizeLocation(location));
-            queryAnimal.addProperty(m.createProperty(ns + "isLocatedIn"), locRes);
-        }
-
-        return queryAnimal;
-    }
-
-
+//    public void saveRDFToFile(String filename) {
+//        try (FileOutputStream out = new FileOutputStream(filename)) {
+//            model.write(out, "TURTLE");
+//            System.out.println("RDF saved to " + filename);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
+//
 
 }

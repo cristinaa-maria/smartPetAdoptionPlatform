@@ -43,8 +43,6 @@ public class RDF2VecService {
 
     private Word2Vec word2Vec;
     private Map<String, double[]> nodeEmbeddings;
-
-    // Configuration parameters
     private static final int WALK_LENGTH = 8;
     private static final int WALKS_PER_NODE = 10;
     private static final int MIN_WORD_FREQUENCY = 1;
@@ -53,21 +51,14 @@ public class RDF2VecService {
     private static final double LEARNING_RATE = 0.025;
     private static final int EPOCHS = 10;
 
-    /**
-     * Trains the RDF2Vec model using random walks from the RDF graph
-     */
     public void trainRDF2VecModel() {
         logger.info("Starting RDF2Vec model training...");
 
         try {
-            // Ensure RDF graph is generated
-            rdfGraphService.getModel();
 
-            // Generate random walks (resource-to-resource only)
-            logger.info("Generating random walks with length={}, walks per node={}", WALK_LENGTH, WALKS_PER_NODE);
+            rdfGraphService.getModel();
             List<String> sentences = rdfGraphService.getWalkSentences(WALK_LENGTH, WALKS_PER_NODE);
 
-            // Print a few walks for debug
             for (int i = 0; i < Math.min(10, sentences.size()); i++) {
                 logger.info("Random walk " + i + ": " + sentences.get(i));
             }
@@ -78,14 +69,10 @@ public class RDF2VecService {
             }
             logger.info("Generated {} random walk sentences", sentences.size());
 
-            // Prepare sentences for Word2Vec training
+
             SentenceIterator iterator = new CollectionSentenceIterator(sentences);
-
-            // === IMPORTANT: Use URI whitespace tokenizer, not a preprocessor! ===
             TokenizerFactory tokenizerFactory = new UriWhitespaceTokenizerFactory();
-            // DO NOT set CommonPreprocessor! URIs must be preserved as tokens.
 
-            // Build and train Word2Vec model
             logger.info("Training Word2Vec model...");
             word2Vec = new Word2Vec.Builder()
                     .minWordFrequency(MIN_WORD_FREQUENCY)
@@ -99,19 +86,16 @@ public class RDF2VecService {
 
             word2Vec.fit();
 
-            // Print vocabulary after training
             logger.info("Word2Vec vocab size: {}", word2Vec.getVocab().numWords());
             List<String> vocabWords = new ArrayList<>(word2Vec.getVocab().words());
             logger.info("Sample vocab: " + vocabWords.stream().limit(20).collect(Collectors.toList()));
 
-            // Print animal URI presence in vocab
             String ns = "http://example.org/adoption#";
             for (Animal animal : animalRepository.findAll()) {
                 String animalUri = ns + "animal" + animal.getId();
                 logger.info("Word2Vec hasWord({}): {}", animalUri, word2Vec.hasWord(animalUri));
             }
 
-            // Extract embeddings for all nodes
             extractNodeEmbeddings();
 
             logger.info("RDF2Vec model training completed successfully");
@@ -121,17 +105,12 @@ public class RDF2VecService {
             throw new RuntimeException("Failed to train RDF2Vec model", e);
         }
     }
-
-    /**
-     * Extracts embeddings for all nodes in the RDF graph
-     */
     private void extractNodeEmbeddings() {
         logger.info("Extracting node embeddings...");
 
         nodeEmbeddings = new HashMap<>();
         String ns = "http://example.org/adoption#";
 
-        // Get all animal resources
         List<Resource> animals = rdfGraphService.getModel()
                 .listResourcesWithProperty(rdfGraphService.getModel().getProperty(ns + "species"))
                 .toList();
@@ -146,13 +125,8 @@ public class RDF2VecService {
             }
         }
 
-
-        logger.info("Extracted embeddings for {} nodes", embeddingsExtracted);
     }
 
-    /**
-     * Gets the RDF2Vec embedding vector for a specific animal by ID
-     */
     public double[] getAnimalRdfEmbedding(String animalId) {
         if (nodeEmbeddings == null) {
             logger.warn("RDF2Vec model not trained. Call trainRDF2VecModel() first.");
@@ -165,9 +139,6 @@ public class RDF2VecService {
         return nodeEmbeddings.get(animalUri);
     }
 
-    /**
-     * Updates animal RDF embeddings in the separate rdf2vecEmbeddings collection
-     */
 //    public void updateAnimalRdfEmbeddings() {
 //        trainRDF2VecModel(); // or ensure model is trained/loaded
 //
@@ -226,18 +197,11 @@ public class RDF2VecService {
 //            System.out.println("WARNING: No embeddings were stored! Check your animal URIs and random walks.");
 //        }
 //    }
-
-    /**
-     * Gets RDF2Vec embedding from the database for a specific animal
-     */
     public List<Float> getStoredRdfEmbedding(String animalId) {
         Optional<RDF2VecEmbeddings> embedding = rdf2VecEmbeddingRepository.findByAnimalId(animalId);
         return embedding.map(RDF2VecEmbeddings::getEmbeddings).orElse(null);
     }
 
-    /**
-     * Finds similar animals based on RDF2Vec embeddings only
-     */
     public List<Animal> findSimilarAnimalsByRdf(String animalId, int topK) {
         List<Float> queryEmbedding = getStoredRdfEmbedding(animalId);
         if (queryEmbedding == null || queryEmbedding.isEmpty()) {
@@ -245,7 +209,6 @@ public class RDF2VecService {
             return new ArrayList<>();
         }
 
-        // Convert to float array for similarity calculation
         float[] queryFloatArray = new float[queryEmbedding.size()];
         for (int i = 0; i < queryEmbedding.size(); i++) {
             queryFloatArray[i] = queryEmbedding.get(i);
@@ -255,7 +218,7 @@ public class RDF2VecService {
         List<SimilarityScore> similarities = new ArrayList<>();
 
         for (Animal animal : allAnimals) {
-            if (animal.getId().equals(animalId)) continue; // Skip self
+            if (animal.getId().equals(animalId)) continue;
 
             List<Float> animalEmbedding = getStoredRdfEmbedding(animal.getId());
             if (animalEmbedding != null && !animalEmbedding.isEmpty()) {
@@ -268,25 +231,16 @@ public class RDF2VecService {
                 similarities.add(new SimilarityScore(animal, similarity));
             }
         }
-
-        // Sort by similarity (descending) and return top K
         return similarities.stream()
                 .sorted((a, b) -> Double.compare(b.similarity, a.similarity))
                 .limit(topK)
                 .map(s -> s.animal)
                 .collect(Collectors.toList());
     }
-
-    /**
-     * Gets count of stored RDF embeddings
-     */
     public long getStoredEmbeddingsCount() {
         return rdf2VecEmbeddingRepository.count();
     }
 
-    /**
-     * Calculates cosine similarity between two vectors
-     */
     private double cosineSimilarity(float[] vectorA, float[] vectorB) {
         if (vectorA.length != vectorB.length) {
             throw new IllegalArgumentException("Vectors must have the same length");
@@ -309,30 +263,18 @@ public class RDF2VecService {
         return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
     }
 
-    /**
-     * Gets vocabulary size of the trained model
-     */
     public int getVocabularySize() {
         return word2Vec != null ? word2Vec.getVocab().numWords() : 0;
     }
 
-    /**
-     * Gets embedding dimension
-     */
     public int getEmbeddingDimension() {
         return LAYER_SIZE;
     }
 
-    /**
-     * Checks if the model is trained
-     */
     public boolean isModelTrained() {
         return word2Vec != null && nodeEmbeddings != null;
     }
 
-    /**
-     * Gets most similar words/nodes to a given node
-     */
     public List<String> getMostSimilarNodes(String nodeUri, int topK) {
         if (word2Vec == null || !word2Vec.hasWord(nodeUri)) {
             return new ArrayList<>();
@@ -347,9 +289,6 @@ public class RDF2VecService {
         }
     }
 
-    /**
-     * Helper class for similarity scoring
-     */
     private static class SimilarityScore {
         final Animal animal;
         final double similarity;

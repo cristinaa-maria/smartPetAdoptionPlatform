@@ -50,10 +50,6 @@ public class EmbeddingService {
             animalService.editEmbeddings(id, emb);
         }
     }
-
-    /**
-     * Metodă pentru update embeddings la toate animalele din DB
-     */
     public void updateAllAnimalEmbeddings() {
         List<Animal> animals = animalRepository.findAll();
         List<String> animalIds = new ArrayList<>();
